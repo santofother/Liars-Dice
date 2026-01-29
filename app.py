@@ -877,6 +877,66 @@ def handle_return_to_lobby(data):
 
     broadcast_game_state(room_code)
 
+@socketio.on('leave_game')
+def handle_leave_game(data):
+    room_code = data.get('room_code')
+    game = games.get(room_code)
+
+    if not game:
+        return
+
+    # Find the leaving player
+    leaving_player = None
+    leaving_idx = -1
+    for i, player in enumerate(game['players']):
+        if player.get('sid') == request.sid:
+            leaving_player = player
+            leaving_idx = i
+            break
+
+    # Also check waiting players
+    if not leaving_player:
+        for i, player in enumerate(game.get('waiting_players', [])):
+            if player.get('sid') == request.sid:
+                game['waiting_players'].pop(i)
+                leave_room(room_code)
+                broadcast_game_state(room_code)
+                return
+
+    if not leaving_player:
+        return
+
+    # Mark player as disconnected
+    leaving_player['connected'] = False
+    leaving_player['sid'] = None
+
+    leave_room(room_code)
+
+    # Count remaining connected human players
+    connected_humans = [p for p in game['players'] if p['is_human'] and p.get('connected', False)]
+
+    if len(connected_humans) == 0:
+        # No humans left, delete the game
+        del games[room_code]
+        return
+
+    game['message'] = f"{leaving_player['name']} has left the ship!"
+
+    # If it was the leaving player's turn, skip to next player
+    if game['phase'] == 'bidding' and leaving_idx == game['current_player']:
+        alive = get_alive_players(game)
+        if leaving_idx in alive:
+            game['current_player'] = next_alive_player(game, leaving_idx)
+            if game['current_player'] is not None:
+                next_player = game['players'][game['current_player']]
+                game['message'] = f"{leaving_player['name']} fled! {next_player['name']}'s turn!"
+
+                # If next player is AI, process their turn
+                if not next_player['is_human']:
+                    socketio.start_background_task(process_ai_turns_async, room_code)
+
+    broadcast_game_state(room_code)
+
 @socketio.on('chat_message')
 def handle_chat_message(data):
     room_code = data.get('room_code')

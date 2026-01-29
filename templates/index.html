@@ -242,14 +242,14 @@
         }
 
         .die {
-            width: 40px;
-            height: 40px;
+            width: 52px;
+            height: 52px;
             background: linear-gradient(145deg, #fff 0%, #e0e0e0 100%);
-            border-radius: 6px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
+            font-size: 42px;
             box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
         }
 
@@ -260,7 +260,7 @@
         .die.hidden::after {
             content: "?";
             color: #ffd700;
-            font-size: 24px;
+            font-size: 32px;
         }
 
         .die.wild {
@@ -1051,6 +1051,11 @@
                 <!-- Host Controls -->
                 <div id="game-host-controls" class="hidden" style="margin-top: 15px; text-align: center;">
                     <button class="btn btn-wood" onclick="returnToLobby()">🏠 Return to Lobby</button>
+                </div>
+
+                <!-- Exit Button (always visible during game) -->
+                <div style="margin-top: 15px; text-align: center;">
+                    <button class="btn btn-red" onclick="exitToMainMenu()" style="opacity: 0.8;">🚪 Exit to Main Menu</button>
                 </div>
             </div>
         </div>
@@ -1917,6 +1922,39 @@
         function returnToLobby() {
             if (confirm('Return all players to lobby? This will end the current game.')) {
                 socket.emit('return_to_lobby', { room_code: roomCode });
+            }
+        }
+
+        function exitToMainMenu() {
+            const isMultiplayer = gameState && gameState.players.filter(p => p.is_human).length > 1;
+
+            let message = 'Exit to main menu?';
+            if (isMultiplayer) {
+                message = 'Exit to main menu? The game will continue without you.';
+            }
+
+            if (confirm(message)) {
+                // Notify server we're leaving
+                socket.emit('leave_game', { room_code: roomCode });
+
+                // Reset local state
+                gameState = null;
+                roomCode = null;
+                playerIndex = -1;
+
+                // Return to lobby screen
+                document.getElementById('lobby').classList.remove('hidden');
+                document.getElementById('waiting-room').classList.add('hidden');
+                document.getElementById('game').classList.add('hidden');
+                document.getElementById('reveal-overlay').classList.add('hidden');
+                document.getElementById('spectator-banner').classList.add('hidden');
+                document.getElementById('chat-panel').classList.add('hidden');
+                document.getElementById('chat-btn').classList.add('hidden');
+                document.body.style.paddingTop = '0';
+                chatOpen = false;
+
+                // Clear inputs
+                document.getElementById('room-code').value = '';
             }
         }
 
