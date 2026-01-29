@@ -1,0 +1,2055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liar's Dice - Pirates of the Caribbean</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pirata+One&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(180deg, #1a0a00 0%, #2d1810 50%, #1a0a00 100%);
+            min-height: 100vh;
+            color: #d4a574;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px;
+            border-bottom: 2px solid #8b4513;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-family: 'Pirata One', serif;
+            font-size: 3em;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px #000;
+            letter-spacing: 3px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #b8860b;
+            margin-top: 5px;
+        }
+
+        /* Lobby Styles */
+        .lobby-container {
+            max-width: 500px;
+            margin: 50px auto;
+            background: linear-gradient(145deg, #3d2817 0%, #2a1a0f 100%);
+            border: 3px solid #8b4513;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .lobby-title {
+            text-align: center;
+            font-size: 1.8em;
+            color: #ffd700;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #b8860b;
+            font-size: 1.1em;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1em;
+            border: 2px solid #8b4513;
+            border-radius: 8px;
+            background: #2a1a0f;
+            color: #ffd700;
+        }
+
+        .input-group input::placeholder {
+            color: #8b7355;
+        }
+
+        .lobby-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px 25px;
+            font-size: 1.2em;
+            font-family: 'Georgia', serif;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-gold {
+            background: linear-gradient(145deg, #ffd700 0%, #b8860b 100%);
+            color: #2a1a0f;
+            border: 2px solid #ffd700;
+        }
+
+        .btn-gold:hover {
+            background: linear-gradient(145deg, #ffec80 0%, #ffd700 100%);
+            transform: scale(1.02);
+        }
+
+        .btn-wood {
+            background: linear-gradient(145deg, #8b4513 0%, #5a2d0a 100%);
+            color: #ffd700;
+            border: 2px solid #8b4513;
+        }
+
+        .btn-wood:hover {
+            background: linear-gradient(145deg, #a0522d 0%, #8b4513 100%);
+            transform: scale(1.02);
+        }
+
+        .btn-red {
+            background: linear-gradient(145deg, #8b0000 0%, #5a0000 100%);
+            color: #ffd700;
+            border: 2px solid #8b0000;
+        }
+
+        .btn-red:hover {
+            background: linear-gradient(145deg, #a00000 0%, #8b0000 100%);
+            transform: scale(1.02);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 30px 0;
+            color: #8b4513;
+            font-size: 1.2em;
+        }
+
+        .room-code-display {
+            text-align: center;
+            background: rgba(0,0,0,0.4);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .room-code {
+            font-size: 3em;
+            color: #ffd700;
+            letter-spacing: 10px;
+            font-family: monospace;
+        }
+
+        .room-code-label {
+            color: #b8860b;
+            margin-bottom: 10px;
+        }
+
+        /* Game Board Styles */
+        .game-container {
+            /* shown/hidden via .hidden class */
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .player-card {
+            background: linear-gradient(145deg, #3d2817 0%, #2a1a0f 100%);
+            border: 3px solid #8b4513;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+        }
+
+        .player-card.current-turn {
+            border-color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .player-card.eliminated {
+            opacity: 0.5;
+        }
+
+        .player-card.disconnected {
+            border-color: #666;
+        }
+
+        .player-card.you {
+            border-color: #32cd32;
+        }
+
+        .player-avatar {
+            font-size: 50px;
+            margin-bottom: 10px;
+        }
+
+        .player-name {
+            font-size: 1.3em;
+            color: #ffd700;
+            margin-bottom: 5px;
+        }
+
+        .player-status {
+            font-size: 0.9em;
+            color: #b8860b;
+            margin-bottom: 10px;
+        }
+
+        .dice-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-height: 50px;
+            margin-top: 10px;
+        }
+
+        .die {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(145deg, #fff 0%, #e0e0e0 100%);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .die.hidden {
+            background: linear-gradient(145deg, #8b4513 0%, #5a2d0a 100%);
+        }
+
+        .die.hidden::after {
+            content: "?";
+            color: #ffd700;
+            font-size: 24px;
+        }
+
+        .die.wild {
+            background: linear-gradient(145deg, #ffd700 0%, #b8860b 100%);
+        }
+
+        .die[data-value="1"]::before { content: "⚀"; }
+        .die[data-value="2"]::before { content: "⚁"; }
+        .die[data-value="3"]::before { content: "⚂"; }
+        .die[data-value="4"]::before { content: "⚃"; }
+        .die[data-value="5"]::before { content: "⚄"; }
+        .die[data-value="6"]::before { content: "⚅"; }
+
+        /* Center Panel */
+        .center-panel {
+            background: linear-gradient(145deg, #3d2817 0%, #2a1a0f 100%);
+            border: 3px solid #8b4513;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        .message-box {
+            background: rgba(0,0,0,0.4);
+            border: 2px solid #b8860b;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.4em;
+            margin-bottom: 20px;
+        }
+
+        .current-bid-display {
+            text-align: center;
+            padding: 15px;
+            background: rgba(139, 69, 19, 0.3);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .current-bid-display h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        .bid-value {
+            font-size: 2.5em;
+            color: #fff;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-label {
+            color: #8b7355;
+            font-size: 0.9em;
+        }
+
+        .info-value {
+            color: #ffd700;
+            font-size: 1.2em;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .bid-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .bid-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bid-input label {
+            color: #b8860b;
+        }
+
+        .bid-input input, .bid-input select {
+            padding: 10px;
+            font-size: 1.1em;
+            border: 2px solid #8b4513;
+            border-radius: 5px;
+            background: #2a1a0f;
+            color: #ffd700;
+            width: 80px;
+            text-align: center;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        /* History */
+        .history {
+            margin-top: 20px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .history h4 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        .history-item {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(139, 69, 19, 0.3);
+            font-size: 0.9em;
+        }
+
+        /* Reveal Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .overlay-content {
+            background: linear-gradient(145deg, #3d2817 0%, #2a1a0f 100%);
+            border: 4px solid #ffd700;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 700px;
+            width: 90%;
+            text-align: center;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .overlay-title {
+            font-size: 2.5em;
+            color: #ffd700;
+            margin-bottom: 20px;
+        }
+
+        .reveal-player {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+        }
+
+        .reveal-player-name {
+            color: #b8860b;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .reveal-result {
+            font-size: 1.3em;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .result-win {
+            background: rgba(50, 205, 50, 0.2);
+            border: 2px solid #32cd32;
+            color: #32cd32;
+        }
+
+        .result-lose {
+            background: rgba(220, 20, 60, 0.2);
+            border: 2px solid #dc143c;
+            color: #dc143c;
+        }
+
+        .wild-note {
+            font-size: 0.9em;
+            color: #8b7355;
+            font-style: italic;
+            margin-top: 15px;
+        }
+
+        /* Waiting Room */
+        .waiting-room {
+            text-align: center;
+        }
+
+        .player-list {
+            margin: 20px 0;
+        }
+
+        .player-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+
+        .player-list-item.host::after {
+            content: "HOST";
+            font-size: 0.8em;
+            background: #ffd700;
+            color: #2a1a0f;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .error-message {
+            background: rgba(220, 20, 60, 0.3);
+            border: 2px solid #dc143c;
+            color: #dc143c;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Rules Button & Modal */
+        .rules-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #8b4513 0%, #5a2d0a 100%);
+            border: 2px solid #ffd700;
+            color: #ffd700;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        .rules-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+
+        .rules-content {
+            text-align: left;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .rules-content h3 {
+            color: #ffd700;
+            margin: 20px 0 10px 0;
+            border-bottom: 1px solid #8b4513;
+            padding-bottom: 5px;
+        }
+
+        .rules-content p, .rules-content li {
+            color: #d4a574;
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+
+        .rules-content ul {
+            margin-left: 20px;
+        }
+
+        /* Emoji Picker */
+        .emoji-picker {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .emoji-option {
+            width: 50px;
+            height: 50px;
+            font-size: 30px;
+            background: #2a1a0f;
+            border: 2px solid #8b4513;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .emoji-option:hover {
+            border-color: #ffd700;
+            transform: scale(1.1);
+        }
+
+        .emoji-option.selected {
+            border-color: #ffd700;
+            background: rgba(255, 215, 0, 0.2);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+
+        /* Speech Bubble */
+        .speech-bubble {
+            position: absolute;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            color: #2a1a0f;
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            max-width: 180px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+            animation: bubblePop 0.3s ease-out;
+            z-index: 10;
+        }
+
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 10px 10px 0 10px;
+            border-style: solid;
+            border-color: rgba(255, 255, 255, 0.95) transparent transparent transparent;
+        }
+
+        @keyframes bubblePop {
+            0% { transform: translateX(-50%) scale(0); opacity: 0; }
+            50% { transform: translateX(-50%) scale(1.1); }
+            100% { transform: translateX(-50%) scale(1); opacity: 1; }
+        }
+
+        @keyframes bubbleFade {
+            0% { opacity: 1; }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+        }
+
+        .player-card {
+            position: relative;
+        }
+
+        /* Invalid Bid Toast */
+        .toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(145deg, #8b0000 0%, #5a0000 100%);
+            border: 2px solid #ff4444;
+            color: #fff;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            z-index: 1001;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            0% { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+            100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        /* Chat Panel */
+        .chat-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #ffd700 0%, #b8860b 100%);
+            border: 3px solid #8b4513;
+            color: #2a1a0f;
+            font-size: 28px;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+
+        .chat-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+        }
+
+        .chat-btn.has-notification::after {
+            content: '!';
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 22px;
+            height: 22px;
+            background: #dc143c;
+            border-radius: 50%;
+            color: white;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-panel {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 320px;
+            max-height: 500px;
+            background: linear-gradient(145deg, #3d2817 0%, #2a1a0f 100%);
+            border: 3px solid #8b4513;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 99;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            background: linear-gradient(145deg, #8b4513 0%, #5a2d0a 100%);
+            padding: 12px 15px;
+            color: #ffd700;
+            font-size: 1.1em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-close {
+            background: none;
+            border: none;
+            color: #ffd700;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .chat-messages {
+            flex: 1;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+        }
+
+        .chat-message {
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 10px;
+            background: rgba(139, 69, 19, 0.3);
+            border-left: 3px solid #b8860b;
+        }
+
+        .chat-message .sender {
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+
+        .chat-message .text {
+            color: #d4a574;
+            margin-top: 3px;
+        }
+
+        .chat-message.own {
+            background: rgba(50, 205, 50, 0.2);
+            border-left-color: #32cd32;
+        }
+
+        .chat-options {
+            padding: 10px;
+            border-top: 2px solid #8b4513;
+        }
+
+        .chat-category {
+            margin-bottom: 10px;
+        }
+
+        .chat-category-title {
+            color: #b8860b;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .chat-option-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+
+        .chat-option {
+            padding: 8px 10px;
+            background: linear-gradient(145deg, #5a2d0a 0%, #3d2817 100%);
+            border: 1px solid #8b4513;
+            border-radius: 8px;
+            color: #d4a574;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .chat-option:hover {
+            background: linear-gradient(145deg, #8b4513 0%, #5a2d0a 100%);
+            border-color: #ffd700;
+            color: #ffd700;
+        }
+
+        .chat-tabs {
+            display: flex;
+            border-bottom: 2px solid #8b4513;
+        }
+
+        .chat-tab {
+            flex: 1;
+            padding: 8px;
+            background: none;
+            border: none;
+            color: #8b7355;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chat-tab.active {
+            color: #ffd700;
+            background: rgba(255, 215, 0, 0.1);
+            border-bottom: 2px solid #ffd700;
+            margin-bottom: -2px;
+        }
+
+        .chat-tab:hover {
+            color: #ffd700;
+        }
+
+        /* Custom Chat Input */
+        .chat-custom-input {
+            display: flex;
+            gap: 8px;
+            padding: 10px;
+        }
+
+        .chat-custom-input input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #8b4513;
+            border-radius: 8px;
+            background: #2a1a0f;
+            color: #ffd700;
+            font-size: 0.9em;
+        }
+
+        .chat-custom-input input::placeholder {
+            color: #8b7355;
+        }
+
+        .chat-custom-input button {
+            padding: 10px 15px;
+            background: linear-gradient(145deg, #ffd700 0%, #b8860b 100%);
+            border: none;
+            border-radius: 8px;
+            color: #2a1a0f;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chat-custom-input button:hover {
+            transform: scale(1.05);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 2em; }
+            .game-board { grid-template-columns: 1fr 1fr; }
+            .bid-controls { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Rules Button -->
+    <button class="rules-btn" onclick="toggleRules()" title="Game Rules">📜</button>
+
+    <!-- Rules Overlay -->
+    <div id="rules-overlay" class="overlay hidden">
+        <div class="overlay-content">
+            <div class="overlay-title">Pirate's Code</div>
+            <div class="rules-content">
+                <h3>🎯 Objective</h3>
+                <p>Be the last pirate standing with dice remaining!</p>
+
+                <h3>🎲 Setup</h3>
+                <p>Each player starts with 5 dice. All players roll their dice secretly - only you can see your own dice.</p>
+
+                <h3>⚔️ Gameplay</h3>
+                <ul>
+                    <li><strong>Bidding:</strong> On your turn, bid how many dice of a certain face value you think are on the table (across ALL players' dice combined).</li>
+                    <li><strong>Raising:</strong> Each bid must be higher than the last - either more dice, or the same quantity with a higher face value.</li>
+                    <li><strong>Challenge:</strong> If you think the current bid is too high, call "LIAR!" to challenge.</li>
+                </ul>
+
+                <h3>🌟 Wild Ones</h3>
+                <p>Dice showing <strong>1</strong> are WILD and count as ANY face value (except when bidding specifically on 1s).</p>
+
+                <h3>💀 Losing Dice</h3>
+                <ul>
+                    <li>If the bid is <strong>TRUE</strong> (enough dice exist): The challenger loses a die.</li>
+                    <li>If the bid is <strong>FALSE</strong> (not enough dice): The bidder loses a die.</li>
+                </ul>
+                <p>The player who lost the die starts the next round.</p>
+
+                <h3>🏆 Winning</h3>
+                <p>The last player with dice remaining wins!</p>
+
+                <h3>💡 Tips</h3>
+                <ul>
+                    <li>Count your own dice and estimate what others might have.</li>
+                    <li>Remember: roughly 1/3 of all dice will match any given face (including wilds).</li>
+                    <li>Bluffing is part of the game - but don't get caught!</li>
+                </ul>
+            </div>
+            <button class="btn btn-gold" onclick="toggleRules()" style="margin-top: 20px;">Close</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>Liar's Dice</h1>
+            <p class="subtitle">Pirates of the Caribbean - Multiplayer</p>
+        </header>
+
+        <!-- Lobby Screen -->
+        <div id="lobby" class="lobby-container">
+            <div class="lobby-title">Join the Crew</div>
+
+            <div class="input-group">
+                <label>Your Pirate Name</label>
+                <input type="text" id="player-name" placeholder="Enter your name..." maxlength="20">
+            </div>
+
+            <div class="input-group">
+                <label>Choose Your Avatar</label>
+                <div class="emoji-picker" id="emoji-picker">
+                    <div class="emoji-option selected" data-emoji="🏴‍☠️">🏴‍☠️</div>
+                    <div class="emoji-option" data-emoji="⚓">⚓</div>
+                    <div class="emoji-option" data-emoji="🦜">🦜</div>
+                    <div class="emoji-option" data-emoji="💀">💀</div>
+                    <div class="emoji-option" data-emoji="🗡️">🗡️</div>
+                    <div class="emoji-option" data-emoji="🦑">🦑</div>
+                    <div class="emoji-option" data-emoji="🧜‍♀️">🧜‍♀️</div>
+                    <div class="emoji-option" data-emoji="🐙">🐙</div>
+                    <div class="emoji-option" data-emoji="🦈">🦈</div>
+                    <div class="emoji-option" data-emoji="🏝️">🏝️</div>
+                    <div class="emoji-option" data-emoji="⛵">⛵</div>
+                    <div class="emoji-option" data-emoji="🧭">🧭</div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>AI Pirates</label>
+                <select id="num-ai">
+                    <option value="0">No AI - Players Only</option>
+                    <option value="1">1 AI Pirate</option>
+                    <option value="2" selected>2 AI Pirates</option>
+                    <option value="3">3 AI Pirates</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Difficulty</label>
+                <select id="ai-difficulty">
+                    <option value="easy">🦜 Deckhand - Landlubber tactics</option>
+                    <option value="medium" selected>⚓ First Mate - Seasoned sailor</option>
+                    <option value="hard">💀 Blackbeard - Cunning strategist</option>
+                    <option value="impossible">🏴‍☠️ Captain Jack - Sees all, knows all!</option>
+                </select>
+            </div>
+
+            <div class="lobby-buttons">
+                <button class="btn btn-gold" onclick="createGame()">Create Game</button>
+            </div>
+
+            <div class="divider">- OR -</div>
+
+            <div class="input-group">
+                <label>Room Code</label>
+                <input type="text" id="room-code" placeholder="XXXX" maxlength="4" style="text-transform: uppercase; text-align: center; font-size: 1.5em; letter-spacing: 5px;">
+            </div>
+
+            <button class="btn btn-wood" onclick="joinGame()" style="width: 100%;">Join Game</button>
+
+            <div id="lobby-error" class="error-message hidden"></div>
+        </div>
+
+        <!-- Waiting Room -->
+        <div id="waiting-room" class="lobby-container hidden">
+            <div class="waiting-room">
+                <div class="lobby-title">Waiting Room</div>
+
+                <div class="room-code-display">
+                    <div class="room-code-label">Share this code with friends:</div>
+                    <div class="room-code" id="display-room-code">XXXX</div>
+                </div>
+
+                <div class="player-list" id="player-list"></div>
+
+                <div id="host-controls" class="hidden">
+                    <button class="btn btn-gold" onclick="startGame()" style="width: 100%;">Start Game</button>
+                </div>
+
+                <div id="waiting-message" style="color: #b8860b; margin-top: 20px;">
+                    Waiting for host to start the game...
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game" class="game-container hidden">
+            <div class="game-board" id="game-board"></div>
+
+            <div class="center-panel">
+                <div class="message-box" id="message">Waiting...</div>
+
+                <div class="game-info">
+                    <div class="info-item">
+                        <div class="info-label">Room</div>
+                        <div class="info-value" id="game-room-code">XXXX</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Total Dice</div>
+                        <div class="info-value" id="total-dice">0</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Difficulty</div>
+                        <div class="info-value" id="ai-level">Deckhand</div>
+                    </div>
+                </div>
+
+                <div id="bid-display" class="current-bid-display hidden">
+                    <h3>Current Bid</h3>
+                    <div class="bid-value" id="current-bid">-</div>
+                </div>
+
+                <div class="controls" id="controls"></div>
+
+                <div class="history" id="history">
+                    <h4>Round History</h4>
+                    <div id="history-list"></div>
+                </div>
+
+                <!-- Waiting Players -->
+                <div id="waiting-players-section" class="hidden" style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                    <h4 style="color: #b8860b; margin-bottom: 10px;">⏳ Waiting to Join</h4>
+                    <div id="waiting-players-list" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
+                </div>
+
+                <!-- Host Controls -->
+                <div id="game-host-controls" class="hidden" style="margin-top: 15px; text-align: center;">
+                    <button class="btn btn-wood" onclick="returnToLobby()">🏠 Return to Lobby</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spectator Banner -->
+    <div id="spectator-banner" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(145deg, #8b4513 0%, #5a2d0a 100%); color: #ffd700; text-align: center; padding: 10px; z-index: 50; border-bottom: 2px solid #ffd700;">
+        👁️ You are spectating. You will join when the game returns to lobby!
+    </div>
+
+    <!-- Chat Button & Panel -->
+    <button class="chat-btn hidden" id="chat-btn" onclick="toggleChat()" title="Send Message">💬</button>
+
+    <div id="chat-panel" class="chat-panel hidden">
+        <div class="chat-header">
+            <span>⚓ Pirate Chat</span>
+            <button class="chat-close" onclick="toggleChat()">×</button>
+        </div>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div class="chat-tabs">
+            <button class="chat-tab active" onclick="showChatTab('taunt')">Taunts</button>
+            <button class="chat-tab" onclick="showChatTab('react')">Reactions</button>
+            <button class="chat-tab" onclick="showChatTab('social')">Social</button>
+            <button class="chat-tab" onclick="showChatTab('custom')">Custom</button>
+        </div>
+        <div class="chat-options" id="chat-options">
+            <!-- Options populated by JS -->
+        </div>
+    </div>
+
+    <!-- Reveal Overlay -->
+    <div id="reveal-overlay" class="overlay hidden">
+        <div class="overlay-content">
+            <div class="overlay-title" id="reveal-title">REVEAL!</div>
+            <div id="reveal-dice"></div>
+            <div class="reveal-result" id="reveal-result"></div>
+            <p class="wild-note">* Gold dice (1s) are wild and count as any face value</p>
+            <button class="btn btn-gold" onclick="continueGame()" id="continue-btn">Continue</button>
+        </div>
+    </div>
+
+    <script>
+        let socket;
+        let gameState = null;
+        let roomCode = null;
+        let playerIndex = -1;
+        let selectedAvatar = '🏴‍☠️';
+        let activeBubbles = {};
+        let chatOpen = false;
+        let currentChatTab = 'taunt';
+
+        // Player chat messages organized by category
+        const chatMessages = {
+            taunt: [
+                "Ye call that a bid?",
+                "Prepare to lose!",
+                "I've seen better from a barnacle!",
+                "Ye're no match for me!",
+                "Scared yet, landlubber?",
+                "Walk the plank!",
+                "Too easy!",
+                "Is that all ye got?",
+                "Me parrot bids better!",
+                "Tremble before me!"
+            ],
+            react: [
+                "Interesting...",
+                "Hmm, suspicious!",
+                "I don't believe ye!",
+                "Bold move!",
+                "Risky business!",
+                "Well played!",
+                "Lucky shot!",
+                "The plot thickens...",
+                "Ye got me there!",
+                "Impressive!"
+            ],
+            social: [
+                "Ahoy, mateys!",
+                "Good game!",
+                "Arrr!",
+                "Yo ho ho!",
+                "Fair winds to ye!",
+                "Good luck!",
+                "May the best pirate win!",
+                "Cheers, scallywags!",
+                "Thanks for playing!",
+                "Aye aye!"
+            ]
+        };
+
+        // Pirate quips for different situations - MASSIVE LIST
+        const quips = {
+            bid: [
+                // Confident bids
+                "Arr, I'll raise ye!",
+                "The seas be kind to me!",
+                "Fortune favors the bold!",
+                "I've seen worse odds!",
+                "Trust me, matey!",
+                "The kraken told me so!",
+                "Davy Jones be my witness!",
+                "Shiver me timbers!",
+                "Yo ho ho!",
+                "The wind be at me back!",
+                "I've got a good feelin'!",
+                "Me bones never lie!",
+                "By Blackbeard's ghost!",
+                "The stars align for me!",
+                "A pirate's intuition!",
+                "I'd bet me wooden leg!",
+                "Aye, this be certain!",
+                "Me parrot agrees!",
+                "The rum speaks truth!",
+                "Bold as a cannon shot!",
+                // Bluffing hints
+                "Would I lie to ye?",
+                "*whistles innocently*",
+                "On me mother's grave!",
+                "Cross me heart!",
+                "As sure as the tide!",
+                "I swear on me ship!",
+                "Trust this old sea dog!",
+                "Me word is me bond!",
+                "*nervous laughter*",
+                "Definitely... probably...",
+                // Aggressive bids
+                "Try and stop me!",
+                "Beat that, landlubber!",
+                "Who dares challenge?",
+                "I fear no man!",
+                "Come at me, scallywags!",
+                "The treasure be mine!",
+                "Bow before me!",
+                "I rule these dice!",
+                "Challenge if ye dare!",
+                "Me luck be legendary!",
+                // Casual bids
+                "Seems reasonable...",
+                "Why not, eh?",
+                "Let's see what happens!",
+                "The dice will decide!",
+                "A fair wager!",
+                "Nothing ventured...",
+                "Here goes nothin'!",
+                "Roll with it!",
+                "Fortune be fickle!",
+                "What's life without risk?"
+            ],
+            challenge: [
+                // Accusations
+                "LIAR! Ye scallywag!",
+                "Ye be bluffin'!",
+                "I smell treachery!",
+                "To Davy Jones with ye!",
+                "Ye can't fool me!",
+                "Walk the plank!",
+                "Ye filthy bilge rat!",
+                "I call yer bluff!",
+                "Hogwash and bilgewater!",
+                "Ye couldn't fool a barnacle!",
+                "That be a load of squid ink!",
+                "Lies! All lies!",
+                "Ye speak with forked tongue!",
+                "I've heard better from a parrot!",
+                "Save it for the mermaids!",
+                // Confident challenges
+                "Show yer hand, coward!",
+                "Prove it, ye sea rat!",
+                "I'll expose ye!",
+                "The truth shall surface!",
+                "Reveal yer treachery!",
+                "No more games!",
+                "Time to face the music!",
+                "Yer lies end here!",
+                "I see through ye!",
+                "Nice try, swabbie!",
+                // Dramatic challenges
+                "MUTINY! I declare mutiny!",
+                "By the powers!",
+                "Abandon all hope, liar!",
+                "The kraken take ye!",
+                "To the depths with ye!",
+                "May ye rot in Davy's locker!",
+                "Thunder and lightning!",
+                "Curse yer bones!",
+                "Ye'll regret that!",
+                "Prepare to be boarded!",
+                // Taunting challenges
+                "Is that the best ye got?",
+                "Me grandmother bids better!",
+                "Pathetic attempt!",
+                "A child could spot that lie!",
+                "Ye call yerself a pirate?",
+                "Even Polly knew that was false!",
+                "Embarrassing, truly!",
+                "Did ye learn from a jellyfish?",
+                "Weak as grog water!",
+                "That's just sad, matey!"
+            ],
+            win: [
+                // Triumphant
+                "The treasure be mine!",
+                "Victory is sweet!",
+                "Haha! Too easy!",
+                "The seas favor me!",
+                "I knew it!",
+                "Never doubt a pirate!",
+                "Told ye so!",
+                "Read 'em and weep!",
+                "That's how it's done!",
+                "Bow before me!",
+                // Gloating
+                "I am the captain now!",
+                "Fear me name!",
+                "Legend of the seven seas!",
+                "Undefeated! Unstoppable!",
+                "Write songs about this!",
+                "Another notch on me belt!",
+                "Too skilled for ye!",
+                "Born to win!",
+                "Natural talent, matey!",
+                "The best there ever was!",
+                // Celebratory
+                "Drinks all around!",
+                "More rum for me!",
+                "Time to celebrate!",
+                "Yo ho ho and victory!",
+                "The Black Pearl smiles!",
+                "A glorious day!",
+                "Fortune favors the brave!",
+                "Blessed by Calypso!",
+                "The dice gods approve!",
+                "Sweet, sweet victory!",
+                // Mocking
+                "Better luck next time!",
+                "Back to swabbin' decks!",
+                "Ye need more practice!",
+                "Maybe try checkers?",
+                "Stick to yer day job!",
+                "Not even close!",
+                "A valiant effort... NOT!",
+                "Thanks for the easy win!",
+                "Ye made it too simple!",
+                "Come back when ye've grown!"
+            ],
+            lose: [
+                // Frustration
+                "Blast! Curse ye!",
+                "Arrr... not again!",
+                "The sea is cruel...",
+                "I'll get ye next time!",
+                "Barnacles!",
+                "Scurvy luck!",
+                "Blimey!",
+                "Curse these dice!",
+                "Confound it all!",
+                "Shiver me timbers!",
+                // Angry
+                "This be witchcraft!",
+                "Ye cheated!",
+                "Impossible!",
+                "I demand a recount!",
+                "The dice be cursed!",
+                "Treachery most foul!",
+                "Ye'll pay for this!",
+                "Mark me words!",
+                "This ain't over!",
+                "Revenge will be mine!",
+                // Defeated
+                "Me pride... wounded...",
+                "A dark day indeed...",
+                "The depths call to me...",
+                "I've failed me crew...",
+                "Davy Jones awaits...",
+                "Me ship be sinkin'...",
+                "All is lost...",
+                "The end is nigh...",
+                "Cruel, cruel fate...",
+                "Why, Poseidon, why?",
+                // Accepting defeat
+                "Fair enough, I suppose...",
+                "Ye got me this time...",
+                "Well played, scoundrel...",
+                "A worthy opponent...",
+                "The better pirate won...",
+                "I tip me hat to ye...",
+                "Respect, ye sea dog...",
+                "Fortune was not with me...",
+                "Ye earned that one...",
+                "I'll learn from this..."
+            ],
+            thinking: [
+                "Hmm...",
+                "Let me think...",
+                "Interesting...",
+                "The dice speak to me...",
+                "*strokes beard*",
+                "*squints suspiciously*",
+                "*counts on fingers*",
+                "Now let me see...",
+                "A moment, if ye will...",
+                "The spirits guide me...",
+                "*mutters calculations*",
+                "What would Jack do?",
+                "Me gut says...",
+                "*stares at dice*",
+                "Patience, patience...",
+                "*taps wooden leg*",
+                "The answer be clear...",
+                "*consults compass*",
+                "By the code...",
+                "*dramatic pause*"
+            ],
+            gameStart: [
+                "Let the games begin!",
+                "Prepare to lose, mateys!",
+                "Fortune favors me today!",
+                "Fresh meat for the sharks!",
+                "This'll be quick!",
+                "Hope ye brought yer A-game!",
+                "The hunt begins!",
+                "Show me what ye got!",
+                "Time to plunder some dice!",
+                "May the best pirate win!"
+            ],
+            lowDice: [
+                "Runnin' out of luck...",
+                "Things be gettin' dire...",
+                "Me ship be takin' water!",
+                "One last stand!",
+                "Back against the wall!",
+                "Desperate times ahead!",
+                "The end draws near...",
+                "Fight to the last!",
+                "Never surrender!",
+                "Still dangerous!"
+            ],
+            highBid: [
+                "That's a bold claim!",
+                "Ye sure about that?",
+                "Risky business, that!",
+                "Careful now...",
+                "High stakes indeed!",
+                "Living dangerously!",
+                "That's quite the wager!",
+                "Ambitious, aren't we?",
+                "Playing with fire!",
+                "Fortune favors the bold... or fools!"
+            ]
+        };
+
+        // Initialize socket connection
+        function initSocket() {
+            socket = io();
+
+            socket.on('connect', () => {
+                console.log('Connected to server');
+            });
+
+            socket.on('game_created', (data) => {
+                roomCode = data.room_code;
+                document.getElementById('display-room-code').textContent = roomCode;
+                document.getElementById('game-room-code').textContent = roomCode;
+
+                // Immediately show waiting room (game_state will update to game screen if rejoining mid-game)
+                document.getElementById('lobby').classList.add('hidden');
+                document.getElementById('waiting-room').classList.remove('hidden');
+            });
+
+            socket.on('game_state', (state) => {
+                const oldState = gameState;
+                gameState = state;
+                playerIndex = state.player_index;
+                updateUI();
+
+                // Trigger quips based on state changes
+                if (oldState) {
+                    checkForQuips(oldState, state);
+                }
+            });
+
+            socket.on('error', (data) => {
+                showToast(data.message);
+            });
+
+            socket.on('chat_message', (data) => {
+                receiveChatMessage(data);
+            });
+
+            socket.on('waiting_status', (data) => {
+                showToast(data.message);
+            });
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('lobby-error');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+            setTimeout(() => errorDiv.classList.add('hidden'), 5000);
+        }
+
+        function showToast(message) {
+            // Remove existing toast
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = '⚠️ ' + message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideDown 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function toggleRules() {
+            const overlay = document.getElementById('rules-overlay');
+            overlay.classList.toggle('hidden');
+        }
+
+        // Emoji picker
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.emoji-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    document.querySelectorAll('.emoji-option').forEach(o => o.classList.remove('selected'));
+                    option.classList.add('selected');
+                    selectedAvatar = option.dataset.emoji;
+                });
+            });
+        });
+
+        function createGame() {
+            const name = document.getElementById('player-name').value.trim() || 'Captain';
+            const numAi = parseInt(document.getElementById('num-ai').value);
+            const aiDifficulty = document.getElementById('ai-difficulty').value;
+
+            socket.emit('create_game', { name, num_ai: numAi, avatar: selectedAvatar, ai_difficulty: aiDifficulty });
+            // Waiting room will be shown when game_state is received with phase='lobby'
+        }
+
+        function joinGame() {
+            const name = document.getElementById('player-name').value.trim() || 'Sailor';
+            const code = document.getElementById('room-code').value.trim().toUpperCase();
+
+            if (code.length !== 4) {
+                showError('Please enter a 4-letter room code');
+                return;
+            }
+
+            roomCode = code;
+            socket.emit('join_game', { name, room_code: code, avatar: selectedAvatar });
+        }
+
+        // Speech bubble functions
+        function showBubble(playerIdx, text) {
+            // Clear existing bubble for this player
+            if (activeBubbles[playerIdx]) {
+                clearTimeout(activeBubbles[playerIdx]);
+            }
+
+            const card = document.querySelector(`[data-player-idx="${playerIdx}"]`);
+            if (!card) return;
+
+            // Remove existing bubble
+            const existingBubble = card.querySelector('.speech-bubble');
+            if (existingBubble) existingBubble.remove();
+
+            // Create new bubble
+            const bubble = document.createElement('div');
+            bubble.className = 'speech-bubble';
+            bubble.textContent = text;
+            card.appendChild(bubble);
+
+            // Remove after delay
+            activeBubbles[playerIdx] = setTimeout(() => {
+                bubble.style.animation = 'bubbleFade 0.5s ease-out forwards';
+                setTimeout(() => bubble.remove(), 500);
+            }, 3000);
+        }
+
+        function getRandomQuip(category) {
+            const arr = quips[category];
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function checkForQuips(oldState, newState) {
+            // Check for game start
+            if (oldState.phase === 'lobby' && newState.phase === 'rolling') {
+                // Random AI says something at game start
+                const aiPlayers = newState.players
+                    .map((p, idx) => ({...p, idx}))
+                    .filter(p => !p.is_human && p.num_dice > 0);
+                if (aiPlayers.length > 0) {
+                    const randomAI = aiPlayers[Math.floor(Math.random() * aiPlayers.length)];
+                    setTimeout(() => showBubble(randomAI.idx, getRandomQuip('gameStart')), 1000);
+                }
+            }
+
+            // Check for new bids or challenges in history
+            if (newState.round_history && newState.round_history.length > 0) {
+                const oldLen = oldState.round_history ? oldState.round_history.length : 0;
+                if (newState.round_history.length > oldLen) {
+                    const newAction = newState.round_history[newState.round_history.length - 1];
+                    const playerIdx = newState.players.findIndex(p => p.name === newAction.player);
+
+                    if (playerIdx !== -1 && playerIdx !== playerIndex) {
+                        // Only show quips for other players (AI or other humans)
+                        setTimeout(() => {
+                            if (newAction.action === 'bid') {
+                                // Check if it's a high bid (more than 1/3 of total dice)
+                                const bidParts = newAction.bid.match(/(\d+)x/);
+                                const bidQty = bidParts ? parseInt(bidParts[1]) : 0;
+                                const isHighBid = bidQty > newState.total_dice * 0.4;
+
+                                // Check if player has low dice
+                                const player = newState.players[playerIdx];
+                                const hasLowDice = player.num_dice <= 2;
+
+                                if (hasLowDice && Math.random() < 0.3) {
+                                    showBubble(playerIdx, getRandomQuip('lowDice'));
+                                } else if (isHighBid && Math.random() < 0.4) {
+                                    // Another player might react to high bid
+                                    const otherAI = newState.players
+                                        .map((p, idx) => ({...p, idx}))
+                                        .filter(p => !p.is_human && p.num_dice > 0 && p.idx !== playerIdx);
+                                    if (otherAI.length > 0) {
+                                        const reactor = otherAI[Math.floor(Math.random() * otherAI.length)];
+                                        setTimeout(() => showBubble(reactor.idx, getRandomQuip('highBid')), 800);
+                                    }
+                                    showBubble(playerIdx, getRandomQuip('bid'));
+                                } else {
+                                    showBubble(playerIdx, getRandomQuip('bid'));
+                                }
+                            } else if (newAction.action === 'challenge') {
+                                showBubble(playerIdx, getRandomQuip('challenge'));
+                            }
+                        }, 500);
+                    }
+                }
+            }
+
+            // Check for reveal results
+            if (newState.phase === 'reveal' && oldState.phase === 'bidding' && newState.reveal_data) {
+                const challenger = newState.players.findIndex(p => p.name === newState.reveal_data.challenger);
+                const bidder = newState.players.findIndex(p => p.name === newState.reveal_data.bidder);
+                const bidTrue = newState.reveal_data.actual >= newState.reveal_data.bid_qty;
+
+                setTimeout(() => {
+                    if (bidTrue) {
+                        // Bidder wins
+                        if (bidder !== playerIndex) showBubble(bidder, getRandomQuip('win'));
+                        if (challenger !== playerIndex) showBubble(challenger, getRandomQuip('lose'));
+                    } else {
+                        // Challenger wins
+                        if (challenger !== playerIndex) showBubble(challenger, getRandomQuip('win'));
+                        if (bidder !== playerIndex) showBubble(bidder, getRandomQuip('lose'));
+                    }
+                }, 1000);
+            }
+
+            // Occasionally show thinking quip when it's AI's turn
+            if (newState.phase === 'bidding' && newState.message.includes('thinking')) {
+                const thinkingPlayer = newState.players[newState.current_player];
+                if (thinkingPlayer && !thinkingPlayer.is_human && Math.random() < 0.3) {
+                    setTimeout(() => showBubble(newState.current_player, getRandomQuip('thinking')), 300);
+                }
+            }
+        }
+
+        function showWaitingRoom(isHost) {
+            document.getElementById('lobby').classList.add('hidden');
+            document.getElementById('waiting-room').classList.remove('hidden');
+            document.getElementById('game').classList.add('hidden');
+
+            if (isHost) {
+                document.getElementById('host-controls').classList.remove('hidden');
+                document.getElementById('waiting-message').classList.add('hidden');
+            } else {
+                document.getElementById('host-controls').classList.add('hidden');
+                document.getElementById('waiting-message').classList.remove('hidden');
+            }
+        }
+
+        function startGame() {
+            socket.emit('start_game', { room_code: roomCode });
+        }
+
+        function updateUI() {
+            if (!gameState) return;
+
+            // Show appropriate screen based on phase
+            if (gameState.phase === 'lobby') {
+                document.getElementById('lobby').classList.add('hidden');
+                document.getElementById('waiting-room').classList.remove('hidden');
+                document.getElementById('game').classList.add('hidden');
+                updateWaitingRoom();
+            } else {
+                document.getElementById('lobby').classList.add('hidden');
+                document.getElementById('waiting-room').classList.add('hidden');
+                document.getElementById('game').classList.remove('hidden');
+                updateGameBoard();
+            }
+
+            // Update chat visibility
+            updateChatVisibility();
+        }
+
+        function updateWaitingRoom() {
+            const playerList = document.getElementById('player-list');
+            playerList.innerHTML = gameState.players.map((p, i) => `
+                <div class="player-list-item ${i === 0 ? 'host' : ''} ${i === playerIndex ? 'you' : ''}">
+                    <span style="font-size: 1.5em;">${p.avatar || '⚓'}</span>
+                    <span>${p.name}${i === playerIndex ? ' (You)' : ''}</span>
+                </div>
+            `).join('');
+
+            // Show host controls only for host
+            if (gameState.is_host) {
+                document.getElementById('host-controls').classList.remove('hidden');
+                document.getElementById('waiting-message').classList.add('hidden');
+            } else {
+                document.getElementById('host-controls').classList.add('hidden');
+                document.getElementById('waiting-message').classList.remove('hidden');
+            }
+        }
+
+        function updateGameBoard() {
+            const board = document.getElementById('game-board');
+
+            board.innerHTML = gameState.players.map((player, idx) => {
+                const isCurrentTurn = idx === gameState.current_player && gameState.phase === 'bidding';
+                const isYou = idx === playerIndex;
+                const isEliminated = player.num_dice <= 0;
+
+                let classes = 'player-card';
+                if (isCurrentTurn) classes += ' current-turn';
+                if (isYou) classes += ' you';
+                if (isEliminated) classes += ' eliminated';
+                if (!player.connected) classes += ' disconnected';
+
+                const diceHtml = player.dice.map(d => {
+                    if (d === 0) return '<div class="die hidden"></div>';
+                    return `<div class="die ${d === 1 ? 'wild' : ''}" data-value="${d}"></div>`;
+                }).join('');
+
+                let status = `${player.num_dice} dice`;
+                if (isEliminated) status = 'ELIMINATED';
+                if (!player.connected) status = 'Disconnected';
+                if (!player.is_human) status += ' (AI)';
+
+                return `
+                    <div class="${classes}" data-player-idx="${idx}">
+                        <div class="player-avatar">${player.avatar || '⚓'}</div>
+                        <div class="player-name">${player.name}${isYou ? ' (You)' : ''}</div>
+                        <div class="player-status">${status}</div>
+                        <div class="dice-container">${diceHtml}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Update message
+            document.getElementById('message').textContent = gameState.message;
+
+            // Update room code, total dice, and AI level
+            document.getElementById('game-room-code').textContent = gameState.room_code;
+            document.getElementById('total-dice').textContent = gameState.total_dice;
+
+            // Display difficulty with pirate theme
+            const difficultyDisplay = {
+                'easy': '🦜 Deckhand',
+                'medium': '⚓ First Mate',
+                'hard': '💀 Blackbeard',
+                'impossible': '🏴‍☠️ Captain Jack'
+            };
+            document.getElementById('ai-level').textContent = difficultyDisplay[gameState.ai_difficulty] || 'Deckhand';
+
+            // Update current bid
+            const bidDisplay = document.getElementById('bid-display');
+            if (gameState.current_bid) {
+                bidDisplay.classList.remove('hidden');
+                document.getElementById('current-bid').textContent =
+                    `${gameState.current_bid[0]} × ${gameState.current_bid[1]}s`;
+            } else {
+                bidDisplay.classList.add('hidden');
+            }
+
+            // Update controls
+            updateControls();
+
+            // Update history
+            updateHistory();
+
+            // Show reveal if needed
+            if (gameState.phase === 'reveal' || gameState.phase === 'game_over') {
+                showReveal();
+            } else {
+                document.getElementById('reveal-overlay').classList.add('hidden');
+            }
+
+            // Show waiting players if any
+            const waitingSection = document.getElementById('waiting-players-section');
+            const waitingList = document.getElementById('waiting-players-list');
+            if (gameState.waiting_players && gameState.waiting_players.length > 0) {
+                waitingSection.classList.remove('hidden');
+                waitingList.innerHTML = gameState.waiting_players.map(wp => `
+                    <div style="background: rgba(139,69,19,0.3); padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
+                        <span>${wp.avatar || '⚓'}</span>
+                        <span style="color: #d4a574;">${wp.name}</span>
+                    </div>
+                `).join('');
+            } else {
+                waitingSection.classList.add('hidden');
+            }
+
+            // Show host controls (return to lobby button)
+            const gameHostControls = document.getElementById('game-host-controls');
+            if (gameState.is_host && gameState.phase !== 'lobby') {
+                gameHostControls.classList.remove('hidden');
+            } else {
+                gameHostControls.classList.add('hidden');
+            }
+
+            // Show spectator banner if waiting
+            const spectatorBanner = document.getElementById('spectator-banner');
+            if (gameState.is_waiting) {
+                spectatorBanner.classList.remove('hidden');
+                document.body.style.paddingTop = '50px';
+            } else {
+                spectatorBanner.classList.add('hidden');
+                document.body.style.paddingTop = '0';
+            }
+        }
+
+        function updateControls() {
+            const controls = document.getElementById('controls');
+            const isMyTurn = playerIndex === gameState.current_player;
+            const myPlayer = gameState.players[playerIndex];
+
+            if (gameState.phase === 'rolling') {
+                controls.innerHTML = `
+                    <button class="btn btn-gold" onclick="rollDice()">Roll Dice</button>
+                `;
+            } else if (gameState.phase === 'bidding' && isMyTurn && myPlayer && myPlayer.num_dice > 0) {
+                const canChallenge = gameState.current_bid !== null;
+                const minQty = gameState.current_bid ? gameState.current_bid[0] : 1;
+
+                controls.innerHTML = `
+                    <div class="bid-controls">
+                        <div class="bid-input">
+                            <label>Qty:</label>
+                            <input type="number" id="bid-qty" min="1" max="${gameState.total_dice}" value="${minQty}">
+                        </div>
+                        <div class="bid-input">
+                            <label>Face:</label>
+                            <select id="bid-face">
+                                <option value="1">1 (Wild)</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-gold" onclick="makeBid()">Make Bid</button>
+                        ${canChallenge ? '<button class="btn btn-red" onclick="callLiar()">LIAR!</button>' : ''}
+                    </div>
+                `;
+
+                if (gameState.current_bid) {
+                    document.getElementById('bid-face').value = gameState.current_bid[1];
+                }
+            } else {
+                controls.innerHTML = '';
+            }
+        }
+
+        function updateHistory() {
+            const historyList = document.getElementById('history-list');
+            if (gameState.round_history && gameState.round_history.length > 0) {
+                historyList.innerHTML = gameState.round_history.map(h => {
+                    if (h.action === 'bid') {
+                        return `<div class="history-item">${h.player} bids ${h.bid}</div>`;
+                    } else {
+                        return `<div class="history-item"><strong>${h.player} calls LIAR!</strong></div>`;
+                    }
+                }).join('');
+            } else {
+                historyList.innerHTML = '<div class="history-item">No bids yet...</div>';
+            }
+        }
+
+        function rollDice() {
+            socket.emit('roll_dice', { room_code: roomCode });
+        }
+
+        function makeBid() {
+            const qty = parseInt(document.getElementById('bid-qty').value);
+            const face = parseInt(document.getElementById('bid-face').value);
+            socket.emit('make_bid', { room_code: roomCode, quantity: qty, face: face });
+        }
+
+        function callLiar() {
+            socket.emit('challenge', { room_code: roomCode });
+        }
+
+        function showReveal() {
+            const reveal = gameState.reveal_data;
+            if (!reveal) return;
+
+            const overlay = document.getElementById('reveal-overlay');
+            const diceDiv = document.getElementById('reveal-dice');
+            const resultDiv = document.getElementById('reveal-result');
+
+            // Show all players' dice
+            let diceHtml = '';
+            gameState.players.forEach(player => {
+                if (player.num_dice > 0 || player.dice.length > 0) {
+                    const dice = player.dice.map(d =>
+                        `<div class="die ${d === 1 ? 'wild' : ''}" data-value="${d}"></div>`
+                    ).join('');
+                    diceHtml += `
+                        <div class="reveal-player">
+                            <div class="reveal-player-name">${player.avatar} ${player.name}</div>
+                            <div class="dice-container">${dice}</div>
+                        </div>
+                    `;
+                }
+            });
+            diceDiv.innerHTML = diceHtml;
+
+            // Show result
+            const bidTrue = reveal.actual >= reveal.bid_qty;
+            resultDiv.className = `reveal-result ${bidTrue ? 'result-lose' : 'result-win'}`;
+            resultDiv.innerHTML = `
+                <div>Bid: ${reveal.bid_qty} × ${reveal.bid_face}s</div>
+                <div>Actual: ${reveal.actual}${reveal.bid_face !== 1 ? ' (including wilds)' : ''}</div>
+                <br>
+                <div style="font-size: 1.2em;">${gameState.message}</div>
+            `;
+
+            // Update button text
+            const continueBtn = document.getElementById('continue-btn');
+            if (gameState.phase === 'game_over') {
+                continueBtn.textContent = 'Play Again';
+                document.getElementById('reveal-title').textContent = 'GAME OVER!';
+            } else {
+                continueBtn.textContent = 'Next Round';
+                document.getElementById('reveal-title').textContent = 'REVEAL!';
+            }
+
+            overlay.classList.remove('hidden');
+        }
+
+        function continueGame() {
+            document.getElementById('reveal-overlay').classList.add('hidden');
+            socket.emit('continue_game', { room_code: roomCode });
+        }
+
+        function returnToLobby() {
+            if (confirm('Return all players to lobby? This will end the current game.')) {
+                socket.emit('return_to_lobby', { room_code: roomCode });
+            }
+        }
+
+        // Chat functions
+        function toggleChat() {
+            chatOpen = !chatOpen;
+            const panel = document.getElementById('chat-panel');
+            const btn = document.getElementById('chat-btn');
+
+            if (chatOpen) {
+                panel.classList.remove('hidden');
+                btn.classList.remove('has-notification');
+                populateChatOptions();
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+
+        function showChatTab(tab) {
+            currentChatTab = tab;
+            document.querySelectorAll('.chat-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            populateChatOptions();
+        }
+
+        function populateChatOptions() {
+            const container = document.getElementById('chat-options');
+
+            if (currentChatTab === 'custom') {
+                container.innerHTML = `
+                    <div class="chat-custom-input">
+                        <input type="text" id="custom-message-input" placeholder="Type yer message, matey..." maxlength="100" onkeypress="handleCustomKeypress(event)">
+                        <button onclick="sendCustomMessage()">Send</button>
+                    </div>
+                `;
+                // Focus the input
+                setTimeout(() => {
+                    const input = document.getElementById('custom-message-input');
+                    if (input) input.focus();
+                }, 100);
+            } else {
+                const messages = chatMessages[currentChatTab];
+                container.innerHTML = `
+                    <div class="chat-option-grid">
+                        ${messages.map(msg => `
+                            <button class="chat-option" onclick="sendChatMessage('${msg.replace(/'/g, "\\'")}')">${msg}</button>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        function handleCustomKeypress(event) {
+            if (event.key === 'Enter') {
+                sendCustomMessage();
+            }
+        }
+
+        function sendCustomMessage() {
+            const input = document.getElementById('custom-message-input');
+            if (!input) return;
+
+            const message = input.value.trim();
+            if (message.length === 0) return;
+
+            sendChatMessage(message);
+            input.value = '';
+            input.focus();
+        }
+
+        function sendChatMessage(message) {
+            if (!roomCode || playerIndex === -1) return;
+
+            socket.emit('chat_message', {
+                room_code: roomCode,
+                message: message
+            });
+
+            // Show own message immediately
+            const myPlayer = gameState.players[playerIndex];
+            addChatMessageToPanel(myPlayer.name, myPlayer.avatar, message, true);
+
+            // Show as bubble on own card
+            showBubble(playerIndex, message);
+        }
+
+        function receiveChatMessage(data) {
+            const senderIdx = gameState.players.findIndex(p => p.name === data.sender);
+
+            // Add to chat panel
+            addChatMessageToPanel(data.sender, data.avatar, data.message, false);
+
+            // Show as bubble
+            if (senderIdx !== -1 && senderIdx !== playerIndex) {
+                showBubble(senderIdx, data.message);
+            }
+
+            // Notify if chat is closed
+            if (!chatOpen) {
+                document.getElementById('chat-btn').classList.add('has-notification');
+            }
+        }
+
+        function addChatMessageToPanel(sender, avatar, message, isOwn) {
+            const container = document.getElementById('chat-messages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `chat-message ${isOwn ? 'own' : ''}`;
+            msgDiv.innerHTML = `
+                <div class="sender">${avatar || '⚓'} ${sender}</div>
+                <div class="text">${message}</div>
+            `;
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+
+            // Keep only last 50 messages
+            while (container.children.length > 50) {
+                container.removeChild(container.firstChild);
+            }
+        }
+
+        function updateChatVisibility() {
+            const chatBtn = document.getElementById('chat-btn');
+            if (gameState && gameState.phase !== 'lobby') {
+                chatBtn.classList.remove('hidden');
+            } else {
+                chatBtn.classList.add('hidden');
+                document.getElementById('chat-panel').classList.add('hidden');
+                chatOpen = false;
+            }
+        }
+
+        // Initialize on page load
+        window.onload = initSocket;
+    </script>
+</body>
+</html>

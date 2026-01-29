@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  liars-dice:
+    build: .
+    container_name: liars-dice-game
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+    restart: unless-stopped
+    networks:
+      - game-network
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - game-network
+    depends_on:
+      - liars-dice
+
+networks:
+  game-network:
+    driver: bridge
