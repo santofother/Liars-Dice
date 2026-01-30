@@ -53,8 +53,16 @@ def add_ai_players(game):
     pirate_names = ['Davy Jones', 'Barbossa', 'Bootstrap Bill', 'Pintel', 'Ragetti']
     random.shuffle(pirate_names)
 
+    difficulties = ['easy', 'medium', 'hard', 'impossible']
+
     for i in range(game['num_ai']):
         if len(game['players']) < game['max_players']:
+            # Assign individual difficulty for random mode
+            if game.get('ai_difficulty') == 'random':
+                ai_difficulty = random.choice(difficulties)
+            else:
+                ai_difficulty = game.get('ai_difficulty', 'easy')
+
             game['players'].append({
                 'name': pirate_names[i],
                 'dice': [],
@@ -62,7 +70,8 @@ def add_ai_players(game):
                 'is_human': False,
                 'sid': None,
                 'connected': True,
-                'avatar': ['🦑', '🏴‍☠️', '⚓', '💀', '🦜'][i]
+                'avatar': ['🦑', '🏴‍☠️', '⚓', '💀', '🦜'][i],
+                'ai_difficulty': ai_difficulty  # Individual AI difficulty
             })
 
 def roll_all_dice(game):
@@ -103,7 +112,12 @@ def is_valid_bid(game, quantity, face_value):
 
 def get_ai_action(game, player):
     """AI decides to bid or challenge based on difficulty."""
-    difficulty = game.get('ai_difficulty', 'easy')
+    # Use individual AI difficulty if set, otherwise fall back to game difficulty
+    difficulty = player.get('ai_difficulty', game.get('ai_difficulty', 'easy'))
+
+    # Handle random mode fallback (shouldn't happen but just in case)
+    if difficulty == 'random':
+        difficulty = random.choice(['easy', 'medium', 'hard', 'impossible'])
 
     if difficulty == 'impossible':
         return get_ai_action_impossible(game, player)
@@ -535,7 +549,7 @@ def handle_create_game(data):
     ai_difficulty = data.get('ai_difficulty', 'easy')
 
     # Validate difficulty
-    if ai_difficulty not in ['easy', 'medium', 'hard', 'impossible']:
+    if ai_difficulty not in ['easy', 'medium', 'hard', 'impossible', 'random']:
         ai_difficulty = 'easy'
 
     room_code = generate_room_code()
@@ -876,6 +890,65 @@ def handle_return_to_lobby(data):
     game['message'] = 'Returned to lobby! Waiting for host to start...'
 
     broadcast_game_state(room_code)
+
+@socketio.on('kick_player')
+def handle_kick_player(data):
+    room_code = data.get('room_code')
+    player_index = data.get('player_index')
+    game = games.get(room_code)
+
+    if not game:
+        return
+
+    # Verify sender is host
+    if game['players'][0].get('sid') != request.sid:
+        emit('error', {'message': 'Only the host can kick players!'})
+        return
+
+    # Can't kick yourself (host is index 0)
+    if player_index == 0 or player_index >= len(game['players']):
+        return
+
+    kicked_player = game['players'][player_index]
+    kicked_name = kicked_player['name']
+    kicked_sid = kicked_player.get('sid')
+
+    # If it was the kicked player's turn, move to next player
+    if game['phase'] == 'bidding' and game['current_player'] == player_index:
+        alive = get_alive_players(game)
+        if player_index in alive:
+            game['current_player'] = next_alive_player(game, player_index)
+
+    # Remove the player
+    game['players'].pop(player_index)
+
+    # Adjust current_player index if needed
+    if game['current_player'] > player_index:
+        game['current_player'] -= 1
+    if game.get('current_bidder') and game['current_bidder'] > player_index:
+        game['current_bidder'] -= 1
+
+    game['message'] = f"{kicked_name} walked the plank!"
+
+    # Notify the kicked player
+    if kicked_sid:
+        socketio.emit('kicked', {'message': 'You have been kicked from the game!'}, room=kicked_sid)
+
+    # Check if game should continue
+    alive = get_alive_players(game)
+    if len(alive) <= 1 and game['phase'] not in ['lobby', 'game_over']:
+        game['phase'] = 'game_over'
+        if alive:
+            winner = game['players'][alive[0]]
+            game['message'] = f"{winner['name']} WINS! The Black Pearl is theirs!"
+
+    broadcast_game_state(room_code)
+
+    # If next player is AI, process their turn
+    if game['phase'] == 'bidding':
+        current = game['players'][game['current_player']] if game['current_player'] < len(game['players']) else None
+        if current and not current['is_human']:
+            socketio.start_background_task(process_ai_turns_async, room_code)
 
 @socketio.on('leave_game')
 def handle_leave_game(data):
