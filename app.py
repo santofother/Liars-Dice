@@ -535,11 +535,22 @@ def handle_disconnect():
 
     # Find and update player status
     for room_code, game in list(games.items()):
+        # Check active players
         for player in game['players']:
             if player.get('sid') == sid:
                 player['connected'] = False
+                print(f"Player {player['name']} marked as disconnected in room {room_code}")
                 broadcast_game_state(room_code)
-                break
+                return
+
+        # Check waiting players
+        if 'waiting_players' in game:
+            for waiting_player in game['waiting_players']:
+                if waiting_player.get('sid') == sid:
+                    waiting_player['connected'] = False
+                    print(f"Waiting player {waiting_player['name']} marked as disconnected in room {room_code}")
+                    broadcast_game_state(room_code)
+                    return
 
 @socketio.on('create_game')
 def handle_create_game(data):
@@ -595,6 +606,23 @@ def handle_join_game(data):
         emit('game_created', {'room_code': room_code})  # So client knows they're in
         broadcast_game_state(room_code)
         return
+
+    # Check if this player is reconnecting to waiting list
+    if 'waiting_players' in game:
+        for waiting_player in game['waiting_players']:
+            if waiting_player['name'].lower() == player_name.lower():
+                waiting_player['sid'] = request.sid
+                waiting_player['connected'] = True
+                if avatar:
+                    waiting_player['avatar'] = avatar
+
+                join_room(room_code)
+                game['message'] = f"{waiting_player['name']} has rejoined the waiting list!"
+
+                emit('game_created', {'room_code': room_code})
+                emit('waiting_status', {'message': 'You are spectating. You will join when the game returns to lobby!'})
+                broadcast_game_state(room_code)
+                return
 
     # If game is in progress, check for disconnected players or add as waiting
     if game['phase'] != 'lobby':

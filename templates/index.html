@@ -1341,6 +1341,169 @@
         let activeBubbles = {};
         let chatOpen = false;
         let currentChatTab = 'taunt';
+        let reconnectAttempted = false;
+
+        // ==================== AUTO-RECONNECTION SYSTEM ====================
+        // Session storage keys
+        const SESSION_KEY = 'liars_dice_session';
+
+        // Save session to localStorage
+        function saveSession(playerName, roomCode, avatar) {
+            try {
+                const session = {
+                    playerName: playerName,
+                    roomCode: roomCode,
+                    avatar: avatar,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+                console.log('Session saved:', session);
+            } catch (e) {
+                console.error('Failed to save session:', e);
+            }
+        }
+
+        // Get saved session from localStorage
+        function getSavedSession() {
+            try {
+                const sessionData = localStorage.getItem(SESSION_KEY);
+                if (!sessionData) return null;
+
+                const session = JSON.parse(sessionData);
+
+                // Session expires after 24 hours
+                const MAX_SESSION_AGE = 24 * 60 * 60 * 1000;
+                if (Date.now() - session.timestamp > MAX_SESSION_AGE) {
+                    console.log('Session expired');
+                    clearSession();
+                    return null;
+                }
+
+                return session;
+            } catch (e) {
+                console.error('Failed to load session:', e);
+                return null;
+            }
+        }
+
+        // Clear session from localStorage
+        function clearSession() {
+            try {
+                localStorage.removeItem(SESSION_KEY);
+                console.log('Session cleared');
+            } catch (e) {
+                console.error('Failed to clear session:', e);
+            }
+        }
+
+        // Attempt to reconnect to saved session
+        function attemptReconnection() {
+            if (reconnectAttempted) {
+                console.log('Reconnection already attempted');
+                return;
+            }
+
+            const session = getSavedSession();
+            if (!session) {
+                console.log('No saved session found');
+                return;
+            }
+
+            console.log('Attempting auto-reconnection:', session);
+            reconnectAttempted = true;
+
+            // Set the saved values
+            roomCode = session.roomCode;
+            selectedAvatar = session.avatar;
+
+            // Show reconnecting message
+            console.log(`Reconnecting ${session.playerName} to room ${session.roomCode}...`);
+
+            // Attempt to join the game
+            socket.emit('join_game', {
+                name: session.playerName,
+                room_code: session.roomCode,
+                avatar: session.avatar
+            });
+        }
+
+        // Reset reconnection flag (call this when starting a new game)
+        function resetReconnectionFlag() {
+            reconnectAttempted = false;
+        }
+
+        // iOS-specific page visibility handlers
+        let isPageHidden = false;
+
+        function handleVisibilityChange() {
+            if (document.hidden) {
+                isPageHidden = true;
+                console.log('Page hidden - session preserved');
+            } else {
+                isPageHidden = false;
+                console.log('Page visible - checking connection');
+
+                // If we have a session and socket is disconnected, try to reconnect
+                const session = getSavedSession();
+                if (session) {
+                    if (!socket || !socket.connected) {
+                        console.log('Socket disconnected, reconnecting...');
+                        // Socket.IO should auto-reconnect, but if not, reload
+                        setTimeout(() => {
+                            if (!socket || !socket.connected) {
+                                console.log('Reloading to reconnect');
+                                location.reload();
+                            }
+                        }, 2000);
+                    } else {
+                        // Socket is connected, verify game state is current
+                        console.log('Socket connected, verifying game state');
+                        if (roomCode) {
+                            socket.emit('join_game', {
+                                name: session.playerName,
+                                room_code: session.roomCode,
+                                avatar: session.avatar
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        function handlePageHide() {
+            console.log('Page hiding - session preserved');
+            // Session is already saved in localStorage, just log
+        }
+
+        function handlePageShow(event) {
+            console.log('Page showing - persisted:', event.persisted);
+
+            // If page was restored from bfcache and we have a session
+            if (event.persisted && getSavedSession()) {
+                console.log('Page restored from cache - reconnecting');
+                location.reload(); // Reload to trigger auto-reconnection
+            }
+        }
+
+        // Initialize iOS-specific event listeners
+        function initIOSEventListeners() {
+            // Handle visibility changes (app switching, screen lock)
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+
+            // Handle page hide/show (iOS Safari specific)
+            window.addEventListener('pagehide', handlePageHide);
+            window.addEventListener('pageshow', handlePageShow);
+
+            // Handle beforeunload for intentional navigation away
+            window.addEventListener('beforeunload', (event) => {
+                // Don't clear session on beforeunload - we want to preserve it
+                // Session will be cleared on intentional leave via leaveGame()
+                console.log('Page unloading - session preserved');
+            });
+
+            console.log('iOS event listeners initialized');
+        }
+        // ==================== END AUTO-RECONNECTION SYSTEM ====================
 
         // Audio system
         let musicPlayer = null;
@@ -1834,10 +1997,22 @@
 
         // Initialize socket connection
         function initSocket() {
-            socket = io();
+            socket = io({
+                // iOS-optimized reconnection settings
+                reconnection: true,
+                reconnectionAttempts: Infinity,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000,
+                timeout: 20000,
+                // Use long-polling as fallback for iOS
+                transports: ['websocket', 'polling']
+            });
 
             socket.on('connect', () => {
                 console.log('Connected to server');
+
+                // Attempt auto-reconnection if we have a saved session
+                attemptReconnection();
             });
 
             socket.on('game_created', (data) => {
@@ -1856,6 +2031,14 @@
                 playerIndex = state.player_index;
                 updateUI();
 
+                // Save session when we successfully join a game
+                if (state.player_index !== -1 && !state.is_waiting && roomCode) {
+                    const player = state.players[state.player_index];
+                    if (player) {
+                        saveSession(player.name, roomCode, player.avatar);
+                    }
+                }
+
                 // Trigger quips based on state changes
                 if (oldState) {
                     checkForQuips(oldState, state);
@@ -1864,6 +2047,18 @@
 
             socket.on('error', (data) => {
                 showToast(data.message);
+
+                // If reconnection fails, clear session and show lobby
+                if (reconnectAttempted && data.message.includes('not found')) {
+                    console.log('Reconnection failed - game no longer exists');
+                    clearSession();
+                    reconnectAttempted = false;
+
+                    // Show lobby
+                    document.getElementById('lobby').classList.remove('hidden');
+                    document.getElementById('waiting-room').classList.add('hidden');
+                    document.getElementById('game').classList.add('hidden');
+                }
             });
 
             socket.on('chat_message', (data) => {
@@ -1877,6 +2072,10 @@
             socket.on('kicked', (data) => {
                 playSfx('lose');
                 alert(data.message);
+
+                // Clear session on kick
+                clearSession();
+                resetReconnectionFlag();
 
                 // Reset local state and return to lobby
                 gameState = null;
@@ -1892,6 +2091,40 @@
                 document.getElementById('chat-btn').classList.add('hidden');
                 document.body.style.paddingTop = '0';
                 chatOpen = false;
+            });
+
+            socket.on('disconnect', (reason) => {
+                console.log('Disconnected from server:', reason);
+                // Don't clear session on disconnect - we want to preserve it for reconnection
+                // Session remains in localStorage for auto-reconnection when connection is restored
+            });
+
+            socket.on('reconnect_attempt', (attemptNumber) => {
+                console.log(`Reconnection attempt #${attemptNumber}`);
+                if (attemptNumber === 1) {
+                    showToast('Connection lost. Reconnecting...');
+                }
+            });
+
+            socket.on('reconnect', (attemptNumber) => {
+                console.log(`Reconnected after ${attemptNumber} attempts`);
+                showToast('Reconnected successfully!');
+
+                // If we have a saved session, attempt to rejoin
+                const session = getSavedSession();
+                if (session && !reconnectAttempted) {
+                    console.log('Re-attempting to join game after reconnect');
+                    attemptReconnection();
+                }
+            });
+
+            socket.on('reconnect_failed', () => {
+                console.log('Reconnection failed');
+                showToast('Unable to reconnect. Please refresh the page.');
+            });
+
+            socket.on('reconnect_error', (error) => {
+                console.log('Reconnection error:', error);
             });
         }
 
@@ -1939,8 +2172,12 @@
             const numAi = parseInt(document.getElementById('num-ai').value);
             const aiDifficulty = document.getElementById('ai-difficulty').value;
 
+            // Clear any existing session and reset reconnection flag
+            clearSession();
+            resetReconnectionFlag();
+
             socket.emit('create_game', { name, num_ai: numAi, avatar: selectedAvatar, ai_difficulty: aiDifficulty });
-            // Waiting room will be shown when game_state is received with phase='lobby'
+            // Session will be saved when game_state is received
         }
 
         function joinGame() {
@@ -1952,8 +2189,13 @@
                 return;
             }
 
+            // Clear any existing session and reset reconnection flag
+            clearSession();
+            resetReconnectionFlag();
+
             roomCode = code;
             socket.emit('join_game', { name, room_code: code, avatar: selectedAvatar });
+            // Session will be saved when game_state is received
         }
 
         // Speech bubble functions
@@ -2436,6 +2678,10 @@
                 // Notify server we're leaving
                 socket.emit('leave_game', { room_code: roomCode });
 
+                // Clear session on intentional leave
+                clearSession();
+                resetReconnectionFlag();
+
                 // Reset local state
                 gameState = null;
                 roomCode = null;
@@ -2591,6 +2837,7 @@
             initSocket();
             initMusic();
             loadDiceSizePreference();
+            initIOSEventListeners();
         };
     </script>
 </body>
