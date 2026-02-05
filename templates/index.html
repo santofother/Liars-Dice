@@ -1079,11 +1079,221 @@
             background: #dc143c;
         }
 
+        /* Account Status Banner */
+        .account-status {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(145deg, #3d2817 0%, #2a1a0f 100%);
+            border: 2px solid #ffd700;
+            border-radius: 12px;
+            padding: 10px 15px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+
+        .account-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .account-status #account-avatar {
+            font-size: 24px;
+        }
+
+        .account-status #account-username {
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 1em;
+        }
+
+        .account-wins {
+            color: #b8860b;
+            font-size: 0.9em;
+            margin-left: 5px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85em;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        /* Leaderboard Widget */
+        .leaderboard-container {
+            background: linear-gradient(145deg, #3d2817 0%, #2a1a0f 100%);
+            border: 3px solid #ffd700;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 25px 0;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+        }
+
+        .leaderboard-title {
+            text-align: center;
+            font-size: 1.6em;
+            color: #ffd700;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px #000;
+            font-family: 'Pirata One', serif;
+        }
+
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 12px 15px;
+            border-left: 4px solid #8b4513;
+            transition: all 0.2s;
+        }
+
+        .leaderboard-item:hover {
+            background: rgba(255, 215, 0, 0.1);
+            transform: translateX(3px);
+        }
+
+        .leaderboard-item.rank-1 {
+            border-left-color: #ffd700;
+            background: rgba(255, 215, 0, 0.15);
+        }
+
+        .leaderboard-item.rank-2 {
+            border-left-color: #c0c0c0;
+        }
+
+        .leaderboard-item.rank-3 {
+            border-left-color: #cd7f32;
+        }
+
+        .leaderboard-rank {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #ffd700;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .leaderboard-item.rank-1 .leaderboard-rank {
+            font-size: 1.5em;
+        }
+
+        .leaderboard-avatar {
+            font-size: 28px;
+        }
+
+        .leaderboard-name {
+            flex: 1;
+            color: #d4a574;
+            font-size: 1.05em;
+        }
+
+        .leaderboard-item.rank-1 .leaderboard-name {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .leaderboard-wins {
+            color: #b8860b;
+            font-size: 0.95em;
+            font-weight: bold;
+        }
+
+        .leaderboard-empty {
+            text-align: center;
+            color: #8b7355;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        /* Account Overlay */
+        .account-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .account-tab {
+            flex: 1;
+            padding: 12px;
+            background: rgba(0,0,0,0.3);
+            border: 2px solid #8b4513;
+            border-radius: 8px;
+            color: #b8860b;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1em;
+        }
+
+        .account-tab.active {
+            background: linear-gradient(145deg, #ffd700 0%, #b8860b 100%);
+            color: #2a1a0f;
+            border-color: #ffd700;
+            font-weight: bold;
+        }
+
+        .account-tab:hover:not(.active) {
+            border-color: #ffd700;
+            color: #ffd700;
+        }
+
+        .account-tab-content {
+            display: none;
+        }
+
+        .account-tab-content.active {
+            display: block;
+        }
+
+        .pirate-warning {
+            background: rgba(139, 69, 19, 0.3);
+            border: 2px solid #b8860b;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #d4a574;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .pirate-warning strong {
+            color: #ffd700;
+        }
+
+        .password-hint {
+            font-size: 0.85em;
+            color: #8b7355;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .error-message {
+            margin-top: 10px;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             h1 { font-size: 2em; }
             .game-board { grid-template-columns: 1fr 1fr; }
             .bid-controls { flex-direction: column; }
+            .account-status {
+                position: static;
+                margin: 10px;
+            }
         }
     </style>
 </head>
@@ -1141,7 +1351,98 @@
                 </div>
             </div>
 
+            <div class="settings-section">
+                <h3>👤 Account</h3>
+                <button class="btn btn-gold" onclick="toggleAccount()" id="account-settings-btn">
+                    Sign In / Create Account
+                </button>
+                <div id="logged-in-info" class="hidden" style="margin-top: 15px; color: #d4a574;">
+                    <p>Logged in as: <strong id="settings-username" style="color: #ffd700;"></strong></p>
+                    <p>Wins: <strong id="settings-wins" style="color: #ffd700;"></strong></p>
+                </div>
+            </div>
+
             <button class="btn btn-gold" onclick="toggleSettings()" style="margin-top: 20px;">Close</button>
+        </div>
+    </div>
+
+    <!-- Account Overlay -->
+    <div id="account-overlay" class="overlay hidden">
+        <div class="overlay-content" style="max-width: 450px;">
+            <div class="overlay-title">⚓ Pirate Account</div>
+
+            <!-- Account tabs -->
+            <div class="account-tabs">
+                <button class="account-tab active" onclick="showAccountTab('login')">Sign In</button>
+                <button class="account-tab" onclick="showAccountTab('register')">Create Account</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-tab" class="account-tab-content active">
+                <div class="input-group">
+                    <label>Username</label>
+                    <input type="text" id="login-username" placeholder="Enter username...">
+                </div>
+                <div class="input-group">
+                    <label>Password (4-10 digits)</label>
+                    <input type="password" id="login-password"
+                           placeholder="Enter PIN..."
+                           pattern="[0-9]{4,10}"
+                           maxlength="10">
+                </div>
+                <button class="btn btn-gold" onclick="loginUser()">Sign In</button>
+                <div id="login-error" class="error-message hidden"></div>
+            </div>
+
+            <!-- Register Form -->
+            <div id="register-tab" class="account-tab-content hidden">
+                <div class="pirate-warning">
+                    <strong>⚠️ Ahoy, Matey!</strong><br>
+                    Choose yer password wisely! We be usin' numbers only (4-10 digits)
+                    so even a scurvy dog can remember it. Don't be usin' the same password
+                    ye use for other sites, or landlubbers might plunder yer wins! 🏴‍☠️
+                </div>
+
+                <div class="input-group">
+                    <label>Username (3-20 characters)</label>
+                    <input type="text" id="register-username"
+                           placeholder="Enter username..."
+                           minlength="3"
+                           maxlength="20">
+                </div>
+
+                <div class="input-group">
+                    <label>Password (4-10 digits ONLY)</label>
+                    <input type="password" id="register-password"
+                           placeholder="e.g., 1234"
+                           pattern="[0-9]{4,10}"
+                           maxlength="10">
+                    <div class="password-hint">Numbers only! Easy to remember, savvy?</div>
+                </div>
+
+                <div class="input-group">
+                    <label>Choose Your Avatar</label>
+                    <div class="emoji-picker" id="register-emoji-picker">
+                        <div class="emoji-option selected" data-emoji="🏴‍☠️">🏴‍☠️</div>
+                        <div class="emoji-option" data-emoji="⚓">⚓</div>
+                        <div class="emoji-option" data-emoji="🦜">🦜</div>
+                        <div class="emoji-option" data-emoji="💀">💀</div>
+                        <div class="emoji-option" data-emoji="🗡️">🗡️</div>
+                        <div class="emoji-option" data-emoji="🦑">🦑</div>
+                        <div class="emoji-option" data-emoji="🧜‍♀️">🧜‍♀️</div>
+                        <div class="emoji-option" data-emoji="🐙">🐙</div>
+                        <div class="emoji-option" data-emoji="🦈">🦈</div>
+                        <div class="emoji-option" data-emoji="🏝️">🏝️</div>
+                        <div class="emoji-option" data-emoji="⛵">⛵</div>
+                        <div class="emoji-option" data-emoji="🧭">🧭</div>
+                    </div>
+                </div>
+
+                <button class="btn btn-gold" onclick="registerUser()">Create Account</button>
+                <div id="register-error" class="error-message hidden"></div>
+            </div>
+
+            <button class="btn btn-wood" onclick="toggleAccount()" style="margin-top: 20px;">Close</button>
         </div>
     </div>
 
@@ -1193,8 +1494,30 @@
             <p class="subtitle">Pirates of the Caribbean - Multiplayer</p>
         </header>
 
+        <!-- Account Status Banner -->
+        <div id="account-status" class="account-status hidden">
+            <div class="account-info">
+                <span id="account-avatar">🏴‍☠️</span>
+                <span id="account-username">Guest</span>
+                <span class="account-wins">⚔️ <span id="account-wins-count">0</span> wins</span>
+            </div>
+            <button class="btn-small btn-red" onclick="logoutUser()">Logout</button>
+        </div>
+
         <!-- Lobby Screen -->
         <div id="lobby" class="lobby-container">
+            <!-- Top Pirates Leaderboard -->
+            <div class="leaderboard-container">
+                <div class="leaderboard-title">🏆 Top Pirates 🏆</div>
+                <div class="leaderboard-podium">
+                    <div id="leaderboard-list" class="leaderboard-list">
+                        <div class="leaderboard-empty">No pirates yet! Be the first!</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="divider">⚓</div>
+
             <div class="lobby-title">Join the Crew</div>
 
             <div class="input-group">
@@ -1378,6 +1701,14 @@
         let chatOpen = false;
         let currentChatTab = 'taunt';
         let reconnectAttempted = false;
+
+        // ==================== AUTHENTICATION SYSTEM ====================
+        let userToken = null;
+        let currentUser = null;  // {username, avatar, wins}
+        let leaderboardData = [];
+        let registerSelectedAvatar = '🏴‍☠️';
+
+        const AUTH_TOKEN_KEY = 'liars_dice_auth_token';
 
         // ==================== AUTO-RECONNECTION SYSTEM ====================
         // Session storage keys
@@ -2162,6 +2493,9 @@
             socket.on('reconnect_error', (error) => {
                 console.log('Reconnection error:', error);
             });
+
+            // Attach authentication handlers
+            attachAuthHandlers();
         }
 
         function showError(message) {
@@ -2212,7 +2546,13 @@
             clearSession();
             resetReconnectionFlag();
 
-            socket.emit('create_game', { name, num_ai: numAi, avatar: selectedAvatar, ai_difficulty: aiDifficulty });
+            socket.emit('create_game', {
+                name,
+                num_ai: numAi,
+                avatar: selectedAvatar,
+                ai_difficulty: aiDifficulty,
+                user_token: userToken  // Include auth token
+            });
             // Session will be saved when game_state is received
         }
 
@@ -2230,7 +2570,12 @@
             resetReconnectionFlag();
 
             roomCode = code;
-            socket.emit('join_game', { name, room_code: code, avatar: selectedAvatar });
+            socket.emit('join_game', {
+                name,
+                room_code: code,
+                avatar: selectedAvatar,
+                user_token: userToken  // Include auth token
+            });
             // Session will be saved when game_state is received
         }
 
@@ -2868,12 +3213,262 @@
             }
         }
 
+        // ==================== AUTHENTICATION FUNCTIONS ====================
+
+        function saveAuthToken(token) {
+            localStorage.setItem(AUTH_TOKEN_KEY, token);
+        }
+
+        function getAuthToken() {
+            return localStorage.getItem(AUTH_TOKEN_KEY);
+        }
+
+        function clearAuthToken() {
+            localStorage.removeItem(AUTH_TOKEN_KEY);
+        }
+
+        function toggleAccount() {
+            const overlay = document.getElementById('account-overlay');
+            overlay.classList.toggle('hidden');
+
+            // Close settings if open
+            if (!overlay.classList.contains('hidden')) {
+                document.getElementById('settings-overlay').classList.add('hidden');
+            }
+        }
+
+        function showAccountTab(tabName) {
+            // Update tabs
+            document.querySelectorAll('.account-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.account-tab-content').forEach(content => {
+                content.classList.remove('active');
+                content.classList.add('hidden');
+            });
+
+            const targetTab = document.getElementById(tabName + '-tab');
+            if (targetTab) {
+                targetTab.classList.remove('hidden');
+                targetTab.classList.add('active');
+            }
+        }
+
+        function showAuthError(elementId, message) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.textContent = message;
+                el.classList.remove('hidden');
+                setTimeout(() => el.classList.add('hidden'), 5000);
+            }
+        }
+
+        function registerUser() {
+            const username = document.getElementById('register-username').value.trim();
+            const password = document.getElementById('register-password').value.trim();
+            const avatar = registerSelectedAvatar;
+
+            // Client-side validation
+            if (username.length < 3 || username.length > 20) {
+                showAuthError('register-error', "Username must be 3-20 characters!");
+                return;
+            }
+
+            if (password.length < 4 || password.length > 10) {
+                showAuthError('register-error', "Password must be 4-10 digits!");
+                return;
+            }
+
+            if (!/^[0-9]+$/.test(password)) {
+                showAuthError('register-error', "Password must be digits only!");
+                return;
+            }
+
+            // Send to server
+            socket.emit('register', { username, password, avatar });
+        }
+
+        function loginUser() {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+
+            if (!username || !password) {
+                showAuthError('login-error', "Username and password required!");
+                return;
+            }
+
+            socket.emit('login', { username, password });
+        }
+
+        function logoutUser() {
+            if (!confirm('Are ye sure ye want to abandon ship?')) {
+                return;
+            }
+
+            if (userToken) {
+                socket.emit('logout', { token: userToken });
+            }
+
+            userToken = null;
+            currentUser = null;
+            clearAuthToken();
+            updateAccountUI();
+            showToast('Fair winds and following seas! ⛵');
+        }
+
+        function updateAccountUI() {
+            const accountStatus = document.getElementById('account-status');
+            const accountSettingsBtn = document.getElementById('account-settings-btn');
+            const loggedInInfo = document.getElementById('logged-in-info');
+
+            if (currentUser) {
+                // Show account status banner
+                accountStatus.classList.remove('hidden');
+                document.getElementById('account-avatar').textContent = currentUser.avatar;
+                document.getElementById('account-username').textContent = currentUser.username;
+                document.getElementById('account-wins-count').textContent = currentUser.wins;
+
+                // Update settings display
+                accountSettingsBtn.textContent = 'Manage Account';
+                loggedInInfo.classList.remove('hidden');
+                document.getElementById('settings-username').textContent = currentUser.username;
+                document.getElementById('settings-wins').textContent = currentUser.wins;
+
+                // Pre-fill player name if empty
+                const nameInput = document.getElementById('player-name');
+                if (!nameInput.value) {
+                    nameInput.value = currentUser.username;
+                }
+            } else {
+                // Hide account status banner
+                accountStatus.classList.add('hidden');
+
+                // Update settings display
+                accountSettingsBtn.textContent = 'Sign In / Create Account';
+                loggedInInfo.classList.add('hidden');
+            }
+        }
+
+        function updateLeaderboard(topPirates) {
+            leaderboardData = topPirates;
+            const listEl = document.getElementById('leaderboard-list');
+
+            if (!topPirates || topPirates.length === 0) {
+                listEl.innerHTML = '<div class="leaderboard-empty">No pirates yet! Be the first!</div>';
+                return;
+            }
+
+            listEl.innerHTML = topPirates.map(pirate => `
+                <div class="leaderboard-item rank-${pirate.rank}">
+                    <span class="leaderboard-rank">${pirate.rank}</span>
+                    <span class="leaderboard-avatar">${pirate.avatar}</span>
+                    <span class="leaderboard-name">${pirate.username}</span>
+                    <span class="leaderboard-wins">⚔️ ${pirate.wins}</span>
+                </div>
+            `).join('');
+        }
+
+        // ==================== AUTH SOCKET HANDLERS ====================
+        // These will be attached in initSocket()
+
+        function attachAuthHandlers() {
+            // Handle registration success
+            socket.on('register_success', (data) => {
+            userToken = data.token;
+            currentUser = {
+                username: data.username,
+                avatar: data.avatar,
+                wins: data.wins
+            };
+            saveAuthToken(userToken);
+            updateAccountUI();
+            toggleAccount();
+            showToast(`Welcome aboard, ${data.username}! ⚓`);
+            playSfx('win');
+        });
+
+            socket.on('register_error', (data) => {
+                showAuthError('register-error', data.message);
+                playSfx('lose');
+            });
+
+        // Handle login success
+        socket.on('login_success', (data) => {
+            userToken = data.token;
+            currentUser = {
+                username: data.username,
+                avatar: data.avatar,
+                wins: data.wins
+            };
+            saveAuthToken(userToken);
+            updateAccountUI();
+            toggleAccount();
+            showToast(`Welcome back, ${data.username}! ⚓`);
+            playSfx('win');
+        });
+
+            socket.on('login_error', (data) => {
+                showAuthError('login-error', data.message);
+                playSfx('lose');
+            });
+
+        // Handle logout
+        socket.on('logout_success', (data) => {
+            // Already handled in logoutUser()
+        });
+
+        // Handle token validation
+        socket.on('token_valid', (data) => {
+            currentUser = {
+                username: data.username,
+                avatar: data.avatar,
+                wins: data.wins
+            };
+            updateAccountUI();
+        });
+
+        socket.on('token_invalid', () => {
+            clearAuthToken();
+            userToken = null;
+            currentUser = null;
+            updateAccountUI();
+        });
+
+            // Handle leaderboard updates
+            socket.on('leaderboard_update', (data) => {
+                updateLeaderboard(data.top_pirates);
+            });
+        }
+
         // Initialize on page load
         window.onload = () => {
             initSocket();
             initMusic();
             loadDiceSizePreference();
             initIOSEventListeners();
+
+            // Validate existing token
+            const token = getAuthToken();
+            if (token) {
+                userToken = token;
+                socket.emit('validate_token', { token });
+            }
+
+            // Request initial leaderboard
+            socket.emit('get_leaderboard');
+
+            // Setup register emoji picker
+            document.querySelectorAll('#register-emoji-picker .emoji-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('#register-emoji-picker .emoji-option').forEach(o =>
+                        o.classList.remove('selected'));
+                    this.classList.add('selected');
+                    registerSelectedAvatar = this.dataset.emoji;
+                });
+            });
         };
     </script>
 </body>

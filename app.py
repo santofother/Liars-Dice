@@ -4,6 +4,12 @@ import random
 from collections import Counter
 import string
 import os
+import secrets
+import time
+from database import (
+    create_user, authenticate_user, get_user_by_username,
+    increment_user_wins, update_last_login, get_top_pirates
+)
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -11,6 +17,46 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Store all active games
 games = {}
+
+# Store user sessions (token -> user data)
+user_sessions = {}
+SESSION_EXPIRY = 86400  # 24 hours in seconds
+
+def create_session(username, avatar, wins):
+    """Create a new session token for a user."""
+    token = secrets.token_urlsafe(32)
+    user_sessions[token] = {
+        'username': username,
+        'avatar': avatar,
+        'wins': wins,
+        'created_at': time.time()
+    }
+    return token
+
+def validate_session(token):
+    """Validate a session token and check expiration."""
+    if not token or token not in user_sessions:
+        return None
+
+    session_data = user_sessions[token]
+    # Check if expired (24 hours)
+    if time.time() - session_data['created_at'] > SESSION_EXPIRY:
+        del user_sessions[token]
+        return None
+
+    return session_data
+
+def invalidate_session(token):
+    """Remove a session token."""
+    if token in user_sessions:
+        del user_sessions[token]
+
+def broadcast_leaderboard_update():
+    """Broadcast updated leaderboard to all connected clients."""
+    leaderboard = get_top_pirates(5)
+    socketio.emit('leaderboard_update', {
+        'top_pirates': leaderboard
+    }, broadcast=True)
 
 def generate_room_code():
     """Generate a 4-letter room code."""
@@ -516,6 +562,17 @@ def resolve_challenge(game, challenger_idx, bidder_idx):
         winner = game['players'][alive[0]] if alive else None
         if winner:
             game['message'] = f"{winner['name']} WINS! The Black Pearl is theirs!"
+
+            # Record win if user is logged in
+            if winner.get('user_token'):
+                session_data = validate_session(winner['user_token'])
+                if session_data:
+                    increment_user_wins(session_data['username'])
+                    # Update session with new win count
+                    user_data = get_user_by_username(session_data['username'])
+                    if user_data:
+                        session_data['wins'] = user_data['wins']
+                    broadcast_leaderboard_update()
     # Round starter rotation is handled in roll_dice
 
 # Routes
@@ -558,6 +615,7 @@ def handle_create_game(data):
     num_ai = int(data.get('num_ai', 2))
     avatar = data.get('avatar', '🏴‍☠️')
     ai_difficulty = data.get('ai_difficulty', 'easy')
+    user_token = data.get('user_token')
 
     # Validate difficulty
     if ai_difficulty not in ['easy', 'medium', 'hard', 'impossible', 'random']:
@@ -568,6 +626,13 @@ def handle_create_game(data):
     game['players'][0]['sid'] = request.sid
     game['players'][0]['avatar'] = avatar
     game['ai_difficulty'] = ai_difficulty
+
+    # Store user token if logged in
+    if user_token:
+        session_data = validate_session(user_token)
+        if session_data:
+            game['players'][0]['user_token'] = user_token
+            game['players'][0]['username'] = session_data['username']
 
     games[room_code] = game
     join_room(room_code)
@@ -580,6 +645,7 @@ def handle_join_game(data):
     room_code = data.get('room_code', '').upper()
     player_name = data.get('name', 'Sailor')[:20]
     avatar = data.get('avatar', '🏴‍☠️')
+    user_token = data.get('user_token')
 
     game = games.get(room_code)
     if not game:
@@ -663,7 +729,7 @@ def handle_join_game(data):
                 emit('error', {'message': 'Waiting list is full!'})
                 return
 
-            game['waiting_players'].append({
+            waiting_player = {
                 'name': player_name,
                 'dice': [],
                 'num_dice': 5,
@@ -672,7 +738,16 @@ def handle_join_game(data):
                 'connected': True,
                 'avatar': avatar,
                 'is_waiting': True
-            })
+            }
+
+            # Store user token if logged in
+            if user_token:
+                session_data = validate_session(user_token)
+                if session_data:
+                    waiting_player['user_token'] = user_token
+                    waiting_player['username'] = session_data['username']
+
+            game['waiting_players'].append(waiting_player)
 
             join_room(room_code)
             game['message'] = f"{player_name} is waiting to join next game!"
@@ -695,7 +770,7 @@ def handle_join_game(data):
         player_name = f"{original_name}_{counter}"
         counter += 1
 
-    game['players'].append({
+    new_player = {
         'name': player_name,
         'dice': [],
         'num_dice': 5,
@@ -703,7 +778,16 @@ def handle_join_game(data):
         'sid': request.sid,
         'connected': True,
         'avatar': avatar
-    })
+    }
+
+    # Store user token if logged in
+    if user_token:
+        session_data = validate_session(user_token)
+        if session_data:
+            new_player['user_token'] = user_token
+            new_player['username'] = session_data['username']
+
+    game['players'].append(new_player)
 
     join_room(room_code)
     game['message'] = f"{player_name} joined the crew!"
@@ -1065,6 +1149,87 @@ def handle_chat_message(data):
                 'avatar': sender.get('avatar', '⚓'),
                 'message': message
             }, room=player['sid'])
+
+# Authentication Socket Events
+@socketio.on('register')
+def handle_register(data):
+    """Handle user registration."""
+    username = data.get('username', '').strip()
+    password = data.get('password', '').strip()
+    avatar = data.get('avatar', '🏴‍☠️')
+
+    success, message, user_data = create_user(username, password, avatar)
+
+    if success:
+        # Create session token
+        token = create_session(user_data['username'], user_data['avatar'], user_data['wins'])
+        emit('register_success', {
+            'token': token,
+            'username': user_data['username'],
+            'avatar': user_data['avatar'],
+            'wins': user_data['wins']
+        })
+        broadcast_leaderboard_update()
+    else:
+        emit('register_error', {'message': message})
+
+@socketio.on('login')
+def handle_login(data):
+    """Handle user login."""
+    username = data.get('username', '').strip()
+    password = data.get('password', '').strip()
+
+    success, message, user_data = authenticate_user(username, password)
+
+    if success:
+        # Update last login
+        update_last_login(user_data['username'])
+
+        # Create session token
+        token = create_session(user_data['username'], user_data['avatar'], user_data['wins'])
+        emit('login_success', {
+            'token': token,
+            'username': user_data['username'],
+            'avatar': user_data['avatar'],
+            'wins': user_data['wins']
+        })
+    else:
+        emit('login_error', {'message': message})
+
+@socketio.on('logout')
+def handle_logout(data):
+    """Handle user logout."""
+    token = data.get('token')
+    if token:
+        invalidate_session(token)
+    emit('logout_success', {'message': 'Fair winds and following seas! ⛵'})
+
+@socketio.on('validate_token')
+def handle_validate_token(data):
+    """Validate session token on page load."""
+    token = data.get('token')
+    session_data = validate_session(token)
+
+    if session_data:
+        # Refresh user data from database
+        user_data = get_user_by_username(session_data['username'])
+        if user_data:
+            session_data['wins'] = user_data['wins']
+            emit('token_valid', {
+                'username': user_data['username'],
+                'avatar': user_data['avatar'],
+                'wins': user_data['wins']
+            })
+        else:
+            emit('token_invalid')
+    else:
+        emit('token_invalid')
+
+@socketio.on('get_leaderboard')
+def handle_get_leaderboard():
+    """Send current leaderboard to client."""
+    leaderboard = get_top_pirates(5)
+    emit('leaderboard_update', {'top_pirates': leaderboard})
 
 if __name__ == '__main__':
     import os
