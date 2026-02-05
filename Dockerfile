@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY app.py .
+COPY database.py .
 COPY templates/ templates/
 COPY static/ static/
 
