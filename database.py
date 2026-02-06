@@ -262,5 +262,47 @@ def get_top_pirates(limit=5):
         print(f"Error fetching leaderboard: {e}")
         return []
 
+def reset_user_wins(username):
+    """Reset wins to 0 for a specific user."""
+    try:
+        with get_db() as conn:
+            conn.execute(
+                'UPDATE users SET total_wins = 0 WHERE username = ? COLLATE NOCASE',
+                (username,)
+            )
+            return True
+    except Exception as e:
+        print(f"Error resetting user wins: {e}")
+        return False
+
+def reset_all_wins():
+    """Reset wins to 0 for all users."""
+    try:
+        with get_db() as conn:
+            conn.execute('UPDATE users SET total_wins = 0')
+            return True
+    except Exception as e:
+        print(f"Error resetting all wins: {e}")
+        return False
+
+def get_all_users():
+    """Get all users with their win counts."""
+    try:
+        with get_db() as conn:
+            users = conn.execute(
+                'SELECT username, avatar, total_wins FROM users ORDER BY total_wins DESC, username ASC'
+            ).fetchall()
+            return [
+                {
+                    'username': user['username'],
+                    'avatar': user['avatar'],
+                    'wins': user['total_wins']
+                }
+                for user in users
+            ]
+    except Exception as e:
+        print(f"Error fetching all users: {e}")
+        return []
+
 # Initialize database on module import
 init_db()

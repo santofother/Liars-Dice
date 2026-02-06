@@ -8,7 +8,8 @@ import secrets
 import time
 from database import (
     create_user, authenticate_user, get_user_by_username,
-    increment_user_wins, update_last_login, get_top_pirates
+    increment_user_wins, update_last_login, get_top_pirates,
+    reset_user_wins, reset_all_wins, get_all_users
 )
 
 app = Flask(__name__)
@@ -493,6 +494,9 @@ def process_ai_turns(game):
 
     while game['phase'] == 'bidding':
         current = game['current_player']
+        if current is None:
+            break
+
         player = game['players'][current]
 
         if player['is_human']:
@@ -500,7 +504,10 @@ def process_ai_turns(game):
             break
 
         if player['num_dice'] <= 0:
-            game['current_player'] = next_alive_player(game, current)
+            next_player = next_alive_player(game, current)
+            if next_player is None:
+                break
+            game['current_player'] = next_player
             continue
 
         # Broadcast that AI is thinking
@@ -527,7 +534,10 @@ def process_ai_turns(game):
                 'bid': f"{qty}x {face}s"
             })
             game['message'] = f"{player['name']} bids {qty}x {face}s"
-            game['current_player'] = next_alive_player(game, current)
+            next_idx = next_alive_player(game, current)
+            if next_idx is None:
+                break
+            game['current_player'] = next_idx
             broadcast_game_state(game['room_code'])
 
 def resolve_challenge(game, challenger_idx, bidder_idx):
@@ -564,15 +574,18 @@ def resolve_challenge(game, challenger_idx, bidder_idx):
             game['message'] = f"{winner['name']} WINS! The Black Pearl is theirs!"
 
             # Record win if user is logged in
-            if winner.get('user_token'):
-                session_data = validate_session(winner['user_token'])
-                if session_data:
-                    increment_user_wins(session_data['username'])
-                    # Update session with new win count
-                    user_data = get_user_by_username(session_data['username'])
-                    if user_data:
-                        session_data['wins'] = user_data['wins']
-                    broadcast_leaderboard_update()
+            try:
+                if winner.get('user_token'):
+                    session_data = validate_session(winner['user_token'])
+                    if session_data:
+                        increment_user_wins(session_data['username'])
+                        # Update session with new win count
+                        user_data = get_user_by_username(session_data['username'])
+                        if user_data:
+                            session_data['wins'] = user_data['wins']
+                        broadcast_leaderboard_update()
+            except Exception as e:
+                print(f"Error recording win: {e}")
     # Round starter rotation is handled in roll_dice
 
 # Routes
@@ -830,12 +843,22 @@ def handle_roll_dice(data):
         return
 
     roll_all_dice(game)
-    game['phase'] = 'bidding'
     game['current_bid'] = None
     game['current_bidder'] = None
     game['round_history'] = []
 
     alive = get_alive_players(game)
+
+    if len(alive) <= 1:
+        # Game should be over, don't start a new round
+        game['phase'] = 'game_over'
+        if alive:
+            winner = game['players'][alive[0]]
+            game['message'] = f"{winner['name']} WINS! The Black Pearl is theirs!"
+        broadcast_game_state(room_code)
+        return
+
+    game['phase'] = 'bidding'
 
     # Set first player for the round
     if game.get('round_starter') is not None:
@@ -902,7 +925,12 @@ def handle_make_bid(data):
         'bid': f"{quantity}x {face}s"
     })
 
-    game['current_player'] = next_alive_player(game, game['current_player'])
+    next_idx = next_alive_player(game, game['current_player'])
+    if next_idx is None:
+        broadcast_game_state(room_code)
+        return
+
+    game['current_player'] = next_idx
     next_player = game['players'][game['current_player']]
     game['message'] = f"{next_player['name']}'s turn!"
 
@@ -1230,6 +1258,48 @@ def handle_get_leaderboard():
     """Send current leaderboard to client."""
     leaderboard = get_top_pirates(5)
     emit('leaderboard_update', {'top_pirates': leaderboard})
+
+# Admin config events
+ADMIN_PASSWORD = 'SantoIsCool'
+
+@socketio.on('admin_auth')
+def handle_admin_auth(data):
+    """Verify admin password."""
+    password = data.get('password', '')
+    if password == ADMIN_PASSWORD:
+        users = get_all_users()
+        emit('admin_auth_success', {'users': users})
+    else:
+        emit('admin_auth_error', {'message': 'Wrong password, landlubber!'})
+
+@socketio.on('admin_reset_user')
+def handle_admin_reset_user(data):
+    """Reset a specific user's wins."""
+    password = data.get('password', '')
+    username = data.get('username', '')
+    if password != ADMIN_PASSWORD:
+        emit('admin_auth_error', {'message': 'Unauthorized!'})
+        return
+    if reset_user_wins(username):
+        users = get_all_users()
+        emit('admin_reset_success', {'message': f"{username}'s wins reset to 0!", 'users': users})
+        broadcast_leaderboard_update()
+    else:
+        emit('admin_reset_error', {'message': f"Failed to reset {username}"})
+
+@socketio.on('admin_reset_all')
+def handle_admin_reset_all(data):
+    """Reset all users' wins."""
+    password = data.get('password', '')
+    if password != ADMIN_PASSWORD:
+        emit('admin_auth_error', {'message': 'Unauthorized!'})
+        return
+    if reset_all_wins():
+        users = get_all_users()
+        emit('admin_reset_success', {'message': 'All pirate wins reset to 0!', 'users': users})
+        broadcast_leaderboard_update()
+    else:
+        emit('admin_reset_error', {'message': 'Failed to reset leaderboard'})
 
 if __name__ == '__main__':
     import os

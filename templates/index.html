@@ -1220,6 +1220,133 @@
             font-style: italic;
         }
 
+        /* Top Pirate Glow Effects */
+        @keyframes goldGlow {
+            0%, 100% { box-shadow: 0 0 8px 2px rgba(255, 215, 0, 0.6), 0 0 20px 4px rgba(255, 215, 0, 0.3); }
+            50% { box-shadow: 0 0 15px 5px rgba(255, 215, 0, 0.9), 0 0 30px 8px rgba(255, 215, 0, 0.5); }
+        }
+        @keyframes silverGlow {
+            0%, 100% { box-shadow: 0 0 6px 2px rgba(192, 192, 192, 0.5), 0 0 15px 3px rgba(192, 192, 192, 0.25); }
+            50% { box-shadow: 0 0 12px 4px rgba(192, 192, 192, 0.8), 0 0 25px 6px rgba(192, 192, 192, 0.4); }
+        }
+        @keyframes bronzeGlow {
+            0%, 100% { box-shadow: 0 0 5px 2px rgba(205, 127, 50, 0.4), 0 0 12px 3px rgba(205, 127, 50, 0.2); }
+            50% { box-shadow: 0 0 10px 3px rgba(205, 127, 50, 0.7), 0 0 20px 5px rgba(205, 127, 50, 0.35); }
+        }
+
+        .player-card.top-pirate-1 {
+            animation: goldGlow 2s ease-in-out infinite;
+            border-color: #ffd700 !important;
+        }
+        .player-card.top-pirate-2 {
+            animation: silverGlow 2.5s ease-in-out infinite;
+            border-color: #c0c0c0 !important;
+        }
+        .player-card.top-pirate-3 {
+            animation: bronzeGlow 3s ease-in-out infinite;
+            border-color: #cd7f32 !important;
+        }
+
+        .player-list-item.top-pirate-1 {
+            animation: goldGlow 2s ease-in-out infinite;
+            border: 2px solid #ffd700;
+        }
+        .player-list-item.top-pirate-2 {
+            animation: silverGlow 2.5s ease-in-out infinite;
+            border: 2px solid #c0c0c0;
+        }
+        .player-list-item.top-pirate-3 {
+            animation: bronzeGlow 3s ease-in-out infinite;
+            border: 2px solid #cd7f32;
+        }
+
+        .chat-message.top-pirate-1 {
+            animation: goldGlow 2s ease-in-out infinite;
+            border-left-color: #ffd700 !important;
+        }
+        .chat-message.top-pirate-2 {
+            animation: silverGlow 2.5s ease-in-out infinite;
+            border-left-color: #c0c0c0 !important;
+        }
+        .chat-message.top-pirate-3 {
+            animation: bronzeGlow 3s ease-in-out infinite;
+            border-left-color: #cd7f32 !important;
+        }
+
+        .crown-icon {
+            margin-left: 4px;
+            font-size: 0.9em;
+        }
+
+        /* Admin Config Panel */
+        .admin-user-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+
+        .admin-user-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            margin-bottom: 6px;
+            border-left: 3px solid #8b4513;
+        }
+
+        .admin-user-item .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #d4a574;
+        }
+
+        .admin-user-item .user-wins {
+            color: #ffd700;
+            font-weight: bold;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .btn-reset {
+            padding: 5px 12px;
+            background: linear-gradient(145deg, #dc143c 0%, #8b0000 100%);
+            color: white;
+            border: 1px solid #ff4444;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.2s;
+        }
+
+        .btn-reset:hover {
+            background: linear-gradient(145deg, #ff4444 0%, #dc143c 100%);
+            transform: scale(1.05);
+        }
+
+        .admin-password-section {
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .admin-password-section input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0,0,0,0.4);
+            border: 2px solid #8b4513;
+            border-radius: 8px;
+            color: #ffd700;
+            font-size: 1.1em;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .admin-password-section input::placeholder {
+            color: #8b7355;
+        }
+
         /* Account Overlay */
         .account-tabs {
             display: flex;
@@ -1359,6 +1486,7 @@
                 <div id="logged-in-info" class="hidden" style="margin-top: 15px; color: #d4a574;">
                     <p>Logged in as: <strong id="settings-username" style="color: #ffd700;"></strong></p>
                     <p>Wins: <strong id="settings-wins" style="color: #ffd700;"></strong></p>
+                    <button class="btn btn-red" onclick="logoutUser()" style="margin-top: 10px; width: 100%;">🚪 Logout</button>
                 </div>
             </div>
 
@@ -1501,7 +1629,6 @@
                 <span id="account-username">Guest</span>
                 <span class="account-wins">⚔️ <span id="account-wins-count">0</span> wins</span>
             </div>
-            <button class="btn-small btn-red" onclick="logoutUser()">Logout</button>
         </div>
 
         <!-- Lobby Screen -->
@@ -1691,6 +1818,37 @@
         </div>
     </div>
 
+    <!-- Admin Config Overlay -->
+    <div id="admin-overlay" class="overlay hidden">
+        <div class="overlay-content" style="max-width: 500px;">
+            <div class="overlay-title">🔧 Captain's Config</div>
+
+            <!-- Password Gate -->
+            <div id="admin-password-gate" class="admin-password-section">
+                <p style="color: #d4a574; margin-bottom: 10px;">Enter the captain's password:</p>
+                <input type="password" id="admin-password" placeholder="Password..." onkeydown="if(event.key==='Enter')adminLogin()">
+                <div id="admin-error" class="hidden" style="color: #ff4444; margin-bottom: 10px;"></div>
+                <button class="btn btn-gold" onclick="adminLogin()">Authenticate</button>
+            </div>
+
+            <!-- Admin Panel (hidden until authenticated) -->
+            <div id="admin-panel" class="hidden">
+                <div class="settings-section">
+                    <h3>🏆 Leaderboard Management</h3>
+                    <button class="btn btn-red" onclick="adminResetAll()" style="width: 100%; margin-bottom: 15px;">
+                        ☠️ Reset ALL Pirate Wins
+                    </button>
+                    <h4 style="color: #b8860b; margin-bottom: 10px;">Individual Reset:</h4>
+                    <div id="admin-user-list" class="admin-user-list">
+                        <div style="color: #8b7355; text-align: center; padding: 20px;">Loading pirates...</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-gold" onclick="closeAdmin()" style="margin-top: 20px;">Close</button>
+        </div>
+    </div>
+
     <script>
         let socket;
         let gameState = null;
@@ -1709,6 +1867,31 @@
         let registerSelectedAvatar = '🏴‍☠️';
 
         const AUTH_TOKEN_KEY = 'liars_dice_auth_token';
+
+        // Get a player's leaderboard rank (1-3) or 0 if not top 3
+        function getPlayerRank(playerName) {
+            try {
+                if (!leaderboardData || leaderboardData.length === 0 || !playerName) return 0;
+                for (let i = 0; i < Math.min(3, leaderboardData.length); i++) {
+                    const entry = leaderboardData[i];
+                    if (entry && entry.username && entry.wins > 0 &&
+                        entry.username.toLowerCase() === playerName.toLowerCase()) {
+                        return entry.rank || 0;
+                    }
+                }
+            } catch (e) {
+                console.error('getPlayerRank error:', e);
+            }
+            return 0;
+        }
+
+        // Get crown emoji for a rank
+        function getCrownIcon(rank) {
+            if (rank === 1) return '<span class="crown-icon">👑</span>';
+            if (rank === 2) return '<span class="crown-icon">🥈</span>';
+            if (rank === 3) return '<span class="crown-icon">🥉</span>';
+            return '';
+        }
 
         // ==================== AUTO-RECONNECTION SYSTEM ====================
         // Session storage keys
@@ -2458,6 +2641,9 @@
                 document.getElementById('chat-btn').classList.add('hidden');
                 document.body.style.paddingTop = '0';
                 chatOpen = false;
+
+                // Show account banner again on main menu
+                updateAccountUI();
             });
 
             socket.on('disconnect', (reason) => {
@@ -2496,6 +2682,7 @@
 
             // Attach authentication handlers
             attachAuthHandlers();
+            attachAdminHandlers();
         }
 
         function showError(message) {
@@ -2767,18 +2954,33 @@
                 updateGameBoard();
             }
 
+            // Hide account banner during game/waiting room - only show on main menu
+            const accountStatus = document.getElementById('account-status');
+            if (currentUser) {
+                accountStatus.classList.add('hidden');
+            }
+
             // Update chat visibility
             updateChatVisibility();
         }
 
         function updateWaitingRoom() {
             const playerList = document.getElementById('player-list');
-            playerList.innerHTML = gameState.players.map((p, i) => `
-                <div class="player-list-item ${i === 0 ? 'host' : ''} ${i === playerIndex ? 'you' : ''}">
+            playerList.innerHTML = gameState.players.map((p, i) => {
+                let glowClass = '';
+                let crown = '';
+                try {
+                    const rank = getPlayerRank(p.name);
+                    glowClass = (rank >= 1 && rank <= 3) ? ` top-pirate-${rank}` : '';
+                    crown = getCrownIcon(rank);
+                } catch (e) { console.error('Rank error:', e); }
+                return `
+                <div class="player-list-item ${i === 0 ? 'host' : ''} ${i === playerIndex ? 'you' : ''}${glowClass}">
                     <span style="font-size: 1.5em;">${p.avatar || '⚓'}</span>
-                    <span>${p.name}${i === playerIndex ? ' (You)' : ''}</span>
+                    <span>${p.name || 'Unknown'}${crown}${i === playerIndex ? ' (You)' : ''}</span>
                 </div>
-            `).join('');
+                `;
+            }).join('');
 
             // Show host controls only for host
             if (gameState.is_host) {
@@ -2804,7 +3006,16 @@
                 if (isEliminated) classes += ' eliminated';
                 if (!player.connected) classes += ' disconnected';
 
-                const diceHtml = player.dice.map(d => {
+                // Top pirate glow effect (safe)
+                let rank = 0;
+                let crown = '';
+                try {
+                    rank = getPlayerRank(player.name);
+                    if (rank >= 1 && rank <= 3) classes += ` top-pirate-${rank}`;
+                    crown = getCrownIcon(rank);
+                } catch (e) { console.error('Rank error:', e); }
+
+                const diceHtml = (player.dice || []).map(d => {
                     if (d === 0) return '<div class="die hidden"></div>';
                     return `<div class="die ${d === 1 ? 'wild' : ''}" data-value="${d}"></div>`;
                 }).join('');
@@ -2822,7 +3033,7 @@
                     <div class="${classes}" data-player-idx="${idx}">
                         ${kickBtn}
                         <div class="player-avatar">${player.avatar || '⚓'}</div>
-                        <div class="player-name">${player.name}${isYou ? ' (You)' : ''}</div>
+                        <div class="player-name">${player.name || 'Unknown'}${crown}${isYou ? ' (You)' : ''}</div>
                         <div class="player-status">${status}</div>
                         <div class="dice-container">${diceHtml}</div>
                     </div>
@@ -3079,6 +3290,9 @@
                 document.body.style.paddingTop = '0';
                 chatOpen = false;
 
+                // Show account banner again on main menu
+                updateAccountUI();
+
                 // Clear inputs
                 document.getElementById('room-code').value = '';
             }
@@ -3188,9 +3402,16 @@
         function addChatMessageToPanel(sender, avatar, message, isOwn) {
             const container = document.getElementById('chat-messages');
             const msgDiv = document.createElement('div');
-            msgDiv.className = `chat-message ${isOwn ? 'own' : ''}`;
+            let glowClass = '';
+            let crown = '';
+            try {
+                const rank = getPlayerRank(sender);
+                glowClass = (rank >= 1 && rank <= 3) ? ` top-pirate-${rank}` : '';
+                crown = getCrownIcon(rank);
+            } catch (e) { console.error('Rank error:', e); }
+            msgDiv.className = `chat-message ${isOwn ? 'own' : ''}${glowClass}`;
             msgDiv.innerHTML = `
-                <div class="sender">${avatar || '⚓'} ${sender}</div>
+                <div class="sender">${avatar || '⚓'} ${sender}${crown}</div>
                 <div class="text">${message}</div>
             `;
             container.appendChild(msgDiv);
@@ -3442,6 +3663,102 @@
                 updateLeaderboard(data.top_pirates);
             });
         }
+
+        // ==================== ADMIN CONFIG SYSTEM ====================
+        let adminAuthenticated = false;
+        let adminPassword = '';
+
+        function openAdmin() {
+            document.getElementById('admin-overlay').classList.remove('hidden');
+            if (!adminAuthenticated) {
+                document.getElementById('admin-password-gate').classList.remove('hidden');
+                document.getElementById('admin-panel').classList.add('hidden');
+                document.getElementById('admin-password').value = '';
+                document.getElementById('admin-password').focus();
+            }
+        }
+
+        function closeAdmin() {
+            document.getElementById('admin-overlay').classList.add('hidden');
+            adminAuthenticated = false;
+            adminPassword = '';
+            document.getElementById('admin-password-gate').classList.remove('hidden');
+            document.getElementById('admin-panel').classList.add('hidden');
+        }
+
+        function adminLogin() {
+            const pwd = document.getElementById('admin-password').value;
+            if (!pwd) return;
+            adminPassword = pwd;
+            socket.emit('admin_auth', { password: pwd });
+        }
+
+        function renderAdminUserList(users) {
+            const listEl = document.getElementById('admin-user-list');
+            if (!users || users.length === 0) {
+                listEl.innerHTML = '<div style="color: #8b7355; text-align: center; padding: 20px;">No pirates registered yet.</div>';
+                return;
+            }
+            listEl.innerHTML = users.map(u => `
+                <div class="admin-user-item">
+                    <div class="user-info">
+                        <span>${u.avatar}</span>
+                        <span>${u.username}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="user-wins">⚔️ ${u.wins}</span>
+                        <button class="btn-reset" onclick="adminResetUser('${u.username.replace(/'/g, "\\'")}')">Reset</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function adminResetUser(username) {
+            if (!confirm(`Reset all wins for ${username}?`)) return;
+            socket.emit('admin_reset_user', { password: adminPassword, username: username });
+        }
+
+        function adminResetAll() {
+            if (!confirm('Reset ALL pirate wins to 0? This cannot be undone!')) return;
+            if (!confirm('Are ye REALLY sure? All rankings will be lost!')) return;
+            socket.emit('admin_reset_all', { password: adminPassword });
+        }
+
+        function attachAdminHandlers() {
+            socket.on('admin_auth_success', (data) => {
+                adminAuthenticated = true;
+                document.getElementById('admin-password-gate').classList.add('hidden');
+                document.getElementById('admin-panel').classList.remove('hidden');
+                document.getElementById('admin-error').classList.add('hidden');
+                renderAdminUserList(data.users);
+            });
+
+            socket.on('admin_auth_error', (data) => {
+                const errEl = document.getElementById('admin-error');
+                errEl.textContent = data.message;
+                errEl.classList.remove('hidden');
+                setTimeout(() => errEl.classList.add('hidden'), 3000);
+            });
+
+            socket.on('admin_reset_success', (data) => {
+                showToast(data.message);
+                renderAdminUserList(data.users);
+            });
+
+            socket.on('admin_reset_error', (data) => {
+                showToast(data.message);
+            });
+        }
+
+        // Listen for '~' key to open admin panel
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '~' || e.key === '`') {
+                // Don't trigger if typing in an input field
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+                e.preventDefault();
+                openAdmin();
+            }
+        });
 
         // Initialize on page load
         window.onload = () => {
