@@ -662,7 +662,7 @@ def handle_join_game(data):
 
     game = games.get(room_code)
     if not game:
-        emit('error', {'message': 'Game not found!'})
+        emit('game_error', {'message': 'Game not found!'})
         return
 
     # Check if this player is reconnecting (matching name)
@@ -735,11 +735,11 @@ def handle_join_game(data):
             # Check if already waiting
             existing_waiting = [p['name'].lower() for p in game['waiting_players']]
             if player_name.lower() in existing_waiting:
-                emit('error', {'message': 'You are already in the waiting list!'})
+                emit('game_error', {'message': 'You are already in the waiting list!'})
                 return
 
             if len(game['waiting_players']) >= 4:  # Limit waiting players
-                emit('error', {'message': 'Waiting list is full!'})
+                emit('game_error', {'message': 'Waiting list is full!'})
                 return
 
             waiting_player = {
@@ -772,7 +772,7 @@ def handle_join_game(data):
 
     # Normal join during lobby phase
     if len([p for p in game['players'] if p['is_human']]) >= game['max_players'] - game['num_ai']:
-        emit('error', {'message': 'Game is full!'})
+        emit('game_error', {'message': 'Game is full!'})
         return
 
     # Check if name already taken (add suffix if so)
@@ -818,7 +818,7 @@ def handle_start_game(data):
 
     # Verify sender is host
     if game['players'][0].get('sid') != request.sid:
-        emit('error', {'message': 'Only the host can start the game!'})
+        emit('game_error', {'message': 'Only the host can start the game!'})
         return
 
     # Add AI players
@@ -826,7 +826,7 @@ def handle_start_game(data):
 
     human_count = len([p for p in game['players'] if p['is_human']])
     if human_count + game['num_ai'] < 2:
-        emit('error', {'message': 'Need at least 2 players!'})
+        emit('game_error', {'message': 'Need at least 2 players!'})
         return
 
     game['phase'] = 'rolling'
@@ -910,11 +910,11 @@ def handle_make_bid(data):
 
     current_player = game['players'][game['current_player']]
     if current_player.get('sid') != request.sid:
-        emit('error', {'message': "It's not your turn!"})
+        emit('game_error', {'message': "It's not your turn!"})
         return
 
     if not is_valid_bid(game, quantity, face):
-        emit('error', {'message': 'Invalid bid! Must be higher than current bid.'})
+        emit('game_error', {'message': 'Invalid bid! Must be higher than current bid.'})
         return
 
     game['current_bid'] = (quantity, face)
@@ -949,12 +949,12 @@ def handle_challenge(data):
         return
 
     if game['current_bid'] is None:
-        emit('error', {'message': 'Nothing to challenge!'})
+        emit('game_error', {'message': 'Nothing to challenge!'})
         return
 
     current_player = game['players'][game['current_player']]
     if current_player.get('sid') != request.sid:
-        emit('error', {'message': "It's not your turn!"})
+        emit('game_error', {'message': "It's not your turn!"})
         return
 
     challenger_idx = game['current_player']
@@ -1001,7 +1001,7 @@ def handle_return_to_lobby(data):
 
     # Only host can return to lobby
     if game['players'][0].get('sid') != request.sid:
-        emit('error', {'message': 'Only the host can return to lobby!'})
+        emit('game_error', {'message': 'Only the host can return to lobby!'})
         return
 
     # Remove AI players (they'll be re-added when game starts)
@@ -1042,7 +1042,7 @@ def handle_kick_player(data):
 
     # Verify sender is host
     if game['players'][0].get('sid') != request.sid:
-        emit('error', {'message': 'Only the host can kick players!'})
+        emit('game_error', {'message': 'Only the host can kick players!'})
         return
 
     # Can't kick yourself (host is index 0)
@@ -1119,11 +1119,25 @@ def handle_leave_game(data):
     if not leaving_player:
         return
 
-    # Mark player as disconnected
+    leave_room(room_code)
+
+    # In lobby phase, fully remove the player
+    if game['phase'] == 'lobby':
+        game['players'].pop(leaving_idx)
+
+        # Count remaining connected human players
+        connected_humans = [p for p in game['players'] if p['is_human'] and p.get('connected', False)]
+        if len(connected_humans) == 0:
+            del games[room_code]
+            return
+
+        game['message'] = f"{leaving_player['name']} has left the ship!"
+        broadcast_game_state(room_code)
+        return
+
+    # Mark player as disconnected (during active game)
     leaving_player['connected'] = False
     leaving_player['sid'] = None
-
-    leave_room(room_code)
 
     # Count remaining connected human players
     connected_humans = [p for p in game['players'] if p['is_human'] and p.get('connected', False)]

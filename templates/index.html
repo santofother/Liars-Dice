@@ -1726,6 +1726,10 @@
                 <div id="waiting-message" style="color: #b8860b; margin-top: 20px;">
                     Waiting for host to start the game...
                 </div>
+
+                <div style="margin-top: 20px; text-align: center;">
+                    <button class="btn btn-red" onclick="leaveWaitingRoom()" style="opacity: 0.8;">🚪 Back to Main Menu</button>
+                </div>
             </div>
         </div>
 
@@ -2595,7 +2599,7 @@
                 }
             });
 
-            socket.on('error', (data) => {
+            socket.on('game_error', (data) => {
                 showToast(data.message);
 
                 // If reconnection fails, clear session and show lobby
@@ -3296,6 +3300,33 @@
                 // Clear inputs
                 document.getElementById('room-code').value = '';
             }
+        }
+
+        function leaveWaitingRoom() {
+            // Notify server we're leaving
+            if (roomCode) {
+                socket.emit('leave_game', { room_code: roomCode });
+            }
+
+            // Clear session
+            clearSession();
+            resetReconnectionFlag();
+
+            // Reset local state
+            gameState = null;
+            roomCode = null;
+            playerIndex = -1;
+
+            // Return to lobby screen
+            document.getElementById('lobby').classList.remove('hidden');
+            document.getElementById('waiting-room').classList.add('hidden');
+            document.getElementById('game').classList.add('hidden');
+
+            // Show account banner again on main menu
+            updateAccountUI();
+
+            // Clear inputs
+            document.getElementById('room-code').value = '';
         }
 
         // Chat functions
