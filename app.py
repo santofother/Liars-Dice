@@ -66,7 +66,7 @@ def generate_room_code():
         if code not in games:
             return code
 
-def create_game(room_code, host_name, num_ai=0):
+def create_game(room_code, host_name, num_ai=0, is_private=False):
     """Create a new game state."""
     game = {
         'room_code': room_code,
@@ -80,7 +80,8 @@ def create_game(room_code, host_name, num_ai=0):
         'host': host_name,
         'num_ai': num_ai,
         'min_players': 2,
-        'max_players': 6
+        'max_players': 6,
+        'is_private': is_private
     }
 
     # Add host as first player
@@ -467,7 +468,9 @@ def get_game_state_for_player(game, player_sid):
         'host': game['host'],
         'waiting_players': waiting_data,
         'is_waiting': is_waiting,
-        'ai_difficulty': game.get('ai_difficulty', 'easy')
+        'ai_difficulty': game.get('ai_difficulty', 'easy'),
+        'is_private': game.get('is_private', False),
+        'num_ai': game.get('num_ai', 0)
     }
 
 def broadcast_game_state(room_code):
@@ -634,8 +637,10 @@ def handle_create_game(data):
     if ai_difficulty not in ['easy', 'medium', 'hard', 'impossible', 'random']:
         ai_difficulty = 'easy'
 
+    is_private = bool(data.get('is_private', False))
+
     room_code = generate_room_code()
-    game = create_game(room_code, player_name, num_ai)
+    game = create_game(room_code, player_name, num_ai, is_private)
     game['players'][0]['sid'] = request.sid
     game['players'][0]['avatar'] = avatar
     game['ai_difficulty'] = ai_difficulty
@@ -662,7 +667,7 @@ def handle_join_game(data):
 
     game = games.get(room_code)
     if not game:
-        emit('game_error', {'message': 'Game not found!'})
+        emit('game_not_found', {'message': "No ship sails under that flag, matey! Check yer code or browse the tavern board."})
         return
 
     # Check if this player is reconnecting (matching name)
@@ -679,6 +684,13 @@ def handle_join_game(data):
         if avatar:
             reconnecting_player['avatar'] = avatar
 
+        # Update user token if provided (preserves win tracking after reconnect)
+        if user_token:
+            session_data = validate_session(user_token)
+            if session_data:
+                reconnecting_player['user_token'] = user_token
+                reconnecting_player['username'] = session_data['username']
+
         join_room(room_code)
         game['message'] = f"{reconnecting_player['name']} has rejoined the crew!"
 
@@ -694,6 +706,11 @@ def handle_join_game(data):
                 waiting_player['connected'] = True
                 if avatar:
                     waiting_player['avatar'] = avatar
+                if user_token:
+                    sd = validate_session(user_token)
+                    if sd:
+                        waiting_player['user_token'] = user_token
+                        waiting_player['username'] = sd['username']
 
                 join_room(room_code)
                 game['message'] = f"{waiting_player['name']} has rejoined the waiting list!"
@@ -720,6 +737,11 @@ def handle_join_game(data):
             disconnected_player['name'] = player_name
             if avatar:
                 disconnected_player['avatar'] = avatar
+            if user_token:
+                sd = validate_session(user_token)
+                if sd:
+                    disconnected_player['user_token'] = user_token
+                    disconnected_player['username'] = sd['username']
 
             join_room(room_code)
             game['message'] = f"{player_name} took over for {old_name}!"
@@ -855,6 +877,18 @@ def handle_roll_dice(data):
         if alive:
             winner = game['players'][alive[0]]
             game['message'] = f"{winner['name']} WINS! The Black Pearl is theirs!"
+            # Record win
+            try:
+                if winner.get('user_token'):
+                    session_data = validate_session(winner['user_token'])
+                    if session_data:
+                        increment_user_wins(session_data['username'])
+                        user_data = get_user_by_username(session_data['username'])
+                        if user_data:
+                            session_data['wins'] = user_data['wins']
+                        broadcast_leaderboard_update()
+            except Exception as e:
+                print(f"Error recording win: {e}")
         broadcast_game_state(room_code)
         return
 
@@ -1191,6 +1225,57 @@ def handle_chat_message(data):
                 'avatar': sender.get('avatar', '⚓'),
                 'message': message
             }, room=player['sid'])
+
+@socketio.on('browse_games')
+def handle_browse_games():
+    """Return list of public games for the server browser."""
+    game_list = []
+    for code, game in games.items():
+        if game.get('is_private', False):
+            continue
+        human_count = len([p for p in game['players'] if p['is_human']])
+        game_list.append({
+            'room_code': code,
+            'host': game['host'],
+            'player_count': human_count,
+            'max_players': game['max_players'],
+            'phase': game['phase'],
+            'ai_count': game.get('num_ai', 0),
+            'ai_difficulty': game.get('ai_difficulty', 'easy')
+        })
+    emit('game_list', {'games': game_list})
+
+@socketio.on('update_ai_count')
+def handle_update_ai_count(data):
+    """Host adjusts AI count in lobby."""
+    room_code = data.get('room_code')
+    game = games.get(room_code)
+    if not game or game['phase'] != 'lobby':
+        return
+    # Host-only
+    if game['players'][0].get('sid') != request.sid:
+        return
+    human_count = len([p for p in game['players'] if p['is_human']])
+    max_ai = game['max_players'] - human_count
+    new_count = max(0, min(int(data.get('num_ai', 0)), max_ai))
+    game['num_ai'] = new_count
+    broadcast_game_state(room_code)
+
+@socketio.on('update_ai_difficulty')
+def handle_update_ai_difficulty(data):
+    """Host adjusts AI difficulty in lobby."""
+    room_code = data.get('room_code')
+    game = games.get(room_code)
+    if not game or game['phase'] != 'lobby':
+        return
+    # Host-only
+    if game['players'][0].get('sid') != request.sid:
+        return
+    difficulty = data.get('ai_difficulty', 'easy')
+    if difficulty not in ['easy', 'medium', 'hard', 'impossible', 'random']:
+        difficulty = 'easy'
+    game['ai_difficulty'] = difficulty
+    broadcast_game_state(room_code)
 
 # Authentication Socket Events
 @socketio.on('register')
