@@ -804,6 +804,945 @@
             font-size: 0.9em;
         }
 
+        /* ============================================ */
+        /* MODERN LAYOUT                                */
+        /* ============================================ */
+
+        /* --- Variables --- */
+        .layout-modern {
+            --m-bg: #1c0900;
+            --m-card: #4a2608;
+            --m-card2: #5e3410;
+            --m-border: #c86820;
+            --m-border2: #9a4e14;
+            --m-gold: #ffd700;
+            --m-amber: #f0920a;
+            --m-amber2: #f5b030;
+            --m-text: #f0c880;
+            --m-dimtext: #a07040;
+            --m-green: #7fff50;
+        }
+
+        /* --- Header --- */
+        .layout-modern .m-header {
+            height: 56px;
+            background: linear-gradient(90deg, #0e0400, #341500, #0e0400);
+            border-bottom: 2px solid var(--m-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            position: relative;
+            z-index: 50;
+        }
+
+        .layout-modern .m-header::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--m-gold), transparent);
+            opacity: 0.5;
+        }
+
+        .layout-modern .m-header-left {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+        }
+
+        .layout-modern .m-header-title {
+            font-family: 'Pirata One', serif;
+            font-size: 1.5em;
+            color: var(--m-gold);
+            text-shadow: 1px 1px 3px #000;
+            white-space: nowrap;
+        }
+
+        .layout-modern .m-header-subtitle {
+            font-size: 0.8em;
+            color: var(--m-dimtext);
+            white-space: nowrap;
+        }
+
+        .layout-modern .m-header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .layout-modern .m-room-pill {
+            background: rgba(200, 104, 32, 0.25);
+            border: 1px solid var(--m-border);
+            border-radius: 12px;
+            padding: 3px 12px;
+            color: var(--m-gold);
+            font-family: monospace;
+            font-size: 0.95em;
+            letter-spacing: 2px;
+        }
+
+        .layout-modern .m-header-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--m-border2);
+            background: rgba(0,0,0,0.4);
+            color: var(--m-text);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .layout-modern .m-header-btn:hover {
+            border-color: var(--m-gold);
+            color: var(--m-gold);
+            background: rgba(200, 104, 32, 0.2);
+        }
+
+        /* --- 3-Column Grid --- */
+        .layout-modern .m-grid {
+            display: grid;
+            grid-template-columns: 265px 1fr 295px;
+            height: calc(100vh - 56px);
+            overflow: hidden;
+            background: var(--m-bg);
+        }
+
+        .layout-modern .m-col {
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+        }
+
+        .layout-modern .m-col-left {
+            border-right: 2px solid var(--m-border2);
+            background: linear-gradient(180deg, #2a1200, #1c0900);
+        }
+
+        .layout-modern .m-col-center {
+            background: linear-gradient(180deg, #1c0900, #120600);
+            padding: 16px 20px;
+            overflow-y: auto;
+        }
+
+        .layout-modern .m-col-right {
+            border-left: 2px solid var(--m-border2);
+            background: linear-gradient(180deg, #2a1200, #1c0900);
+        }
+
+        /* --- Section Labels --- */
+        .layout-modern .m-section-label {
+            font-size: 0.7em;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--m-dimtext);
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        /* --- Left Column: Your Hand --- */
+        .layout-modern .m-your-name {
+            font-family: 'Pirata One', serif;
+            font-size: 1.4em;
+            color: var(--m-gold);
+            text-shadow: 1px 1px 2px #000;
+            margin-bottom: 12px;
+        }
+
+        .layout-modern .m-dice-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .layout-modern .m-dice-grid .m-die-wrap:nth-child(5) {
+            grid-column: span 2;
+        }
+
+        .layout-modern .m-die-wrap {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 16px rgba(0,0,0,0.9);
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .layout-modern .m-die-wrap svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .layout-modern .m-die-wrap.die-hidden {
+            background: linear-gradient(145deg, #5e3410, #3a1e08);
+            border: 2px solid var(--m-border2);
+        }
+
+        .layout-modern .m-die-wrap.die-hidden::after {
+            content: '?';
+            font-size: 3em;
+            color: var(--m-gold);
+            font-family: 'Pirata One', serif;
+        }
+
+        .layout-modern .m-stat-pills {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-shrink: 0;
+        }
+
+        .layout-modern .m-stat-pill {
+            flex: 1;
+            text-align: center;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--m-border2);
+            border-radius: 8px;
+            padding: 6px 4px;
+            font-size: 0.75em;
+        }
+
+        .layout-modern .m-stat-pill .m-stat-val {
+            color: var(--m-gold);
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .layout-modern .m-stat-pill .m-stat-lbl {
+            color: var(--m-dimtext);
+            font-size: 0.85em;
+        }
+
+        /* --- Center Column --- */
+        .layout-modern .m-turn-banner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            background: linear-gradient(90deg, rgba(127,255,80,0.08), transparent);
+            border-left: 3px solid var(--m-green);
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 14px;
+            flex-shrink: 0;
+        }
+
+        .layout-modern .m-turn-banner.not-your-turn {
+            border-left-color: var(--m-border);
+            background: linear-gradient(90deg, rgba(200,104,32,0.08), transparent);
+        }
+
+        .layout-modern .m-turn-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--m-green);
+            animation: m-pulse 1.5s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+
+        .layout-modern .m-turn-banner.not-your-turn .m-turn-dot {
+            background: var(--m-amber);
+            animation: none;
+        }
+
+        @keyframes m-pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--m-green); }
+            50% { opacity: 0.4; box-shadow: 0 0 2px var(--m-green); }
+        }
+
+        .layout-modern .m-turn-text {
+            font-family: 'Pirata One', serif;
+            font-size: 1.3em;
+            color: var(--m-green);
+        }
+
+        .layout-modern .m-turn-banner.not-your-turn .m-turn-text {
+            color: var(--m-amber);
+        }
+
+        .layout-modern .m-turn-context {
+            font-style: italic;
+            color: var(--m-dimtext);
+            font-size: 0.85em;
+        }
+
+        .layout-modern .m-bid-hero {
+            text-align: center;
+            padding: 16px;
+            background: linear-gradient(145deg, rgba(74,38,8,0.6), rgba(28,9,0,0.6));
+            border: 1px solid var(--m-border2);
+            border-radius: 12px;
+            margin-bottom: 14px;
+            flex-shrink: 0;
+        }
+
+        .layout-modern .m-bid-hero-label {
+            font-size: 0.7em;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--m-dimtext);
+            margin-bottom: 6px;
+        }
+
+        .layout-modern .m-bid-hero-value {
+            font-family: 'Pirata One', serif;
+            font-size: 3.5em;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(200, 104, 32, 0.6), 0 0 40px rgba(200, 104, 32, 0.3);
+            line-height: 1.1;
+        }
+
+        .layout-modern .m-bid-hero-who {
+            font-style: italic;
+            color: var(--m-dimtext);
+            font-size: 0.85em;
+            margin-top: 4px;
+        }
+
+        .layout-modern .m-bid-hero.no-bid .m-bid-hero-value {
+            font-size: 1.8em;
+            color: var(--m-dimtext);
+            text-shadow: none;
+        }
+
+        /* Make Your Move */
+        .layout-modern .m-move-section {
+            padding: 14px 16px;
+            background: linear-gradient(145deg, rgba(74,38,8,0.4), rgba(28,9,0,0.4));
+            border: 1px solid var(--m-border2);
+            border-radius: 12px;
+            margin-bottom: 14px;
+            flex-shrink: 0;
+        }
+
+        .layout-modern .m-move-label {
+            font-size: 0.7em;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--m-dimtext);
+            margin-bottom: 10px;
+        }
+
+        .layout-modern .m-move-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .layout-modern .m-move-input {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .layout-modern .m-move-input label {
+            color: var(--m-text);
+            font-size: 0.9em;
+        }
+
+        .layout-modern .m-move-input input,
+        .layout-modern .m-move-input select {
+            padding: 10px 12px;
+            font-size: 1.1em;
+            border: 2px solid var(--m-border2);
+            border-radius: 8px;
+            background: rgba(0,0,0,0.5);
+            color: var(--m-gold);
+            width: 75px;
+            text-align: center;
+        }
+
+        .layout-modern .m-move-input select {
+            width: auto;
+        }
+
+        .layout-modern .m-btn-bid {
+            padding: 10px 22px;
+            font-size: 1.1em;
+            font-family: 'Georgia', serif;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: linear-gradient(145deg, #ffd700, #b8860b);
+            color: #2a1a0f;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .layout-modern .m-btn-bid:hover {
+            background: linear-gradient(145deg, #ffec80, #ffd700);
+            transform: scale(1.03);
+        }
+
+        .layout-modern .m-btn-liar {
+            padding: 10px 22px;
+            font-size: 1.1em;
+            font-family: 'Georgia', serif;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: linear-gradient(145deg, #8b0000, #5a0000);
+            color: #ffd700;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .layout-modern .m-btn-liar:hover {
+            background: linear-gradient(145deg, #a00000, #8b0000);
+            transform: scale(1.03);
+        }
+
+        .layout-modern .m-btn-roll {
+            padding: 12px 30px;
+            font-size: 1.2em;
+            font-family: 'Georgia', serif;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: linear-gradient(145deg, #ffd700, #b8860b);
+            color: #2a1a0f;
+            font-weight: bold;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .layout-modern .m-btn-roll:hover {
+            background: linear-gradient(145deg, #ffec80, #ffd700);
+            transform: scale(1.02);
+        }
+
+        /* Bottom split: History + Chat */
+        .layout-modern .m-bottom-split {
+            display: flex;
+            gap: 12px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .layout-modern .m-history-panel {
+            width: 28%;
+            min-width: 120px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--m-border2);
+            border-radius: 10px;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .layout-modern .m-history-panel .m-section-label {
+            flex-shrink: 0;
+        }
+
+        .layout-modern .m-history-list {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .layout-modern .m-history-item {
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(200,104,32,0.15);
+            font-size: 0.82em;
+            color: var(--m-text);
+        }
+
+        .layout-modern .m-history-item strong {
+            color: var(--m-gold);
+        }
+
+        /* Pirate Chat Inline */
+        .layout-modern .m-chat-panel {
+            flex: 1;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--m-border2);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .layout-modern .m-chat-header {
+            padding: 8px 12px;
+            background: linear-gradient(90deg, rgba(74,38,8,0.8), rgba(28,9,0,0.5));
+            border-bottom: 1px solid var(--m-border2);
+            color: var(--m-gold);
+            font-size: 0.9em;
+            flex-shrink: 0;
+        }
+
+        .layout-modern .m-chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+            min-height: 0;
+        }
+
+        .layout-modern .m-chat-msg {
+            padding: 5px 8px;
+            margin: 3px 0;
+            border-radius: 8px;
+            background: rgba(74, 38, 8, 0.3);
+            border-left: 2px solid var(--m-border2);
+        }
+
+        .layout-modern .m-chat-msg.own {
+            background: rgba(50, 205, 50, 0.12);
+            border-left-color: var(--m-green);
+        }
+
+        .layout-modern .m-chat-msg .m-chat-sender {
+            font-family: 'Pirata One', serif;
+            color: var(--m-gold);
+            font-size: 0.85em;
+        }
+
+        .layout-modern .m-chat-msg .m-chat-text {
+            color: var(--m-text);
+            font-style: italic;
+            font-size: 0.85em;
+            margin-top: 1px;
+        }
+
+        .layout-modern .m-chat-tabs {
+            display: flex;
+            border-top: 1px solid var(--m-border2);
+            flex-shrink: 0;
+        }
+
+        .layout-modern .m-chat-tab {
+            flex: 1;
+            padding: 6px;
+            background: none;
+            border: none;
+            color: var(--m-dimtext);
+            font-size: 0.78em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .layout-modern .m-chat-tab.active {
+            color: var(--m-gold);
+            background: rgba(255,215,0,0.08);
+            border-bottom: 2px solid var(--m-gold);
+        }
+
+        .layout-modern .m-chat-tab:hover {
+            color: var(--m-gold);
+        }
+
+        .layout-modern .m-chat-options {
+            padding: 8px;
+            border-top: 1px solid var(--m-border2);
+            flex-shrink: 0;
+        }
+
+        .layout-modern .m-chat-option-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+        }
+
+        .layout-modern .m-chat-quick-btn {
+            padding: 5px 6px;
+            background: linear-gradient(145deg, #5e3410, #3d2817);
+            border: 1px solid var(--m-border2);
+            border-radius: 6px;
+            color: var(--m-text);
+            font-size: 0.73em;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .layout-modern .m-chat-quick-btn:hover {
+            border-color: var(--m-gold);
+            color: var(--m-gold);
+        }
+
+        .layout-modern .m-chat-input-row {
+            display: flex;
+            gap: 6px;
+            padding: 8px;
+            border-top: 1px solid var(--m-border2);
+            flex-shrink: 0;
+        }
+
+        .layout-modern .m-chat-input-row input {
+            flex: 1;
+            padding: 8px 10px;
+            border: 1px solid var(--m-border2);
+            border-radius: 6px;
+            background: rgba(0,0,0,0.5);
+            color: var(--m-gold);
+            font-size: 0.9em;
+        }
+
+        .layout-modern .m-chat-input-row input::placeholder {
+            color: var(--m-dimtext);
+        }
+
+        .layout-modern .m-chat-input-row button {
+            padding: 8px 14px;
+            background: linear-gradient(145deg, #ffd700, #b8860b);
+            border: none;
+            border-radius: 6px;
+            color: #2a1a0f;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        /* --- Right Column: Opponents --- */
+        .layout-modern .m-opponent-card {
+            background: linear-gradient(145deg, var(--m-card), var(--m-bg));
+            border: 2px solid var(--m-border2);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .layout-modern .m-opponent-card.active-bidder {
+            border-color: var(--m-border);
+            box-shadow: 0 0 12px rgba(200,104,32,0.4);
+        }
+
+        .layout-modern .m-opponent-card.eliminated {
+            opacity: 0.4;
+        }
+
+        .layout-modern .m-opponent-card.disconnected {
+            border-color: #555;
+        }
+
+        .layout-modern .m-opp-avatar {
+            font-size: 2.5em;
+            flex-shrink: 0;
+        }
+
+        .layout-modern .m-opp-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .layout-modern .m-opp-name {
+            font-family: 'Pirata One', serif;
+            color: var(--m-gold);
+            font-size: 1.1em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .layout-modern .m-opp-status {
+            color: var(--m-dimtext);
+            font-size: 0.8em;
+        }
+
+        .layout-modern .m-opp-list {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .layout-modern .m-bottom-btns {
+            flex-shrink: 0;
+            margin-top: auto;
+            padding-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .layout-modern .m-bottom-btns .btn {
+            width: 100%;
+            padding: 10px;
+            font-size: 0.95em;
+        }
+
+        /* --- Message when not bidding phase (rolling, waiting, etc.) --- */
+        .layout-modern .m-message-box {
+            text-align: center;
+            padding: 20px;
+            color: var(--m-text);
+            font-size: 1.2em;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--m-border2);
+            border-radius: 10px;
+            margin-bottom: 14px;
+        }
+
+        /* --- Hide legacy elements when Modern is active --- */
+        .layout-modern #game {
+            display: none !important;
+        }
+
+        .layout-modern .settings-btn,
+        .layout-modern .poker-btn,
+        .layout-modern .rules-btn {
+            display: none !important;
+        }
+
+        .layout-modern .chat-btn {
+            display: none !important;
+        }
+
+        .layout-modern .chat-panel {
+            display: none !important;
+        }
+
+        /* Show modern game container only when modern is active */
+        #game-modern {
+            display: none !important;
+        }
+
+        .layout-modern #game-modern {
+            display: flex !important;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .layout-modern #game-modern.hidden {
+            display: none !important;
+        }
+
+        /* Make body not scroll in modern layout when game is active */
+        .layout-modern.m-game-active {
+            overflow: hidden;
+        }
+
+        .layout-modern.m-game-active header,
+        .layout-modern.m-game-active #account-status {
+            display: none !important;
+        }
+
+        /* --- Layout Toggle in Settings --- */
+        .layout-toggle-options {
+            display: flex;
+            gap: 10px;
+        }
+
+        .layout-option {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border: 2px solid #5a2d0a;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #d4a574;
+        }
+
+        .layout-option:hover {
+            background: rgba(255, 215, 0, 0.05);
+        }
+
+        .layout-option.active {
+            border-color: #ffd700;
+            background: rgba(255, 215, 0, 0.1);
+            color: #ffd700;
+        }
+
+        .layout-option input[type="radio"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #ffd700;
+        }
+
+        /* ============================================ */
+        /* MODERN LAYOUT — MOBILE (< 768px)            */
+        /* ============================================ */
+        @media (max-width: 767px) {
+            .layout-modern #game-modern {
+                height: auto;
+                overflow: visible;
+            }
+
+            .layout-modern.m-game-active {
+                overflow: auto;
+            }
+
+            .layout-modern .m-header {
+                height: auto;
+                min-height: 48px;
+                padding: 8px 12px;
+                flex-wrap: wrap;
+            }
+
+            .layout-modern .m-header-title {
+                font-size: 1.3em;
+            }
+
+            .layout-modern .m-header-subtitle {
+                display: none;
+            }
+
+            .layout-modern .m-header-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+            }
+
+            .layout-modern .m-grid {
+                display: flex;
+                flex-direction: column;
+                height: auto;
+                overflow: visible;
+            }
+
+            .layout-modern .m-col {
+                overflow: visible;
+                padding: 12px;
+            }
+
+            .layout-modern .m-col-left {
+                border-right: none;
+                border-bottom: 2px solid var(--m-border2);
+            }
+
+            .layout-modern .m-col-right {
+                border-left: none;
+                border-top: 2px solid var(--m-border2);
+            }
+
+            /* Mobile dice: single row */
+            .layout-modern .m-dice-grid {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 8px;
+                flex: none;
+            }
+
+            .layout-modern .m-die-wrap {
+                width: 60px;
+                height: 60px;
+                aspect-ratio: auto;
+            }
+
+            .layout-modern .m-die-wrap.die-hidden::after {
+                font-size: 1.8em;
+            }
+
+            .layout-modern .m-your-name {
+                text-align: center;
+                font-size: 1.2em;
+            }
+
+            .layout-modern .m-stat-pills {
+                justify-content: center;
+            }
+
+            /* Mobile center column */
+            .layout-modern .m-col-center {
+                overflow: visible;
+            }
+
+            .layout-modern .m-bid-hero-value {
+                font-size: 2.5em;
+            }
+
+            .layout-modern .m-move-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .layout-modern .m-move-input {
+                justify-content: center;
+            }
+
+            .layout-modern .m-move-input input,
+            .layout-modern .m-move-input select {
+                font-size: 16px;
+                padding: 12px;
+            }
+
+            .layout-modern .m-btn-bid,
+            .layout-modern .m-btn-liar,
+            .layout-modern .m-btn-roll {
+                width: 100%;
+                padding: 14px;
+                font-size: 16px;
+                min-height: 44px;
+            }
+
+            /* Mobile bottom split: stack vertically */
+            .layout-modern .m-bottom-split {
+                flex-direction: column;
+            }
+
+            .layout-modern .m-history-panel {
+                width: 100%;
+                max-height: 160px;
+            }
+
+            .layout-modern .m-chat-panel {
+                height: 280px;
+            }
+
+            .layout-modern .m-chat-input-row input {
+                font-size: 16px;
+            }
+
+            /* Mobile opponent cards */
+            .layout-modern .m-opponent-card {
+                padding: 10px;
+            }
+
+            .layout-modern .m-opp-avatar {
+                font-size: 2em;
+            }
+
+            /* Larger tap targets */
+            .layout-modern .m-chat-tab {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .layout-modern .m-chat-quick-btn {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.8em;
+            }
+
+            .layout-modern .m-bottom-btns .btn {
+                min-height: 44px;
+            }
+        }
+
         /* Rules Button & Modal */
         .rules-btn {
             position: fixed;
@@ -1755,6 +2694,20 @@
             </div>
 
             <div class="settings-section">
+                <h3>🗺️ UI Layout</h3>
+                <div class="layout-toggle-options">
+                    <label class="layout-option active" id="layout-opt-modern" onclick="setUILayout('modern')">
+                        <input type="radio" name="ui-layout" value="modern" checked>
+                        <span>Modern</span>
+                    </label>
+                    <label class="layout-option" id="layout-opt-legacy" onclick="setUILayout('legacy')">
+                        <input type="radio" name="ui-layout" value="legacy">
+                        <span>Legacy</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-section">
                 <h3>🎲 Dice Size</h3>
                 <div class="dice-size-options">
                     <label class="size-option">
@@ -2130,6 +3083,61 @@
                 <!-- Exit Button (always visible during game) -->
                 <div style="margin-top: 15px; text-align: center;">
                     <button class="btn btn-red" onclick="exitToMainMenu()" style="opacity: 0.8;">🚪 Exit to Main Menu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modern Game Screen -->
+    <div id="game-modern" class="hidden">
+        <!-- Header -->
+        <div class="m-header">
+            <div class="m-header-left">
+                <span class="m-header-title">⚓ Liar's Dice</span>
+                <span class="m-header-subtitle">Pirates of the Caribbean · Multiplayer</span>
+            </div>
+            <div class="m-header-right">
+                <span class="m-room-pill" id="m-room-code">XXXX</span>
+                <button class="m-header-btn" onclick="window.open('https://poker.fothergill.com/','_blank')" title="Trivia Poker">♠</button>
+                <button class="m-header-btn" onclick="toggleSettings()" title="Settings">⚙</button>
+                <button class="m-header-btn" onclick="toggleRules()" title="Rules">📜</button>
+            </div>
+        </div>
+        <!-- 3-Column Grid -->
+        <div class="m-grid">
+            <!-- Left: Your Hand -->
+            <div class="m-col m-col-left">
+                <div class="m-section-label">⚔ YOUR HAND</div>
+                <div class="m-your-name" id="m-your-name">☠ Captain (You)</div>
+                <div class="m-dice-grid" id="m-dice-grid"></div>
+                <div class="m-stat-pills">
+                    <div class="m-stat-pill">
+                        <div class="m-stat-val" id="m-your-dice">5</div>
+                        <div class="m-stat-lbl">Your Dice</div>
+                    </div>
+                    <div class="m-stat-pill">
+                        <div class="m-stat-val" id="m-total-dice">10</div>
+                        <div class="m-stat-lbl">Total Dice</div>
+                    </div>
+                    <div class="m-stat-pill">
+                        <div class="m-stat-val" id="m-difficulty">⚓</div>
+                        <div class="m-stat-lbl">Difficulty</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Center: Game Action -->
+            <div class="m-col m-col-center" id="m-center-col">
+                <!-- Populated by JS -->
+            </div>
+            <!-- Right: Opponents -->
+            <div class="m-col m-col-right">
+                <div class="m-section-label">👥 OPPONENTS</div>
+                <div class="m-opp-list" id="m-opp-list"></div>
+                <div class="m-bottom-btns">
+                    <div id="m-host-controls" class="hidden">
+                        <button class="btn btn-wood" onclick="returnToLobby()" style="width:100%;">🏠 Return to Lobby</button>
+                    </div>
+                    <button class="btn btn-red" onclick="exitToMainMenu()" style="width:100%; opacity: 0.8;">🚪 Exit to Main Menu</button>
                 </div>
             </div>
         </div>
@@ -2599,6 +3607,380 @@
             }
         }
 
+        // ============================================
+        // MODERN LAYOUT — JavaScript
+        // ============================================
+
+        let uiLayout = 'modern';
+        let modernChatTab = 'taunt';
+
+        function setUILayout(layout) {
+            uiLayout = layout;
+            localStorage.setItem('uiLayout', layout);
+            if (layout === 'modern') {
+                document.body.classList.add('layout-modern');
+                document.body.classList.remove('layout-legacy');
+            } else {
+                document.body.classList.remove('layout-modern');
+                document.body.classList.add('layout-legacy');
+            }
+            // Update settings radio UI
+            document.getElementById('layout-opt-modern').classList.toggle('active', layout === 'modern');
+            document.getElementById('layout-opt-legacy').classList.toggle('active', layout === 'legacy');
+            const radio = document.querySelector(`input[name="ui-layout"][value="${layout}"]`);
+            if (radio) radio.checked = true;
+            // Re-render if in game
+            if (gameState) updateUI();
+            playSfx('click');
+        }
+
+        function loadLayoutPreference() {
+            const saved = localStorage.getItem('uiLayout') || 'modern';
+            uiLayout = saved;
+            if (saved === 'modern') {
+                document.body.classList.add('layout-modern');
+            } else {
+                document.body.classList.add('layout-legacy');
+            }
+            document.getElementById('layout-opt-modern').classList.toggle('active', saved === 'modern');
+            document.getElementById('layout-opt-legacy').classList.toggle('active', saved === 'legacy');
+            const radio = document.querySelector(`input[name="ui-layout"][value="${saved}"]`);
+            if (radio) radio.checked = true;
+        }
+
+        // SVG Dice Renderer
+        const pipPositions = {
+            1: [[50,50]],
+            2: [[70,30],[30,70]],
+            3: [[70,30],[50,50],[30,70]],
+            4: [[30,30],[70,30],[30,70],[70,70]],
+            5: [[30,30],[70,30],[50,50],[30,70],[70,70]],
+            6: [[30,25],[70,25],[30,50],[70,50],[30,75],[70,75]]
+        };
+
+        function getModernDiceSVG(value) {
+            if (!value || value === 0) return '';
+            const pips = pipPositions[value] || [];
+            const isWild = value === 1;
+            const borderColor = isWild ? '#b8860b' : '#c86820';
+            const faceColor = isWild ? '#fff8dc' : '#f5eed8';
+            let pipsSVG = pips.map(([x,y]) =>
+                `<circle cx="${x}" cy="${y}" r="8" fill="${borderColor}"/>`
+            ).join('');
+
+            return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <rect width="100" height="100" rx="14" ry="14" fill="${borderColor}"/>
+                <rect x="8" y="8" width="84" height="84" rx="9" ry="9" fill="${faceColor}"/>
+                <defs><linearGradient id="hl${value}" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="rgba(255,255,255,0.35)"/>
+                    <stop offset="60%" stop-color="rgba(255,255,255,0)"/>
+                </linearGradient></defs>
+                <rect x="8" y="8" width="84" height="84" rx="9" ry="9" fill="url(#hl${value})"/>
+                ${pipsSVG}
+            </svg>`;
+        }
+
+        function updateGameBoardModern() {
+            if (!gameState) return;
+
+            const myPlayer = gameState.players[playerIndex];
+            const isMyTurn = playerIndex === gameState.current_player && gameState.phase === 'bidding';
+
+            // --- Update header ---
+            document.getElementById('m-room-code').textContent = gameState.room_code;
+
+            // --- Left column: Your Hand ---
+            if (myPlayer) {
+                let crown = '';
+                try { crown = getCrownIcon(getPlayerRank(myPlayer.name)); } catch(e) {}
+                document.getElementById('m-your-name').innerHTML = `☠ ${myPlayer.name}${crown} (You)`;
+                document.getElementById('m-your-dice').textContent = myPlayer.num_dice;
+
+                const diceGrid = document.getElementById('m-dice-grid');
+                if (myPlayer.dice && myPlayer.dice.length > 0) {
+                    diceGrid.innerHTML = myPlayer.dice.map(d => {
+                        if (d === 0) return '<div class="m-die-wrap die-hidden"></div>';
+                        return `<div class="m-die-wrap">${getModernDiceSVG(d)}</div>`;
+                    }).join('');
+                } else {
+                    diceGrid.innerHTML = '<div style="grid-column:span 2;text-align:center;color:var(--m-dimtext);padding:20px;">No dice yet</div>';
+                }
+            }
+
+            document.getElementById('m-total-dice').textContent = gameState.total_dice;
+
+            const diffEmoji = {easy:'🦜', medium:'⚓', hard:'💀', impossible:'🏴‍☠️', random:'🎲'};
+            document.getElementById('m-difficulty').textContent = diffEmoji[gameState.ai_difficulty] || '⚓';
+
+            // --- Right column: Opponents ---
+            const oppList = document.getElementById('m-opp-list');
+            oppList.innerHTML = gameState.players.map((p, idx) => {
+                if (idx === playerIndex) return '';
+                const isEliminated = p.num_dice <= 0;
+                const isBidder = idx === gameState.current_bidder || idx === gameState.current_player;
+                let cls = 'm-opponent-card';
+                if (isBidder && gameState.phase === 'bidding') cls += ' active-bidder';
+                if (isEliminated) cls += ' eliminated';
+                if (!p.connected) cls += ' disconnected';
+
+                let crown = '';
+                try { crown = getCrownIcon(getPlayerRank(p.name)); } catch(e) {}
+
+                const status = isEliminated ? 'ELIMINATED' :
+                    !p.connected ? 'Disconnected' :
+                    `${p.num_dice} dice${p.is_human ? '' : ' (AI)'}`;
+
+                const kickBtn = (gameState.is_host && idx !== 0 && idx !== playerIndex)
+                    ? `<button class="kick-btn" onclick="kickPlayer(${idx})" title="Kick" style="opacity:1;position:static;width:24px;height:24px;">✕</button>` : '';
+
+                return `<div class="${cls}">
+                    <div class="m-opp-avatar">${p.avatar || '⚓'}</div>
+                    <div class="m-opp-info">
+                        <div class="m-opp-name">${p.name}${crown}</div>
+                        <div class="m-opp-status">${status}</div>
+                    </div>
+                    ${kickBtn}
+                </div>`;
+            }).join('');
+
+            // Host controls
+            const mHostCtrl = document.getElementById('m-host-controls');
+            if (gameState.is_host && gameState.phase === 'game_over') {
+                mHostCtrl.classList.remove('hidden');
+            } else {
+                mHostCtrl.classList.add('hidden');
+            }
+
+            // --- Center column ---
+            updateModernCenter();
+
+            // Show reveal overlay if needed (shared with legacy)
+            if (gameState.phase === 'reveal' || gameState.phase === 'game_over') {
+                showReveal();
+            } else {
+                document.getElementById('reveal-overlay').classList.add('hidden');
+            }
+        }
+
+        function updateModernCenter() {
+            const center = document.getElementById('m-center-col');
+            const isMyTurn = playerIndex === gameState.current_player && gameState.phase === 'bidding';
+            const myPlayer = gameState.players[playerIndex];
+
+            let html = '';
+
+            // Turn banner
+            if (gameState.phase === 'bidding') {
+                const currentP = gameState.players[gameState.current_player];
+                const currentName = currentP ? currentP.name : '';
+                if (isMyTurn) {
+                    let context = '';
+                    if (gameState.current_bid) {
+                        const bidder = gameState.players[gameState.current_bidder];
+                        context = `<span class="m-turn-context">— respond to ${bidder ? bidder.name : 'unknown'}'s bid</span>`;
+                    }
+                    html += `<div class="m-turn-banner">
+                        <div class="m-turn-dot"></div>
+                        <span class="m-turn-text">YOUR TURN</span>
+                        ${context}
+                    </div>`;
+                } else {
+                    html += `<div class="m-turn-banner not-your-turn">
+                        <div class="m-turn-dot"></div>
+                        <span class="m-turn-text">${currentName}'s Turn</span>
+                    </div>`;
+                }
+            } else if (gameState.phase === 'rolling') {
+                html += `<div class="m-message-box">${gameState.message}</div>`;
+            } else if (gameState.phase === 'game_over' || gameState.phase === 'reveal') {
+                html += `<div class="m-message-box">${gameState.message}</div>`;
+            } else {
+                html += `<div class="m-message-box">${gameState.message}</div>`;
+            }
+
+            // Current Bid hero
+            if (gameState.current_bid) {
+                const [qty, face] = gameState.current_bid;
+                const bidder = gameState.players[gameState.current_bidder];
+                html += `<div class="m-bid-hero">
+                    <div class="m-bid-hero-label">⚡ CURRENT BID</div>
+                    <div class="m-bid-hero-value">${qty} × ${face}s</div>
+                    <div class="m-bid-hero-who">${bidder ? bidder.name : ''}'s bid</div>
+                </div>`;
+            } else if (gameState.phase === 'bidding') {
+                html += `<div class="m-bid-hero no-bid">
+                    <div class="m-bid-hero-label">⚡ CURRENT BID</div>
+                    <div class="m-bid-hero-value">No bids yet</div>
+                </div>`;
+            }
+
+            // Controls
+            if (gameState.phase === 'rolling') {
+                html += `<div class="m-move-section">
+                    <button class="m-btn-roll" onclick="rollDice()">🎲 Roll Dice</button>
+                </div>`;
+            } else if (gameState.phase === 'bidding' && isMyTurn && myPlayer && myPlayer.num_dice > 0) {
+                const canChallenge = gameState.current_bid !== null;
+                const minQty = gameState.current_bid ? gameState.current_bid[0] : 1;
+                const curFace = gameState.current_bid ? gameState.current_bid[1] : 2;
+                html += `<div class="m-move-section">
+                    <div class="m-move-label">🎯 MAKE YOUR MOVE</div>
+                    <div class="m-move-row">
+                        <div class="m-move-input">
+                            <label>Qty:</label>
+                            <input type="number" id="m-bid-qty" min="1" max="${gameState.total_dice}" value="${minQty}">
+                        </div>
+                        <div class="m-move-input">
+                            <label>Face:</label>
+                            <select id="m-bid-face">
+                                <option value="1">1 (Wild)</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                            </select>
+                        </div>
+                        <button class="m-btn-bid" onclick="makeBidModern()">MAKE BID</button>
+                        ${canChallenge ? '<button class="m-btn-liar" onclick="callLiar()">LIAR!</button>' : ''}
+                    </div>
+                </div>`;
+            } else if (gameState.phase === 'reveal' || gameState.phase === 'game_over') {
+                // Show continue/play again button
+                const btnText = gameState.phase === 'game_over' ? 'Play Again' : 'Next Round';
+                html += `<div class="m-move-section" style="text-align:center;">
+                    <button class="m-btn-roll" onclick="continueGame()">⚔ ${btnText}</button>
+                </div>`;
+            }
+
+            // Bottom split: History + Chat
+            html += `<div class="m-bottom-split">`;
+
+            // History panel
+            html += `<div class="m-history-panel">
+                <div class="m-section-label">📜 Round History</div>
+                <div class="m-history-list" id="m-history-list">`;
+            if (gameState.round_history && gameState.round_history.length > 0) {
+                html += gameState.round_history.map(h => {
+                    if (h.action === 'bid') {
+                        return `<div class="m-history-item">${h.player} bids ${h.bid}</div>`;
+                    } else {
+                        return `<div class="m-history-item"><strong>${h.player} calls LIAR!</strong></div>`;
+                    }
+                }).join('');
+            } else {
+                html += '<div class="m-history-item" style="color:var(--m-dimtext);">No bids yet...</div>';
+            }
+            html += `</div></div>`;
+
+            // Chat panel
+            html += `<div class="m-chat-panel">
+                <div class="m-chat-header">⚓ Pirate Chat</div>
+                <div class="m-chat-messages" id="m-chat-messages"></div>
+                <div class="m-chat-tabs">
+                    <button class="m-chat-tab ${modernChatTab==='taunt'?'active':''}" onclick="setModernChatTab('taunt',this)">Taunts</button>
+                    <button class="m-chat-tab ${modernChatTab==='react'?'active':''}" onclick="setModernChatTab('react',this)">Reactions</button>
+                    <button class="m-chat-tab ${modernChatTab==='social'?'active':''}" onclick="setModernChatTab('social',this)">Social</button>
+                    <button class="m-chat-tab ${modernChatTab==='custom'?'active':''}" onclick="setModernChatTab('custom',this)">Custom</button>
+                </div>
+                <div class="m-chat-options" id="m-chat-options"></div>
+                <div class="m-chat-input-row">
+                    <input type="text" id="m-chat-input" placeholder="Type yer message..." maxlength="100" onkeypress="if(event.key==='Enter')sendModernChat()">
+                    <button onclick="sendModernChat()">Send</button>
+                </div>
+            </div>`;
+
+            html += `</div>`; // close m-bottom-split
+
+            center.innerHTML = html;
+
+            // Set face value after DOM is built
+            if (gameState.phase === 'bidding' && isMyTurn) {
+                const faceSelect = document.getElementById('m-bid-face');
+                if (faceSelect && gameState.current_bid) {
+                    faceSelect.value = gameState.current_bid[1];
+                }
+            }
+
+            // Restore chat messages
+            restoreModernChat();
+            populateModernChatOptions();
+        }
+
+        // Modern chat message store
+        let modernChatHistory = [];
+
+        function addModernChatMessage(sender, avatar, message, isOwn) {
+            modernChatHistory.push({sender, avatar, message, isOwn});
+            if (modernChatHistory.length > 50) modernChatHistory.shift();
+
+            const container = document.getElementById('m-chat-messages');
+            if (!container) return;
+            const crown = (() => { try { return getCrownIcon(getPlayerRank(sender)); } catch(e) { return ''; } })();
+            const div = document.createElement('div');
+            div.className = `m-chat-msg ${isOwn ? 'own' : ''}`;
+            div.innerHTML = `<span class="m-chat-sender">${avatar||'⚓'} ${sender}${crown}</span> <span class="m-chat-text">${message}</span>`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function restoreModernChat() {
+            const container = document.getElementById('m-chat-messages');
+            if (!container) return;
+            container.innerHTML = '';
+            modernChatHistory.forEach(m => {
+                const crown = (() => { try { return getCrownIcon(getPlayerRank(m.sender)); } catch(e) { return ''; } })();
+                const div = document.createElement('div');
+                div.className = `m-chat-msg ${m.isOwn ? 'own' : ''}`;
+                div.innerHTML = `<span class="m-chat-sender">${m.avatar||'⚓'} ${m.sender}${crown}</span> <span class="m-chat-text">${m.message}</span>`;
+                container.appendChild(div);
+            });
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function setModernChatTab(tab, btn) {
+            modernChatTab = tab;
+            document.querySelectorAll('.m-chat-tab').forEach(t => t.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            populateModernChatOptions();
+        }
+
+        function populateModernChatOptions() {
+            const container = document.getElementById('m-chat-options');
+            if (!container) return;
+            if (modernChatTab === 'custom') {
+                container.innerHTML = '';
+                return;
+            }
+            const msgs = chatMessages[modernChatTab === 'react' ? 'react' : modernChatTab] || [];
+            container.innerHTML = `<div class="m-chat-option-grid">${
+                msgs.slice(0, 6).map(msg =>
+                    `<button class="m-chat-quick-btn" onclick="sendModernQuick('${msg.replace(/'/g, "\\'")}')">${msg}</button>`
+                ).join('')
+            }</div>`;
+        }
+
+        function sendModernChat() {
+            const input = document.getElementById('m-chat-input');
+            if (!input) return;
+            const msg = input.value.trim();
+            if (!msg || !roomCode || playerIndex === -1) return;
+            input.value = '';
+            sendChatMessage(msg);
+        }
+
+        function sendModernQuick(msg) {
+            if (!roomCode || playerIndex === -1) return;
+            sendChatMessage(msg);
+        }
+
+        function makeBidModern() {
+            const qty = parseInt(document.getElementById('m-bid-qty').value);
+            const face = parseInt(document.getElementById('m-bid-face').value);
+            if (isNaN(qty) || isNaN(face)) return;
+            socket.emit('make_bid', { room_code: roomCode, quantity: qty, face: face });
+        }
+
         // Player chat messages organized by category
         const chatMessages = {
             taunt: [
@@ -2943,6 +4325,8 @@
                     document.getElementById('lobby').classList.remove('hidden');
                     document.getElementById('waiting-room').classList.add('hidden');
                     document.getElementById('game').classList.add('hidden');
+                    document.getElementById('game-modern').classList.add('hidden');
+                    document.body.classList.remove('m-game-active');
                     return;
                 }
                 openBrowser(data.message);
@@ -3011,6 +4395,8 @@
                     document.getElementById('lobby').classList.remove('hidden');
                     document.getElementById('waiting-room').classList.add('hidden');
                     document.getElementById('game').classList.add('hidden');
+                    document.getElementById('game-modern').classList.add('hidden');
+                    document.body.classList.remove('m-game-active');
                 }
             });
 
@@ -3038,12 +4424,15 @@
                 document.getElementById('lobby').classList.remove('hidden');
                 document.getElementById('waiting-room').classList.add('hidden');
                 document.getElementById('game').classList.add('hidden');
+                document.getElementById('game-modern').classList.add('hidden');
                 document.getElementById('reveal-overlay').classList.add('hidden');
                 document.getElementById('spectator-banner').classList.add('hidden');
                 document.getElementById('chat-panel').classList.add('hidden');
                 document.getElementById('chat-btn').classList.add('hidden');
                 document.body.style.paddingTop = '0';
+                document.body.classList.remove('m-game-active');
                 chatOpen = false;
+                modernChatHistory = [];
 
                 // Show account banner again on main menu
                 updateAccountUI();
@@ -3411,6 +4800,8 @@
             document.getElementById('lobby').classList.add('hidden');
             document.getElementById('waiting-room').classList.remove('hidden');
             document.getElementById('game').classList.add('hidden');
+            document.getElementById('game-modern').classList.add('hidden');
+            document.body.classList.remove('m-game-active');
 
             if (isHost) {
                 document.getElementById('host-controls').classList.remove('hidden');
@@ -3428,19 +4819,33 @@
         function updateUI() {
             if (!gameState) return;
 
+            const isModern = uiLayout === 'modern';
+
             // Show appropriate screen based on phase
             if (gameState.phase === 'lobby') {
                 document.getElementById('lobby').classList.add('hidden');
                 document.getElementById('server-browser').classList.add('hidden');
                 document.getElementById('waiting-room').classList.remove('hidden');
                 document.getElementById('game').classList.add('hidden');
+                document.getElementById('game-modern').classList.add('hidden');
+                document.body.classList.remove('m-game-active');
                 updateWaitingRoom();
             } else {
                 document.getElementById('lobby').classList.add('hidden');
                 document.getElementById('server-browser').classList.add('hidden');
                 document.getElementById('waiting-room').classList.add('hidden');
-                document.getElementById('game').classList.remove('hidden');
-                updateGameBoard();
+
+                if (isModern) {
+                    document.getElementById('game').classList.add('hidden');
+                    document.getElementById('game-modern').classList.remove('hidden');
+                    document.body.classList.add('m-game-active');
+                    updateGameBoardModern();
+                } else {
+                    document.getElementById('game-modern').classList.add('hidden');
+                    document.getElementById('game').classList.remove('hidden');
+                    document.body.classList.remove('m-game-active');
+                    updateGameBoard();
+                }
             }
 
             // Hide account banner during game/waiting room - only show on main menu
@@ -3785,12 +5190,15 @@
                 document.getElementById('lobby').classList.remove('hidden');
                 document.getElementById('waiting-room').classList.add('hidden');
                 document.getElementById('game').classList.add('hidden');
+                document.getElementById('game-modern').classList.add('hidden');
                 document.getElementById('reveal-overlay').classList.add('hidden');
                 document.getElementById('spectator-banner').classList.add('hidden');
                 document.getElementById('chat-panel').classList.add('hidden');
                 document.getElementById('chat-btn').classList.add('hidden');
                 document.body.style.paddingTop = '0';
+                document.body.classList.remove('m-game-active');
                 chatOpen = false;
+                modernChatHistory = [];
 
                 // Show account banner again on main menu
                 updateAccountUI();
@@ -3819,6 +5227,9 @@
             document.getElementById('lobby').classList.remove('hidden');
             document.getElementById('waiting-room').classList.add('hidden');
             document.getElementById('game').classList.add('hidden');
+            document.getElementById('game-modern').classList.add('hidden');
+            document.body.classList.remove('m-game-active');
+            modernChatHistory = [];
 
             // Show account banner again on main menu
             updateAccountUI();
@@ -3929,27 +5340,33 @@
         }
 
         function addChatMessageToPanel(sender, avatar, message, isOwn) {
+            // Legacy chat panel
             const container = document.getElementById('chat-messages');
-            const msgDiv = document.createElement('div');
-            let glowClass = '';
-            let crown = '';
-            try {
-                const rank = getPlayerRank(sender);
-                glowClass = (rank >= 1 && rank <= 3) ? ` top-pirate-${rank}` : '';
-                crown = getCrownIcon(rank);
-            } catch (e) { console.error('Rank error:', e); }
-            msgDiv.className = `chat-message ${isOwn ? 'own' : ''}${glowClass}`;
-            msgDiv.innerHTML = `
-                <div class="sender">${avatar || '⚓'} ${sender}${crown}</div>
-                <div class="text">${message}</div>
-            `;
-            container.appendChild(msgDiv);
-            container.scrollTop = container.scrollHeight;
+            if (container) {
+                const msgDiv = document.createElement('div');
+                let glowClass = '';
+                let crown = '';
+                try {
+                    const rank = getPlayerRank(sender);
+                    glowClass = (rank >= 1 && rank <= 3) ? ` top-pirate-${rank}` : '';
+                    crown = getCrownIcon(rank);
+                } catch (e) { console.error('Rank error:', e); }
+                msgDiv.className = `chat-message ${isOwn ? 'own' : ''}${glowClass}`;
+                msgDiv.innerHTML = `
+                    <div class="sender">${avatar || '⚓'} ${sender}${crown}</div>
+                    <div class="text">${message}</div>
+                `;
+                container.appendChild(msgDiv);
+                container.scrollTop = container.scrollHeight;
 
-            // Keep only last 50 messages
-            while (container.children.length > 50) {
-                container.removeChild(container.firstChild);
+                // Keep only last 50 messages
+                while (container.children.length > 50) {
+                    container.removeChild(container.firstChild);
+                }
             }
+
+            // Modern chat — always feed the store
+            addModernChatMessage(sender, avatar, message, isOwn);
         }
 
         function updateChatVisibility() {
@@ -4294,6 +5711,7 @@
             initSocket();
             initMusic();
             loadDiceSizePreference();
+            loadLayoutPreference();
             initIOSEventListeners();
 
             // Validate existing token
