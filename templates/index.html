@@ -731,16 +731,32 @@
             background: #ffd700;
         }
 
-        /* Private Badge */
-        .private-badge {
+        /* Private Badge Button */
+        .private-badge-btn {
             display: inline-block;
-            background: rgba(139, 0, 0, 0.4);
-            border: 1px solid #8b0000;
-            color: #ff6b6b;
-            padding: 3px 10px;
+            background: rgba(34, 139, 34, 0.3);
+            border: 1px solid #228b22;
+            color: #90ee90;
+            padding: 5px 14px;
             border-radius: 10px;
-            font-size: 0.8em;
-            margin-top: 5px;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .private-badge-btn:hover {
+            opacity: 0.85;
+        }
+
+        .private-badge-btn.is-private {
+            background: rgba(139, 0, 0, 0.4);
+            border-color: #8b0000;
+            color: #ff6b6b;
+        }
+
+        .private-badge-btn:disabled {
+            cursor: default;
+            opacity: 0.7;
         }
 
         /* AI Controls in Waiting Room */
@@ -2149,6 +2165,39 @@
             transform: scale(0.95);
         }
 
+        /* Lobby Menu Dropdown */
+        .lobby-menu {
+            position: fixed;
+            top: 78px;
+            right: 140px;
+            background: linear-gradient(145deg, #3d2817 0%, #2a1a0f 100%);
+            border: 2px solid #ffd700;
+            border-radius: 12px;
+            padding: 8px;
+            z-index: 101;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            min-width: 180px;
+        }
+
+        .lobby-menu-item {
+            display: block;
+            padding: 10px 16px;
+            color: #ffd700;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: background 0.2s;
+        }
+
+        .lobby-menu-item:hover {
+            background: rgba(255, 215, 0, 0.15);
+        }
+
+        .layout-modern .lobby-menu {
+            top: 58px;
+            right: 20px;
+        }
+
         .settings-section {
             background: rgba(0,0,0,0.3);
             border-radius: 10px;
@@ -2660,8 +2709,14 @@
     <!-- Settings Button -->
     <button class="settings-btn" onclick="toggleSettings()" title="Settings">⚙️</button>
 
-    <!-- Trivia Poker Button -->
-    <a href="https://poker.fothergill.com/" target="_blank" rel="noopener noreferrer" class="poker-btn" title="Play Trivia Poker">♠️</a>
+    <!-- Lobby Ace of Spades Button -->
+    <button class="poker-btn" onclick="toggleLobbyMenu()" title="Game Lobby">♠️</button>
+
+    <!-- Lobby Menu Dropdown -->
+    <div id="lobby-menu" class="lobby-menu hidden">
+        <a href="https://poker.fothergill.com/" target="_blank" rel="noopener noreferrer" class="lobby-menu-item">♠️ Trivia Poker</a>
+        <a href="https://lastmagazine.fothergill.com/" target="_blank" rel="noopener noreferrer" class="lobby-menu-item">🧟 Last Magazine</a>
+    </div>
 
     <!-- Settings Overlay -->
     <div id="settings-overlay" class="overlay hidden">
@@ -2934,13 +2989,8 @@
                 </select>
             </div>
 
-            <div class="private-toggle">
-                <label for="private-game">Private Game (hidden from browser)</label>
-                <div class="toggle-switch">
-                    <input type="checkbox" id="private-game">
-                    <span class="toggle-slider"></span>
-                </div>
-            </div>
+            <button class="btn btn-wood" id="private-game-btn" onclick="togglePrivateCreate()" style="width: 100%; margin-bottom: 15px;">🌐 Public Game</button>
+            <input type="hidden" id="private-game" value="false">
 
             <div class="lobby-buttons">
                 <button class="btn btn-gold" onclick="createGame()">Create Game</button>
@@ -2995,7 +3045,7 @@
                 <div class="room-code-display">
                     <div class="room-code-label">Share this code with friends:</div>
                     <div class="room-code" id="display-room-code">XXXX</div>
-                    <div id="private-badge" class="private-badge hidden">Private Voyage</div>
+                    <button id="private-badge" class="private-badge-btn" onclick="togglePrivacyWaiting()" style="margin-top: 8px;">🌐 Public Game</button>
                 </div>
 
                 <div class="player-list" id="player-list"></div>
@@ -3098,7 +3148,7 @@
             </div>
             <div class="m-header-right">
                 <span class="m-room-pill" id="m-room-code">XXXX</span>
-                <button class="m-header-btn" onclick="window.open('https://poker.fothergill.com/','_blank')" title="Trivia Poker">♠</button>
+                <button class="m-header-btn" onclick="toggleLobbyMenu()" title="Game Lobby">♠</button>
                 <button class="m-header-btn" onclick="toggleSettings()" title="Settings">⚙</button>
                 <button class="m-header-btn" onclick="toggleRules()" title="Rules">📜</button>
             </div>
@@ -3134,9 +3184,7 @@
                 <div class="m-section-label">👥 OPPONENTS</div>
                 <div class="m-opp-list" id="m-opp-list"></div>
                 <div class="m-bottom-btns">
-                    <div id="m-host-controls" class="hidden">
-                        <button class="btn btn-wood" onclick="returnToLobby()" style="width:100%;">🏠 Return to Lobby</button>
-                    </div>
+                    <button id="m-return-lobby" class="btn btn-wood hidden" onclick="returnToLobby()" style="width:100%;">🏠 Return to Lobby</button>
                     <button class="btn btn-red" onclick="exitToMainMenu()" style="width:100%; opacity: 0.8;">🚪 Exit to Main Menu</button>
                 </div>
             </div>
@@ -3743,12 +3791,12 @@
                 </div>`;
             }).join('');
 
-            // Host controls
-            const mHostCtrl = document.getElementById('m-host-controls');
+            // Return to Lobby button (host only, game_over phase)
+            const mReturnLobby = document.getElementById('m-return-lobby');
             if (gameState.is_host && gameState.phase === 'game_over') {
-                mHostCtrl.classList.remove('hidden');
+                mReturnLobby.classList.remove('hidden');
             } else {
-                mHostCtrl.classList.add('hidden');
+                mReturnLobby.classList.add('hidden');
             }
 
             // --- Center column ---
@@ -4525,7 +4573,7 @@
             clearSession();
             resetReconnectionFlag();
 
-            const isPrivate = document.getElementById('private-game').checked;
+            const isPrivate = document.getElementById('private-game').value === 'true';
 
             socket.emit('create_game', {
                 name,
@@ -4641,6 +4689,38 @@
             const difficulty = document.getElementById('waiting-ai-difficulty').value;
             socket.emit('update_ai_difficulty', { room_code: roomCode, ai_difficulty: difficulty });
         }
+
+        // Toggle private/public on create screen
+        function togglePrivateCreate() {
+            const input = document.getElementById('private-game');
+            const btn = document.getElementById('private-game-btn');
+            const isNowPrivate = input.value !== 'true';
+            input.value = isNowPrivate ? 'true' : 'false';
+            btn.textContent = isNowPrivate ? '🔒 Private Game' : '🌐 Public Game';
+            btn.className = isNowPrivate ? 'btn btn-red' : 'btn btn-wood';
+            btn.style.width = '100%';
+            btn.style.marginBottom = '15px';
+        }
+
+        // Toggle private/public in waiting room (host only)
+        function togglePrivacyWaiting() {
+            if (!gameState || !gameState.is_host || !roomCode) return;
+            socket.emit('update_privacy', { room_code: roomCode, is_private: !gameState.is_private });
+        }
+
+        // Lobby menu (ace of spades)
+        function toggleLobbyMenu() {
+            document.getElementById('lobby-menu').classList.toggle('hidden');
+        }
+
+        // Close lobby menu when clicking outside
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('lobby-menu');
+            const btn = document.querySelector('.poker-btn');
+            if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        });
 
         // Speech bubble functions
         function showBubble(playerIdx, text, addToChat = true) {
@@ -4876,13 +4956,17 @@
                 `;
             }).join('');
 
-            // Private badge
+            // Private/Public badge button
             const privateBadge = document.getElementById('private-badge');
             if (gameState.is_private) {
-                privateBadge.classList.remove('hidden');
+                privateBadge.textContent = '🔒 Private Game';
+                privateBadge.classList.add('is-private');
             } else {
-                privateBadge.classList.add('hidden');
+                privateBadge.textContent = '🌐 Public Game';
+                privateBadge.classList.remove('is-private');
             }
+            // Only host can toggle
+            privateBadge.disabled = !gameState.is_host;
 
             // AI controls (host only)
             const aiControls = document.getElementById('ai-controls');

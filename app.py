@@ -1277,6 +1277,19 @@ def handle_update_ai_difficulty(data):
     game['ai_difficulty'] = difficulty
     broadcast_game_state(room_code)
 
+@socketio.on('update_privacy')
+def handle_update_privacy(data):
+    """Host toggles game privacy in lobby."""
+    room_code = data.get('room_code')
+    game = games.get(room_code)
+    if not game or game['phase'] != 'lobby':
+        return
+    # Host-only
+    if game['players'][0].get('sid') != request.sid:
+        return
+    game['is_private'] = bool(data.get('is_private', False))
+    broadcast_game_state(room_code)
+
 # Authentication Socket Events
 @socketio.on('register')
 def handle_register(data):
