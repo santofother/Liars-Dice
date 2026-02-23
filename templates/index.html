@@ -1517,9 +1517,11 @@
             display: none !important;
         }
 
-        .layout-modern .settings-btn,
-        .layout-modern .poker-btn,
-        .layout-modern .rules-btn {
+        /* Hide legacy fixed buttons only while a game is active in modern layout
+           (the m-header provides equivalents). On the main menu they stay visible. */
+        .layout-modern.m-game-active .settings-btn,
+        .layout-modern.m-game-active .poker-btn,
+        .layout-modern.m-game-active .rules-btn {
             display: none !important;
         }
 
@@ -1550,6 +1552,17 @@
         /* Make body not scroll in modern layout when game is active */
         .layout-modern.m-game-active {
             overflow: hidden;
+        }
+
+        /* Spectator banner offset for modern layout:
+           nudge #game-modern down and shrink so the bottom isn't clipped */
+        .layout-modern.spectator-active #game-modern {
+            margin-top: 50px;
+            height: calc(100vh - 50px);
+        }
+
+        .layout-modern.spectator-active .m-grid {
+            height: calc(100vh - 106px); /* 56px m-header + 50px banner */
         }
 
         .layout-modern.m-game-active header,
@@ -3192,7 +3205,7 @@
     </div>
 
     <!-- Spectator Banner -->
-    <div id="spectator-banner" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(145deg, #8b4513 0%, #5a2d0a 100%); color: #ffd700; text-align: center; padding: 10px; z-index: 50; border-bottom: 2px solid #ffd700;">
+    <div id="spectator-banner" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(145deg, #8b4513 0%, #5a2d0a 100%); color: #ffd700; text-align: center; padding: 10px; z-index: 200; border-bottom: 2px solid #ffd700;">
         👁️ You are spectating. You will join when the game returns to lobby!
     </div>
 
@@ -4479,6 +4492,7 @@
                 document.getElementById('chat-btn').classList.add('hidden');
                 document.body.style.paddingTop = '0';
                 document.body.classList.remove('m-game-active');
+                document.body.classList.remove('spectator-active');
                 chatOpen = false;
                 modernChatHistory = [];
 
@@ -5098,9 +5112,15 @@
             const spectatorBanner = document.getElementById('spectator-banner');
             if (gameState.is_waiting) {
                 spectatorBanner.classList.remove('hidden');
-                document.body.style.paddingTop = '50px';
+                if (document.body.classList.contains('layout-modern')) {
+                    document.body.classList.add('spectator-active');
+                    document.body.style.paddingTop = '0';
+                } else {
+                    document.body.style.paddingTop = '50px';
+                }
             } else {
                 spectatorBanner.classList.add('hidden');
+                document.body.classList.remove('spectator-active');
                 document.body.style.paddingTop = '0';
             }
         }
@@ -5281,6 +5301,7 @@
                 document.getElementById('chat-btn').classList.add('hidden');
                 document.body.style.paddingTop = '0';
                 document.body.classList.remove('m-game-active');
+                document.body.classList.remove('spectator-active');
                 chatOpen = false;
                 modernChatHistory = [];
 
