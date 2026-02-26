@@ -3,13 +3,19 @@ Database module for Liar's Dice user management and leaderboard.
 Handles user registration, authentication, and win tracking with pirate theme.
 """
 
+import os
 import sqlite3
 import bcrypt
 import re
 from datetime import datetime, timedelta
 from contextlib import contextmanager
 
-DATABASE_PATH = 'liars_dice.db'
+# Use /app/data/ in production (Docker) so the volume-mounted directory persists the DB
+if os.environ.get('FLASK_ENV') == 'production':
+    os.makedirs('/app/data', exist_ok=True)
+    DATABASE_PATH = '/app/data/liars_dice.db'
+else:
+    DATABASE_PATH = 'liars_dice.db'
 
 @contextmanager
 def get_db():

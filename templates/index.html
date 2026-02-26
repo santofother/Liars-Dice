@@ -1565,8 +1565,7 @@
             height: calc(100vh - 106px); /* 56px m-header + 50px banner */
         }
 
-        .layout-modern.m-game-active header,
-        .layout-modern.m-game-active #account-status {
+        .layout-modern.m-game-active .container {
             display: none !important;
         }
 
@@ -1734,12 +1733,21 @@
                 max-height: 160px;
             }
 
+            /* Mobile: hide inline chat, show legacy floating chat button instead */
             .layout-modern .m-chat-panel {
-                height: 280px;
+                display: none !important;
             }
 
-            .layout-modern .m-chat-input-row input {
-                font-size: 16px;
+            .layout-modern .chat-btn {
+                display: block !important;
+            }
+
+            .layout-modern .chat-panel {
+                display: block !important;
+            }
+
+            .layout-modern .chat-panel.hidden {
+                display: none !important;
             }
 
             /* Mobile opponent cards */
@@ -1749,22 +1757,6 @@
 
             .layout-modern .m-opp-avatar {
                 font-size: 2em;
-            }
-
-            /* Larger tap targets */
-            .layout-modern .m-chat-tab {
-                min-height: 44px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .layout-modern .m-chat-quick-btn {
-                min-height: 44px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 0.8em;
             }
 
             .layout-modern .m-bottom-btns .btn {
@@ -3492,7 +3484,14 @@
         const seaShanties = [
             { name: "Pirate Shanty I", url: "/static/pirate_shanty_v1.mp3" },
             { name: "Pirate Shanty II", url: "/static/pirate_shanty_v2.mp3" },
-            { name: "Pirate Shanty III", url: "/static/pirate_shanty_v3.mp3" }
+            { name: "Pirate Shanty III", url: "/static/pirate_shanty_v3.mp3" },
+            { name: "Pirate Shanty IV", url: "/static/pirate_shanty_v4.mp3" },
+            { name: "Pirate Shanty V", url: "/static/pirate_shanty_v5.mp3" },
+            { name: "Pirate Shanty VI", url: "/static/pirate_shanty_v6.mp3" },
+            { name: "Pirate Shanty VII", url: "/static/pirate_shanty_v7.mp3" },
+            { name: "Pirate Shanty VIII", url: "/static/pirate_shanty_v8.mp3" },
+            { name: "Pirate Shanty IX", url: "/static/pirate_shanty_v9.mp3" },
+            { name: "Pirate Shanty X", url: "/static/pirate_shanty_v10.mp3" }
         ];
 
         // Sound effects using Web Audio API oscillators (no external files needed)
