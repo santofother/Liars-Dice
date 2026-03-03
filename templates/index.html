@@ -418,7 +418,7 @@
             background: linear-gradient(145deg, #3d2817 0%, #2a1a0f 100%);
             border: 4px solid #ffd700;
             border-radius: 20px;
-            padding: 30px;
+            padding: 20px;
             max-width: 700px;
             width: 90%;
             text-align: center;
@@ -427,28 +427,45 @@
         }
 
         .overlay-title {
-            font-size: 2.5em;
+            font-size: 2em;
             color: #ffd700;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
         }
 
         .reveal-player {
-            margin: 15px 0;
-            padding: 15px;
+            margin: 8px 0;
+            padding: 10px;
             background: rgba(0,0,0,0.3);
             border-radius: 10px;
         }
 
         .reveal-player-name {
             color: #b8860b;
-            margin-bottom: 10px;
-            font-size: 1.1em;
+            margin-bottom: 6px;
+            font-size: 1em;
+        }
+
+        .reveal-player .dice-container {
+            gap: 4px;
+            min-height: 30px;
+            margin-top: 5px;
+        }
+
+        .reveal-player .die {
+            width: 45px;
+            height: 45px;
+            font-size: 56px;
+            border-radius: 8px;
+        }
+
+        .reveal-player .die.hidden::after {
+            font-size: 28px;
         }
 
         .reveal-result {
-            font-size: 1.3em;
-            margin: 20px 0;
-            padding: 20px;
+            font-size: 1.1em;
+            margin: 12px 0;
+            padding: 14px;
             border-radius: 10px;
         }
 
