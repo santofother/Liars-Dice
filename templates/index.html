@@ -1829,7 +1829,7 @@
             margin: 16px 0;
         }
 
-        .layout-modern #lobby .lobby-m-btn {
+        .layout-modern .lobby-m-btn {
             width: 100%;
             padding: 11px 20px;
             font-size: 1em;
@@ -1842,27 +1842,44 @@
             letter-spacing: 1px;
         }
 
-        .layout-modern #lobby .lobby-m-btn-gold {
+        .layout-modern .lobby-m-btn-gold {
             background: linear-gradient(145deg, var(--m-gold), #b8860b);
             color: #2a1a0f;
             border: 2px solid var(--m-gold);
             font-weight: bold;
         }
 
-        .layout-modern #lobby .lobby-m-btn-gold:hover {
+        .layout-modern .lobby-m-btn-gold:hover {
             background: linear-gradient(145deg, #ffec80, var(--m-gold));
             transform: scale(1.02);
         }
 
-        .layout-modern #lobby .lobby-m-btn-wood {
+        .layout-modern .lobby-m-btn-wood {
             background: linear-gradient(145deg, var(--m-card), #3a1c06);
             color: var(--m-gold);
             border: 2px solid var(--m-border2);
         }
 
-        .layout-modern #lobby .lobby-m-btn-wood:hover {
+        .layout-modern .lobby-m-btn-wood:hover {
             background: linear-gradient(145deg, var(--m-card2), var(--m-card));
             transform: scale(1.02);
+        }
+
+        /* Waiting room button overrides — bigger, more prominent */
+        .layout-modern #waiting-room .lobby-m-btn-gold {
+            padding: 14px 28px;
+            font-size: 1.2em;
+            letter-spacing: 2px;
+            box-shadow: 0 0 15px rgba(255,215,0,0.3);
+        }
+
+        .layout-modern #waiting-room .lobby-m-btn-gold:hover {
+            box-shadow: 0 0 25px rgba(255,215,0,0.5);
+        }
+
+        .layout-modern #waiting-room .lobby-m-btn-wood {
+            padding: 12px 24px;
+            font-size: 1.05em;
         }
 
         /* Leaderboard in modern lobby */
@@ -2044,6 +2061,127 @@
             color: #2a1a0f;
         }
 
+        .layout-modern #waiting-room .waiting-m-player-avatar.clickable {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .layout-modern #waiting-room .waiting-m-player-avatar.clickable:hover {
+            transform: scale(1.3);
+        }
+
+        .layout-modern #waiting-room .waiting-m-kick-btn {
+            background: none;
+            border: 1px solid rgba(200,50,50,0.4);
+            color: #cc4444;
+            font-size: 0.75em;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .layout-modern #waiting-room .waiting-m-kick-btn:hover {
+            background: rgba(200,50,50,0.2);
+            border-color: #cc4444;
+        }
+
+        /* Avatar picker popup in waiting room */
+        @keyframes popupSlideIn {
+            from { transform: translate(-50%, -50%) scale(0.7); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        @keyframes popupGoldShimmer {
+            0%, 100% { border-color: var(--m-gold); box-shadow: 0 0 20px rgba(255,215,0,0.2), inset 0 0 30px rgba(255,215,0,0.03); }
+            50% { border-color: #ffec80; box-shadow: 0 0 35px rgba(255,215,0,0.35), inset 0 0 30px rgba(255,215,0,0.06); }
+        }
+
+        .waiting-avatar-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(160deg, #4a2608 0%, #2a1a0f 40%, #1a0a00 100%);
+            border: 3px solid var(--m-gold);
+            border-radius: 18px;
+            padding: 28px 32px;
+            z-index: 1000;
+            text-align: center;
+            min-width: 300px;
+        }
+
+        .waiting-avatar-popup.active {
+            display: block;
+            animation: popupSlideIn 0.3s ease-out, popupGoldShimmer 3s ease-in-out 0.3s infinite;
+        }
+
+        .waiting-avatar-popup-title {
+            font-family: 'Pirata One', serif;
+            font-size: 1.6em;
+            color: var(--m-gold);
+            text-shadow: 0 0 10px rgba(255,215,0,0.4), 2px 2px 4px #000;
+            margin-bottom: 6px;
+        }
+
+        .waiting-avatar-popup-subtitle {
+            color: var(--m-dimtext);
+            font-size: 0.85em;
+            margin-bottom: 18px;
+            font-style: italic;
+        }
+
+        .waiting-avatar-popup-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .waiting-avatar-popup-grid .emoji-option {
+            width: 52px;
+            height: 52px;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--m-border2);
+            border-radius: 10px;
+            cursor: pointer;
+            background: rgba(0,0,0,0.4);
+            transition: all 0.2s;
+        }
+
+        .waiting-avatar-popup-grid .emoji-option:hover {
+            border-color: var(--m-gold);
+            transform: scale(1.2) rotate(-5deg);
+            background: rgba(255,215,0,0.1);
+            box-shadow: 0 0 12px rgba(255,215,0,0.25);
+        }
+
+        .waiting-avatar-popup-grid .emoji-option.selected {
+            border-color: var(--m-gold);
+            background: rgba(255,215,0,0.2);
+            box-shadow: 0 0 15px rgba(255,215,0,0.4);
+            transform: scale(1.1);
+        }
+
+        .waiting-avatar-popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 999;
+            backdrop-filter: blur(2px);
+        }
+
+        .waiting-avatar-popup-overlay.active {
+            display: block;
+        }
+
         /* Hide legacy waiting room internals in modern */
         .layout-modern #waiting-room .lobby-title,
         .layout-modern #waiting-room .room-code-display,
@@ -2143,7 +2281,7 @@
                 font-size: 18px;
             }
 
-            .layout-modern #lobby .lobby-m-btn {
+            .layout-modern .lobby-m-btn {
                 padding: 8px 16px;
                 font-size: 0.9em;
             }
@@ -3931,8 +4069,8 @@
                         <div class="waiting-m-code-label">Share this code with friends:</div>
                         <div class="waiting-m-code" id="m-display-room-code">XXXX</div>
                         <button id="m-private-badge" class="private-badge-btn" onclick="togglePrivacyWaiting()" style="margin-top:8px;">🌐 Public Game</button>
-                        <div id="m-host-controls" class="hidden" style="margin-top:16px;width:100%;">
-                            <button class="lobby-m-btn lobby-m-btn-gold" onclick="startGame()" style="width:100%;">Start Game</button>
+                        <div id="m-host-controls" class="hidden" style="margin-top:16px;">
+                            <button class="lobby-m-btn lobby-m-btn-gold" onclick="startGame()">Start Game</button>
                         </div>
                         <div id="m-waiting-message" style="color:var(--m-dimtext);margin-top:14px;font-size:0.9em;">
                             Waiting for host to start the game...
@@ -3953,19 +4091,41 @@
                             <div style="display:flex;align-items:center;gap:10px;">
                                 <label style="color:var(--m-amber2);font-size:0.9em;">Difficulty:</label>
                                 <select id="m-waiting-ai-difficulty" onchange="changeAiDifficulty()" style="flex:1;padding:6px 10px;border:2px solid var(--m-border2);border-radius:6px;background:rgba(0,0,0,0.4);color:var(--m-gold);font-size:0.9em;">
-                                    <option value="easy">Deckhand</option>
-                                    <option value="medium">First Mate</option>
-                                    <option value="hard">Blackbeard</option>
-                                    <option value="impossible">Captain Jack</option>
-                                    <option value="random">Motley Crew</option>
+                                    <option value="easy">🦜 Deckhand - Landlubber tactics</option>
+                                    <option value="medium">⚓ First Mate - Seasoned sailor</option>
+                                    <option value="hard">💀 Blackbeard - Cunning strategist</option>
+                                    <option value="impossible">🏴‍☠️ Captain Jack - Sees all, knows all!</option>
+                                    <option value="random">🎲 Motley Crew - A ragtag bunch of scallywags!</option>
                                 </select>
                             </div>
                         </div>
 
                         <div style="margin-top:auto;padding-top:16px;">
-                            <button class="lobby-m-btn lobby-m-btn-wood" onclick="leaveWaitingRoom()" style="opacity:0.8;">🚪 Back to Main Menu</button>
+                            <button class="lobby-m-btn lobby-m-btn-wood" onclick="leaveWaitingRoom()">🚪 Back to Main Menu</button>
                         </div>
                     </div>
+                </div>
+
+                <!-- Avatar picker popup -->
+                <div class="waiting-avatar-popup-overlay" id="waiting-avatar-overlay" onclick="closeWaitingAvatarPicker()"></div>
+                <div class="waiting-avatar-popup" id="waiting-avatar-popup">
+                    <div class="waiting-avatar-popup-title">Hoist Yer Colors!</div>
+                    <div class="waiting-avatar-popup-subtitle">Every pirate needs a flag to sail under...</div>
+                    <div class="waiting-avatar-popup-grid" id="waiting-avatar-grid">
+                        <div class="emoji-option" data-emoji="🏴‍☠️" title="Jolly Roger">🏴‍☠️</div>
+                        <div class="emoji-option" data-emoji="⚓" title="Anchor">⚓</div>
+                        <div class="emoji-option" data-emoji="🦜" title="Polly">🦜</div>
+                        <div class="emoji-option" data-emoji="💀" title="Skull">💀</div>
+                        <div class="emoji-option" data-emoji="🗡️" title="Cutlass">🗡️</div>
+                        <div class="emoji-option" data-emoji="🦑" title="Kraken">🦑</div>
+                        <div class="emoji-option" data-emoji="🧜‍♀️" title="Siren">🧜‍♀️</div>
+                        <div class="emoji-option" data-emoji="🐙" title="Davy Jones">🐙</div>
+                        <div class="emoji-option" data-emoji="🦈" title="Shark">🦈</div>
+                        <div class="emoji-option" data-emoji="🏝️" title="Island">🏝️</div>
+                        <div class="emoji-option" data-emoji="⛵" title="Ship">⛵</div>
+                        <div class="emoji-option" data-emoji="🧭" title="Compass">🧭</div>
+                    </div>
+                    <button class="lobby-m-btn lobby-m-btn-wood" onclick="closeWaitingAvatarPicker()" style="width:auto;padding:8px 24px;font-size:0.9em;">Set Sail</button>
                 </div>
 
                 <!-- === LEGACY WAITING ROOM === -->
@@ -3991,11 +4151,11 @@
                     <div class="ai-controls-row">
                         <label>Difficulty:</label>
                         <select id="waiting-ai-difficulty" onchange="changeAiDifficulty()">
-                            <option value="easy">Deckhand</option>
-                            <option value="medium">First Mate</option>
-                            <option value="hard">Blackbeard</option>
-                            <option value="impossible">Captain Jack</option>
-                            <option value="random">Motley Crew</option>
+                            <option value="easy">🦜 Deckhand - Landlubber tactics</option>
+                            <option value="medium">⚓ First Mate - Seasoned sailor</option>
+                            <option value="hard">💀 Blackbeard - Cunning strategist</option>
+                            <option value="impossible">🏴‍☠️ Captain Jack - Sees all, knows all!</option>
+                            <option value="random">🎲 Motley Crew - A ragtag bunch of scallywags!</option>
                         </select>
                     </div>
                 </div>
@@ -5991,10 +6151,17 @@
                     if (i === 0) badge = '<span class="waiting-m-player-badge host">HOST</span>';
                     else if (!p.is_human) badge = '<span class="waiting-m-player-badge ai">AI</span>';
                     const youTag = i === playerIndex ? ' (You)' : '';
+                    const isYou = i === playerIndex;
+                    const avatarClick = isYou ? ` onclick="openWaitingAvatarPicker()"` : '';
+                    const avatarClass = isYou ? ' clickable' : '';
+                    const avatarTitle = isYou ? ' title="Click to change avatar"' : '';
+                    const kickBtn = (gameState.is_host && i !== 0 && i !== playerIndex && p.is_human)
+                        ? `<button class="waiting-m-kick-btn" onclick="kickPlayer(${i})">Kick</button>`
+                        : '';
                     return `<div class="waiting-m-player">
-                        <span class="waiting-m-player-avatar">${p.avatar || '⚓'}</span>
+                        <span class="waiting-m-player-avatar${avatarClass}"${avatarClick}${avatarTitle}>${p.avatar || '⚓'}</span>
                         <span class="waiting-m-player-name">${p.name || 'Unknown'}${youTag}</span>
-                        ${badge}
+                        ${badge}${kickBtn}
                     </div>`;
                 }).join('');
             }
@@ -6354,6 +6521,38 @@
                 document.getElementById('room-code').value = '';
             }
         }
+
+        function openWaitingAvatarPicker() {
+            const popup = document.getElementById('waiting-avatar-popup');
+            const overlay = document.getElementById('waiting-avatar-overlay');
+            if (!popup || !overlay) return;
+            // Highlight current avatar
+            const currentAvatar = gameState?.players?.[playerIndex]?.avatar || selectedAvatar;
+            document.querySelectorAll('#waiting-avatar-grid .emoji-option').forEach(o => {
+                o.classList.toggle('selected', o.dataset.emoji === currentAvatar);
+            });
+            popup.classList.add('active');
+            overlay.classList.add('active');
+        }
+
+        function closeWaitingAvatarPicker() {
+            document.getElementById('waiting-avatar-popup')?.classList.remove('active');
+            document.getElementById('waiting-avatar-overlay')?.classList.remove('active');
+        }
+
+        // Wire up waiting room avatar picker clicks
+        document.querySelectorAll('#waiting-avatar-grid .emoji-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const emoji = option.dataset.emoji;
+                document.querySelectorAll('#waiting-avatar-grid .emoji-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                selectedAvatar = emoji;
+                if (roomCode) {
+                    socket.emit('change_avatar', { room_code: roomCode, avatar: emoji });
+                }
+                closeWaitingAvatarPicker();
+            });
+        });
 
         function leaveWaitingRoom() {
             // Notify server we're leaving

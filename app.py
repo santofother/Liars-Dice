@@ -1144,6 +1144,23 @@ def handle_kick_player(data):
         if current and not current['is_human']:
             socketio.start_background_task(process_ai_turns_async, room_code)
 
+@socketio.on('change_avatar')
+def handle_change_avatar(data):
+    room_code = data.get('room_code')
+    avatar = data.get('avatar')
+    game = games.get(room_code)
+
+    if not game or not avatar:
+        return
+
+    # Find the player by their socket id
+    for player in game['players']:
+        if player.get('sid') == request.sid:
+            player['avatar'] = avatar
+            break
+
+    broadcast_game_state(room_code)
+
 @socketio.on('leave_game')
 def handle_leave_game(data):
     room_code = data.get('room_code')
