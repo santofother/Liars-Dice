@@ -2804,6 +2804,195 @@
                 margin: 10px;
             }
         }
+        /* ===== INTERACTIVE TUTORIAL ===== */
+        .tut-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 2000;
+            pointer-events: none;
+        }
+
+        .tut-backdrop {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1999;
+            background: rgba(0,0,0,0.7);
+            transition: opacity 0.3s;
+        }
+
+        .tut-spotlight {
+            position: absolute;
+            border-radius: 12px;
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.72);
+            z-index: 2001;
+            pointer-events: none;
+            transition: all 0.4s ease;
+        }
+
+        .tut-spotlight.pulse {
+            animation: tutPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes tutPulse {
+            0%, 100% { box-shadow: 0 0 0 9999px rgba(0,0,0,0.72), 0 0 15px 3px rgba(255,215,0,0.5); }
+            50% { box-shadow: 0 0 0 9999px rgba(0,0,0,0.72), 0 0 25px 8px rgba(255,215,0,0.8); }
+        }
+
+        .tut-popup {
+            position: fixed;
+            z-index: 2002;
+            background: linear-gradient(145deg, #3d2817 0%, #2a1a0f 100%);
+            border: 3px solid #ffd700;
+            border-radius: 16px;
+            padding: 20px 24px;
+            max-width: 380px;
+            width: 90vw;
+            color: #f5e6d3;
+            pointer-events: auto;
+            animation: tutPopIn 0.3s ease-out;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+        }
+
+        @keyframes tutPopIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .tut-popup-title {
+            color: #ffd700;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-family: 'Georgia', serif;
+        }
+
+        .tut-popup-body {
+            font-size: 0.95em;
+            line-height: 1.5;
+            margin-bottom: 16px;
+            color: #d4a574;
+        }
+
+        .tut-popup-body strong {
+            color: #ffd700;
+        }
+
+        .tut-popup-body .tut-tip {
+            background: rgba(255,215,0,0.1);
+            border-left: 3px solid #ffd700;
+            padding: 8px 12px;
+            margin-top: 10px;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9em;
+        }
+
+        .tut-popup-btns {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .tut-btn {
+            padding: 10px 22px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Georgia', serif;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tut-btn-next {
+            background: linear-gradient(145deg, #ffd700, #b8860b);
+            color: #2a1a0f;
+        }
+
+        .tut-btn-next:hover {
+            background: linear-gradient(145deg, #ffec80, #ffd700);
+            transform: scale(1.05);
+        }
+
+        .tut-btn-skip {
+            background: transparent;
+            color: #8b7355;
+            border: 1px solid #8b7355;
+        }
+
+        .tut-btn-skip:hover {
+            color: #ffd700;
+            border-color: #ffd700;
+        }
+
+        .tut-arrow {
+            position: fixed;
+            z-index: 2003;
+            font-size: 32px;
+            pointer-events: none;
+            animation: tutBounce 1s ease-in-out infinite;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+
+        @keyframes tutBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .tut-step-counter {
+            color: #8b7355;
+            font-size: 0.8em;
+            margin-bottom: 8px;
+        }
+
+        .tut-action-hint {
+            display: inline-block;
+            background: rgba(255,215,0,0.15);
+            border: 1px dashed #ffd700;
+            border-radius: 6px;
+            padding: 4px 10px;
+            margin-top: 8px;
+            font-size: 0.85em;
+            color: #ffd700;
+            animation: tutHintPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes tutHintPulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        /* Tutorial game board - reuses modern layout classes */
+        #tutorial-game {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1998;
+            background: var(--m-bg, #1a0f07);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #tutorial-game .m-grid {
+            height: calc(100vh - 56px);
+        }
+
+        #tutorial-game.hidden {
+            display: none;
+        }
+
+        @media (max-width: 767px) {
+            .tut-popup {
+                max-width: 92vw;
+                padding: 16px 18px;
+                bottom: 10px !important;
+                top: auto !important;
+                left: 50% !important;
+                transform: translateX(-50%);
+            }
+
+            .tut-popup-body { font-size: 0.88em; }
+        }
     </style>
 </head>
 <body>
@@ -3112,6 +3301,9 @@
                 <button class="btn btn-wood" onclick="openBrowser()" style="flex: 1;">Browse Games</button>
             </div>
 
+            <div class="divider">⚓</div>
+            <button class="btn btn-wood" onclick="startTutorial()" style="width: 100%;">📜 How to Play (Interactive Tutorial)</button>
+
             <div id="lobby-error" class="error-message hidden"></div>
         </div>
 
@@ -3361,6 +3553,15 @@
             <button class="btn btn-gold" onclick="closeAdmin()" style="margin-top: 20px;">Close</button>
         </div>
     </div>
+
+    <!-- Tutorial Layers (hidden until started) -->
+    <div id="tutorial-game" class="hidden"></div>
+    <div id="tut-backdrop" class="tut-backdrop hidden"></div>
+    <div id="tut-overlay" class="tut-overlay hidden">
+        <div id="tut-spotlight" class="tut-spotlight"></div>
+    </div>
+    <div id="tut-arrow" class="tut-arrow hidden"></div>
+    <div id="tut-popup" class="tut-popup hidden"></div>
 
     <script>
         let socket;
@@ -5969,6 +6170,516 @@
                 });
             });
         };
+
+        // ===== INTERACTIVE TUTORIAL ENGINE =====
+        let tutActive = false;
+        let tutStep = 0;
+        let tutFakeState = null;
+
+        const tutSteps = [
+            {
+                id: 'welcome',
+                title: "Welcome, Pirate!",
+                body: `Let's learn how to play <strong>Liar's Dice</strong> with a guided round!<br><br>You'll play against two AI pirates. We'll walk you through every step.`,
+                target: null,
+                arrow: null,
+                btns: ['next'],
+                setup: () => tutBuildBoard()
+            },
+            {
+                id: 'your-dice',
+                title: "Your Dice",
+                body: `These are <strong>your dice</strong>. Only you can see them. Your opponents' dice are hidden.<br><br>Take a look at what you rolled - you'll need this info to make smart bids.`,
+                target: '#tut-dice-grid',
+                arrow: 'down',
+                btns: ['next']
+            },
+            {
+                id: 'opponents',
+                title: "Your Opponents",
+                body: `Over here are your <strong>opponents</strong>. You can see how many dice they have, but not what they rolled.<br><br>Everyone's dice together make up the "pool" you're bidding on.`,
+                target: '#tut-opp-list',
+                arrow: 'left',
+                btns: ['next']
+            },
+            {
+                id: 'total-dice',
+                title: "Total Dice in Play",
+                body: `This shows the <strong>total dice on the table</strong> across all players. Right now there are <strong>15 dice</strong> total (5 each).<div class="tut-tip">Roughly 1/3 of all dice will match any given face value (including wilds). So with 15 dice, expect about 5 of any face.</div>`,
+                target: '#tut-stat-total',
+                arrow: 'down',
+                btns: ['next']
+            },
+            {
+                id: 'wilds',
+                title: "Wild Ones!",
+                body: `Dice showing <strong>1</strong> are <strong>WILD</strong> - they count as ANY face value! The gold-tinted die in your hand is a wild.<div class="tut-tip">This is key to the game. When someone bids "four 5s", all the 1s count as 5s too!</div>`,
+                target: '#tut-dice-grid',
+                arrow: 'down',
+                btns: ['next']
+            },
+            {
+                id: 'explain-bid',
+                title: "How Bidding Works",
+                body: `A bid is a guess about <strong>all dice on the table combined</strong>.<br><br>For example, bidding <strong>"3 fours"</strong> means you think there are at least 3 dice showing 4 (or wild 1s) across everyone's hands.<br><br>It's your turn! Let's make a bid.`,
+                target: '#tut-move-section',
+                arrow: 'up',
+                btns: ['next'],
+                setup: () => tutSetPhase('bid-first')
+            },
+            {
+                id: 'make-bid',
+                title: "Make Your First Bid",
+                body: `Set the <strong>Quantity</strong> and <strong>Face</strong> value, then click <strong>MAKE BID</strong>.<br><br><span class="tut-action-hint">Click MAKE BID to continue</span>`,
+                target: '#tut-move-section',
+                arrow: 'up',
+                btns: [],
+                waitFor: 'bid'
+            },
+            {
+                id: 'opponent-bids',
+                title: "Opponents Bid Higher",
+                body: `After your bid, each player must bid <strong>higher</strong> — either more dice, or the same quantity with a higher face.<br><br><strong>Barnacle Bob</strong> bid 4 × 4s, then <strong>Salty Sam</strong> raised to <strong>8 × 4s</strong>!`,
+                target: '#tut-bid-hero',
+                arrow: 'down',
+                btns: ['next'],
+                setup: () => tutSetPhase('opponent-bid')
+            },
+            {
+                id: 'raising-rules',
+                title: "Your Options",
+                body: `It's back to you. You can:<br><br>&#x2022; <strong>Raise the bid</strong> — increase quantity or same quantity with higher face<br>&#x2022; <strong>Call LIAR!</strong> — challenge the current bid<br><div class="tut-tip">8 fours out of 15 dice? That's way more than the ~5 you'd expect. Looks like a bluff!</div>`,
+                target: null,
+                arrow: null,
+                btns: ['next'],
+                setup: () => tutSetPhase('your-turn-2')
+            },
+            {
+                id: 'call-liar',
+                title: "Call Liar!",
+                body: `<strong>8 fours?!</strong> With only 15 dice, that's way above the ~5 you'd expect. This smells like a bluff!<br><br><span class="tut-action-hint">Click the LIAR! button</span>`,
+                target: '#tut-liar-btn',
+                arrow: 'up',
+                btns: [],
+                waitFor: 'liar'
+            },
+            {
+                id: 'reveal',
+                title: "The Reveal!",
+                body: `Everyone's dice are revealed! The game checks if the bid was true or false.<br><br><strong>If the bid was false</strong> (not enough dice) — the <strong>bidder</strong> loses a die.<br><strong>If the bid was true</strong> (enough dice) — the <strong>challenger</strong> loses a die.`,
+                target: null,
+                arrow: null,
+                btns: ['next'],
+                setup: () => tutSetPhase('reveal')
+            },
+            {
+                id: 'tips',
+                title: "Pro Pirate Tips",
+                body: `<strong>1.</strong> Count your own dice first — your hand is guaranteed info.<br><br><strong>2.</strong> With 15 total dice, expect ~5 of any face (including wilds). Scale down as dice are lost.<br><br><strong>3.</strong> Bluffing works! Bid confidently even on faces you don't have.<br><br><strong>4.</strong> If a bid is close to the expected count, it's risky to call liar. If it's way over, call it!`,
+                target: null,
+                arrow: null,
+                btns: ['finish']
+            }
+        ];
+
+        function startTutorial() {
+            tutActive = true;
+            tutStep = 0;
+            playSfx('click');
+
+            // Hide lobby
+            document.getElementById('lobby').classList.add('hidden');
+
+            // Build fake game state
+            tutFakeState = {
+                myDice: [3, 1, 5, 3, 6],
+                opp1: { name: 'Barnacle Bob', avatar: '🦑', dice: [2, 4, 4, 1, 5] },
+                opp2: { name: 'Salty Sam', avatar: '🦈', dice: [3, 6, 1, 2, 4] },
+                currentBid: null,
+                currentBidder: null,
+                playerBid: null,
+                phase: 'start'
+            };
+
+            showTutStep();
+        }
+
+        function endTutorial() {
+            tutActive = false;
+            playSfx('click');
+
+            // Clean up tutorial elements
+            document.getElementById('tutorial-game').classList.add('hidden');
+            document.getElementById('tutorial-game').innerHTML = '';
+            document.getElementById('tut-backdrop').classList.add('hidden');
+            document.getElementById('tut-overlay').classList.add('hidden');
+            document.getElementById('tut-popup').classList.add('hidden');
+            document.getElementById('tut-arrow').classList.add('hidden');
+
+            // Show lobby again
+            document.getElementById('lobby').classList.remove('hidden');
+        }
+
+        function tutNextStep() {
+            tutStep++;
+            playSfx('click');
+            if (tutStep >= tutSteps.length) {
+                endTutorial();
+                return;
+            }
+            showTutStep();
+        }
+
+        function showTutStep() {
+            const step = tutSteps[tutStep];
+
+            // Run setup if any
+            if (step.setup) step.setup();
+
+            // Position spotlight
+            const spotlight = document.getElementById('tut-spotlight');
+            const backdrop = document.getElementById('tut-backdrop');
+            const overlay = document.getElementById('tut-overlay');
+            const arrowEl = document.getElementById('tut-arrow');
+
+            backdrop.classList.remove('hidden');
+            overlay.classList.remove('hidden');
+
+            // For waitFor steps, let clicks pass through backdrop to target
+            if (step.waitFor) {
+                backdrop.style.pointerEvents = 'none';
+            } else {
+                backdrop.style.pointerEvents = 'auto';
+            }
+
+            if (step.target) {
+                const targetEl = document.querySelector(step.target);
+                if (targetEl) {
+                    const rect = targetEl.getBoundingClientRect();
+                    const pad = 8;
+                    spotlight.style.left = (rect.left - pad) + 'px';
+                    spotlight.style.top = (rect.top - pad) + 'px';
+                    spotlight.style.width = (rect.width + pad * 2) + 'px';
+                    spotlight.style.height = (rect.height + pad * 2) + 'px';
+                    spotlight.classList.add('pulse');
+                    spotlight.style.display = 'block';
+
+                    // Arrow
+                    if (step.arrow) {
+                        arrowEl.classList.remove('hidden');
+                        const arrowChar = step.arrow === 'down' ? '👇' : step.arrow === 'up' ? '👆' : step.arrow === 'left' ? '👈' : '👉';
+                        arrowEl.textContent = arrowChar;
+                        if (step.arrow === 'down') {
+                            arrowEl.style.left = (rect.left + rect.width / 2 - 16) + 'px';
+                            arrowEl.style.top = (rect.top - 45) + 'px';
+                        } else if (step.arrow === 'up') {
+                            arrowEl.style.left = (rect.left + rect.width / 2 - 16) + 'px';
+                            arrowEl.style.top = (rect.bottom + 8) + 'px';
+                        } else if (step.arrow === 'left') {
+                            arrowEl.style.left = (rect.right + 8) + 'px';
+                            arrowEl.style.top = (rect.top + rect.height / 2 - 16) + 'px';
+                        } else {
+                            arrowEl.style.left = (rect.left - 45) + 'px';
+                            arrowEl.style.top = (rect.top + rect.height / 2 - 16) + 'px';
+                        }
+                    } else {
+                        arrowEl.classList.add('hidden');
+                    }
+                } else {
+                    spotlight.style.display = 'none';
+                    arrowEl.classList.add('hidden');
+                }
+            } else {
+                spotlight.style.display = 'none';
+                arrowEl.classList.add('hidden');
+            }
+
+            // Build popup
+            const popup = document.getElementById('tut-popup');
+            let btnsHtml = '';
+            if (step.btns.includes('next')) {
+                btnsHtml += `<button class="tut-btn tut-btn-skip" onclick="endTutorial()">Skip</button>`;
+                btnsHtml += `<button class="tut-btn tut-btn-next" onclick="tutNextStep()">Next</button>`;
+            } else if (step.btns.includes('finish')) {
+                btnsHtml += `<button class="tut-btn tut-btn-next" onclick="endTutorial()">Back to Menu</button>`;
+            }
+            // waitFor steps have no buttons - action required
+
+            popup.innerHTML = `
+                <div class="tut-step-counter">Step ${tutStep + 1} of ${tutSteps.length}</div>
+                <div class="tut-popup-title">${step.title}</div>
+                <div class="tut-popup-body">${step.body}</div>
+                <div class="tut-popup-btns">${btnsHtml}</div>
+            `;
+            popup.classList.remove('hidden');
+
+            // Position popup smartly
+            tutPositionPopup(step);
+        }
+
+        function tutPositionPopup(step) {
+            const popup = document.getElementById('tut-popup');
+            const isMobile = window.innerWidth <= 767;
+
+            if (isMobile) {
+                // On mobile, always pin to bottom center
+                popup.style.left = '50%';
+                popup.style.top = 'auto';
+                popup.style.bottom = '10px';
+                popup.style.transform = 'translateX(-50%)';
+                return;
+            }
+
+            popup.style.transform = 'none';
+            popup.style.bottom = 'auto';
+
+            if (step.target) {
+                const targetEl = document.querySelector(step.target);
+                if (targetEl) {
+                    const rect = targetEl.getBoundingClientRect();
+                    const popW = 380;
+
+                    // Prefer to place popup to the side or below the target
+                    if (rect.right + popW + 30 < window.innerWidth) {
+                        popup.style.left = (rect.right + 20) + 'px';
+                        popup.style.top = Math.max(20, rect.top - 20) + 'px';
+                    } else if (rect.left - popW - 30 > 0) {
+                        popup.style.left = (rect.left - popW - 20) + 'px';
+                        popup.style.top = Math.max(20, rect.top - 20) + 'px';
+                    } else {
+                        // Below
+                        popup.style.left = Math.max(20, rect.left) + 'px';
+                        popup.style.top = (rect.bottom + 20) + 'px';
+                    }
+                    return;
+                }
+            }
+
+            // Center on screen
+            popup.style.left = '50%';
+            popup.style.top = '50%';
+            popup.style.transform = 'translate(-50%, -50%)';
+        }
+
+        function tutBuildBoard() {
+            const container = document.getElementById('tutorial-game');
+            container.classList.remove('hidden');
+
+            const myDice = tutFakeState.myDice;
+            const diceHtml = myDice.map(d => {
+                return `<div class="m-die-wrap">${getModernDiceSVG(d)}</div>`;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="m-header">
+                    <div class="m-header-left">
+                        <span class="m-header-title">⚓ Tutorial</span>
+                        <span class="m-header-subtitle">Learn to Play</span>
+                    </div>
+                    <div class="m-header-right">
+                        <span class="m-room-pill">DEMO</span>
+                        <button class="m-header-btn" onclick="endTutorial()" title="Exit Tutorial">✕</button>
+                    </div>
+                </div>
+                <div class="m-grid">
+                    <div class="m-col m-col-left">
+                        <div class="m-section-label">⚔ YOUR HAND</div>
+                        <div class="m-your-name">☠ You (Captain)</div>
+                        <div class="m-dice-grid" id="tut-dice-grid">${diceHtml}</div>
+                        <div class="m-stat-pills">
+                            <div class="m-stat-pill">
+                                <div class="m-stat-val">5</div>
+                                <div class="m-stat-lbl">Your Dice</div>
+                            </div>
+                            <div class="m-stat-pill" id="tut-stat-total">
+                                <div class="m-stat-val">15</div>
+                                <div class="m-stat-lbl">Total Dice</div>
+                            </div>
+                            <div class="m-stat-pill">
+                                <div class="m-stat-val">⚓</div>
+                                <div class="m-stat-lbl">Difficulty</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="m-col m-col-center" id="tut-center-col">
+                        <div class="m-message-box">Tutorial in progress...</div>
+                    </div>
+                    <div class="m-col m-col-right">
+                        <div class="m-section-label">👥 OPPONENTS</div>
+                        <div class="m-opp-list" id="tut-opp-list">
+                            <div class="m-opponent-card">
+                                <div class="m-opp-avatar">${tutFakeState.opp1.avatar}</div>
+                                <div class="m-opp-info">
+                                    <div class="m-opp-name">${tutFakeState.opp1.name}</div>
+                                    <div class="m-opp-status">5 dice (AI)</div>
+                                </div>
+                            </div>
+                            <div class="m-opponent-card">
+                                <div class="m-opp-avatar">${tutFakeState.opp2.avatar}</div>
+                                <div class="m-opp-info">
+                                    <div class="m-opp-name">${tutFakeState.opp2.name}</div>
+                                    <div class="m-opp-status">5 dice (AI)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function tutSetPhase(phase) {
+            const center = document.getElementById('tut-center-col');
+            if (!center) return;
+
+            if (phase === 'bid-first') {
+                center.innerHTML = `
+                    <div class="m-turn-banner">
+                        <div class="m-turn-dot"></div>
+                        <span class="m-turn-text">YOUR TURN</span>
+                    </div>
+                    <div class="m-bid-hero no-bid">
+                        <div class="m-bid-hero-label">⚡ CURRENT BID</div>
+                        <div class="m-bid-hero-value">No bids yet</div>
+                    </div>
+                    <div class="m-move-section" id="tut-move-section">
+                        <div class="m-move-label">🎯 MAKE YOUR MOVE</div>
+                        <div class="m-move-row">
+                            <div class="m-move-input">
+                                <label>Qty:</label>
+                                <input type="number" id="tut-bid-qty" min="1" max="15" value="2">
+                            </div>
+                            <div class="m-move-input">
+                                <label>Face:</label>
+                                <select id="tut-bid-face">
+                                    <option value="1">1 (Wild)</option>
+                                    <option value="2">2</option>
+                                    <option value="3" selected>3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                </select>
+                            </div>
+                            <button class="m-btn-bid" onclick="tutMakeBid()">MAKE BID</button>
+                        </div>
+                    </div>
+                `;
+            } else if (phase === 'opponent-bid') {
+                // Salty Sam bid 8x4s - suspiciously high
+                tutFakeState.currentBid = [8, 4];
+                tutFakeState.currentBidder = 'opp2';
+                center.innerHTML = `
+                    <div class="m-turn-banner not-your-turn">
+                        <div class="m-turn-dot"></div>
+                        <span class="m-turn-text">Your Turn is Next</span>
+                    </div>
+                    <div class="m-bid-hero" id="tut-bid-hero">
+                        <div class="m-bid-hero-label">⚡ CURRENT BID</div>
+                        <div class="m-bid-hero-value">8 × 4s</div>
+                        <div class="m-bid-hero-who">${tutFakeState.opp2.name}'s bid</div>
+                    </div>
+                `;
+            } else if (phase === 'your-turn-2') {
+                // Salty Sam raised to 8x4s - suspiciously high!
+                tutFakeState.currentBid = [8, 4];
+                tutFakeState.currentBidder = 'opp2';
+                center.innerHTML = `
+                    <div class="m-turn-banner">
+                        <div class="m-turn-dot"></div>
+                        <span class="m-turn-text">YOUR TURN</span>
+                        <span class="m-turn-context">— respond to ${tutFakeState.opp2.name}'s bid</span>
+                    </div>
+                    <div class="m-bid-hero" id="tut-bid-hero">
+                        <div class="m-bid-hero-label">⚡ CURRENT BID</div>
+                        <div class="m-bid-hero-value">8 × 4s</div>
+                        <div class="m-bid-hero-who">${tutFakeState.opp2.name}'s bid</div>
+                    </div>
+                    <div class="m-move-section" id="tut-move-section">
+                        <div class="m-move-label">🎯 MAKE YOUR MOVE</div>
+                        <div class="m-move-row">
+                            <div class="m-move-input">
+                                <label>Qty:</label>
+                                <input type="number" id="tut-bid-qty" min="1" max="15" value="6">
+                            </div>
+                            <div class="m-move-input">
+                                <label>Face:</label>
+                                <select id="tut-bid-face">
+                                    <option value="1">1 (Wild)</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4" selected>4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                </select>
+                            </div>
+                            <button class="m-btn-bid" onclick="tutMakeBid()">MAKE BID</button>
+                            <button class="m-btn-liar" id="tut-liar-btn" onclick="tutCallLiar()">LIAR!</button>
+                        </div>
+                    </div>
+                `;
+            } else if (phase === 'reveal') {
+                // Show reveal - the bid was 5x4s
+                // Actual 4s: your dice [3,1,5,3,6] = one 1(wild) = 1
+                // opp1 [2,4,4,1,5] = two 4s + one 1(wild) = 3
+                // opp2 [3,6,1,2,4] = one 4 + one 1(wild) = 2
+                // Total = 6 (bid was 5, so it was actually TRUE - challenger loses)
+                // Wait, let me recalculate. We want the call to be correct (liar wins).
+                // Actually with these dice, actual 4s = 1(from your wild) + 2(opp1 4s) + 1(opp1 wild) + 1(opp2 4) + 1(opp2 wild) = 6
+                // Bid was 5x4s, actual is 6. Bid is TRUE. Challenger (you) would lose.
+                // Let's change opp2's bid to 8x4s to make it clearly false.
+                tutFakeState.currentBid = [8, 4];
+
+                const allDice = [
+                    { name: 'You (Captain)', avatar: '☠', dice: tutFakeState.myDice },
+                    { name: tutFakeState.opp1.name, avatar: tutFakeState.opp1.avatar, dice: tutFakeState.opp1.dice },
+                    { name: tutFakeState.opp2.name, avatar: tutFakeState.opp2.avatar, dice: tutFakeState.opp2.dice }
+                ];
+
+                let revealHtml = allDice.map(p => {
+                    const diceStr = p.dice.map(d =>
+                        `<div class="die ${d === 1 ? 'wild' : ''} ${d === 4 ? '' : ''}" data-value="${d}" style="${d === 4 || d === 1 ? 'outline: 3px solid #ffd700;' : ''}">${''}</div>`
+                    ).join('');
+                    return `<div class="reveal-player">
+                        <div class="reveal-player-name">${p.avatar} ${p.name}</div>
+                        <div class="dice-container">${diceStr}</div>
+                    </div>`;
+                }).join('');
+
+                center.innerHTML = `
+                    <div class="m-message-box" style="color: #4ade80; font-size: 1.1em;">LIAR! ${tutFakeState.opp2.name} loses a die!</div>
+                    <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 15px; margin: 10px 0;">
+                        <div style="color: #ffd700; text-align: center; margin-bottom: 8px; font-weight: bold;">Bid: 8 × 4s</div>
+                        <div style="color: #d4a574; text-align: center; margin-bottom: 12px;">Actual 4s found: <strong style="color: #ffd700;">6</strong> (including wilds) — Bid was FALSE!</div>
+                        ${revealHtml}
+                        <p style="color: #8b7355; font-size: 0.8em; text-align: center; margin-top: 8px;">* Gold outlined dice are 4s or wilds (1s) that count</p>
+                    </div>
+                `;
+            }
+        }
+
+        function tutMakeBid() {
+            const step = tutSteps[tutStep];
+            if (step.waitFor !== 'bid') return;
+
+            const qty = parseInt(document.getElementById('tut-bid-qty').value) || 2;
+            const face = parseInt(document.getElementById('tut-bid-face').value) || 3;
+            tutFakeState.playerBid = [qty, face];
+            tutFakeState.currentBid = [qty, face];
+
+            playSfx('click');
+            tutNextStep();
+        }
+
+        function tutCallLiar() {
+            const step = tutSteps[tutStep];
+            if (step.waitFor !== 'liar') return;
+
+            // Update the bid to be clearly false before reveal
+            tutFakeState.currentBid = [8, 4];
+            tutFakeState.currentBidder = 'opp2';
+
+            playSfx('click');
+            tutNextStep();
+        }
     </script>
 </body>
 </html>
