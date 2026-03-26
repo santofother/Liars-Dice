@@ -988,6 +988,7 @@
         .layout-modern .m-col-left {
             border-right: 2px solid var(--m-border2);
             background: linear-gradient(180deg, #2a1200, #1c0900);
+            overflow-y: auto;
         }
 
         .layout-modern .m-col-center {
@@ -1024,8 +1025,9 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
-            flex: 1;
+            flex: 1 1 0;
             min-height: 0;
+            overflow: hidden;
         }
 
         .layout-modern .m-dice-grid .m-die-wrap:nth-child(5) {
@@ -1565,11 +1567,11 @@
             display: none !important;
         }
 
-        /* Hide legacy fixed buttons only while a game is active in modern layout
-           (the m-header provides equivalents). On the main menu they stay visible. */
-        .layout-modern.m-game-active .settings-btn,
-        .layout-modern.m-game-active .poker-btn,
-        .layout-modern.m-game-active .rules-btn {
+        /* Hide legacy fixed buttons in modern layout
+           (the m-header / lobby-m-header provides equivalents). */
+        .layout-modern .settings-btn,
+        .layout-modern .poker-btn,
+        .layout-modern .rules-btn {
             display: none !important;
         }
 
@@ -1652,6 +1654,510 @@
             width: 16px;
             height: 16px;
             accent-color: #ffd700;
+        }
+
+        /* ============================================ */
+        /* MODERN LAYOUT — LOBBY & WAITING ROOM        */
+        /* ============================================ */
+
+        /* Hide legacy header/buttons/account in modern lobby */
+        .layout-modern header {
+            display: none;
+        }
+
+        .layout-modern .account-status {
+            display: none !important;
+        }
+
+        .layout-modern .container {
+            max-width: 100%;
+            padding: 0;
+        }
+
+        /* --- Modern Lobby --- */
+        .layout-modern #lobby {
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+            background: none;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(180deg, var(--m-bg) 0%, #0d0500 100%);
+        }
+
+        .layout-modern #lobby .lobby-m-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 24px;
+            background: linear-gradient(180deg, rgba(74,38,8,0.95), rgba(30,15,4,0.95));
+            border-bottom: 2px solid var(--m-border2);
+            flex-shrink: 0;
+        }
+
+        .layout-modern #lobby .lobby-m-title {
+            font-family: 'Pirata One', serif;
+            font-size: 1.8em;
+            color: var(--m-gold);
+            text-shadow: 1px 1px 3px #000;
+        }
+
+        .layout-modern #lobby .lobby-m-subtitle {
+            color: var(--m-dimtext);
+            font-size: 0.85em;
+            margin-left: 12px;
+        }
+
+        .layout-modern #lobby .lobby-m-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .layout-modern #lobby .lobby-m-col {
+            padding: 20px 28px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .layout-modern #lobby .lobby-m-col-left {
+            background: linear-gradient(180deg, #2a1200, #1c0900);
+            border-right: 2px solid var(--m-border2);
+        }
+
+        .layout-modern #lobby .lobby-m-col-right {
+            background: linear-gradient(180deg, #1c0900, #120600);
+        }
+
+        .layout-modern #lobby .lobby-m-section {
+            font-size: 0.7em;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--m-dimtext);
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+
+        .layout-modern #lobby .lobby-m-form-group {
+            margin-bottom: 14px;
+        }
+
+        .layout-modern #lobby .lobby-m-form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--m-amber2);
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .layout-modern #lobby .lobby-m-form-group input,
+        .layout-modern #lobby .lobby-m-form-group select {
+            width: 100%;
+            padding: 9px 12px;
+            font-size: 1em;
+            border: 2px solid var(--m-border2);
+            border-radius: 8px;
+            background: rgba(0,0,0,0.4);
+            color: var(--m-gold);
+            font-family: 'Georgia', serif;
+        }
+
+        .layout-modern #lobby .lobby-m-form-group input:focus,
+        .layout-modern #lobby .lobby-m-form-group select:focus {
+            border-color: var(--m-gold);
+            outline: none;
+        }
+
+        .layout-modern #lobby .lobby-m-form-group input::placeholder {
+            color: var(--m-dimtext);
+        }
+
+        .layout-modern #lobby .lobby-m-emoji-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .layout-modern #lobby .lobby-m-emoji-grid .emoji-option {
+            width: 40px;
+            height: 40px;
+            font-size: 22px;
+            background: rgba(0,0,0,0.3);
+            border: 2px solid var(--m-border2);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .layout-modern #lobby .lobby-m-emoji-grid .emoji-option:hover {
+            border-color: var(--m-gold);
+            transform: scale(1.1);
+        }
+
+        .layout-modern #lobby .lobby-m-emoji-grid .emoji-option.selected {
+            border-color: var(--m-gold);
+            background: rgba(255,215,0,0.15);
+            box-shadow: 0 0 8px rgba(255,215,0,0.3);
+        }
+
+        .layout-modern #lobby .lobby-m-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .layout-modern #lobby .lobby-m-row > * {
+            flex: 1;
+        }
+
+        .layout-modern #lobby .lobby-m-divider {
+            border: none;
+            border-top: 1px solid var(--m-border2);
+            margin: 16px 0;
+        }
+
+        .layout-modern #lobby .lobby-m-btn {
+            width: 100%;
+            padding: 11px 20px;
+            font-size: 1em;
+            font-family: 'Georgia', serif;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .layout-modern #lobby .lobby-m-btn-gold {
+            background: linear-gradient(145deg, var(--m-gold), #b8860b);
+            color: #2a1a0f;
+            border: 2px solid var(--m-gold);
+            font-weight: bold;
+        }
+
+        .layout-modern #lobby .lobby-m-btn-gold:hover {
+            background: linear-gradient(145deg, #ffec80, var(--m-gold));
+            transform: scale(1.02);
+        }
+
+        .layout-modern #lobby .lobby-m-btn-wood {
+            background: linear-gradient(145deg, var(--m-card), #3a1c06);
+            color: var(--m-gold);
+            border: 2px solid var(--m-border2);
+        }
+
+        .layout-modern #lobby .lobby-m-btn-wood:hover {
+            background: linear-gradient(145deg, var(--m-card2), var(--m-card));
+            transform: scale(1.02);
+        }
+
+        /* Leaderboard in modern lobby */
+        .layout-modern #lobby .leaderboard-container {
+            background: none;
+            border: none;
+            padding: 0;
+            margin: 0;
+            box-shadow: none;
+        }
+
+        .layout-modern #lobby .leaderboard-title {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: var(--m-gold);
+        }
+
+        .layout-modern #lobby .leaderboard-list {
+            gap: 6px;
+        }
+
+        .layout-modern #lobby .leaderboard-item {
+            background: rgba(0,0,0,0.3);
+            border-left-color: var(--m-border2);
+            padding: 10px 12px;
+        }
+
+        /* Hide legacy lobby elements in modern */
+        .layout-modern #lobby > .leaderboard-container,
+        .layout-modern #lobby > .divider,
+        .layout-modern #lobby > .lobby-title,
+        .layout-modern #lobby > .input-group,
+        .layout-modern #lobby > .lobby-buttons,
+        .layout-modern #lobby > #private-game-btn,
+        .layout-modern #lobby > input[type="hidden"],
+        .layout-modern #lobby > #lobby-error,
+        .layout-modern #lobby > .btn {
+            display: none !important;
+        }
+
+        /* Show modern lobby content (hidden by default for legacy) */
+        .layout-modern #lobby > .lobby-m-header,
+        .layout-modern #lobby > .lobby-m-body {
+            display: flex;
+        }
+
+        .layout-modern #lobby > .lobby-m-body {
+            display: grid;
+        }
+
+        /* --- Modern Waiting Room --- */
+        .layout-modern #waiting-room {
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+            background: none;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(180deg, var(--m-bg) 0%, #0d0500 100%);
+        }
+
+        .layout-modern #waiting-room .waiting-room {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .layout-modern #waiting-room .lobby-title {
+            display: none;
+        }
+
+        .layout-modern #waiting-room .waiting-m-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 24px;
+            background: linear-gradient(180deg, rgba(74,38,8,0.95), rgba(30,15,4,0.95));
+            border-bottom: 2px solid var(--m-border2);
+            flex-shrink: 0;
+        }
+
+        .layout-modern #waiting-room .waiting-m-title {
+            font-family: 'Pirata One', serif;
+            font-size: 1.8em;
+            color: var(--m-gold);
+            text-shadow: 1px 1px 3px #000;
+        }
+
+        .layout-modern #waiting-room .waiting-m-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .layout-modern #waiting-room .waiting-m-col {
+            padding: 24px 32px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .layout-modern #waiting-room .waiting-m-col-left {
+            background: linear-gradient(180deg, #2a1200, #1c0900);
+            border-right: 2px solid var(--m-border2);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .layout-modern #waiting-room .waiting-m-col-right {
+            background: linear-gradient(180deg, #1c0900, #120600);
+        }
+
+        .layout-modern #waiting-room .waiting-m-code {
+            font-family: monospace;
+            font-size: 4em;
+            color: var(--m-gold);
+            letter-spacing: 12px;
+            text-shadow: 0 0 20px rgba(255,215,0,0.3);
+            margin: 10px 0;
+        }
+
+        .layout-modern #waiting-room .waiting-m-code-label {
+            color: var(--m-dimtext);
+            font-size: 0.95em;
+            margin-bottom: 4px;
+        }
+
+        .layout-modern #waiting-room .waiting-m-section {
+            font-size: 0.7em;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--m-dimtext);
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+
+        .layout-modern #waiting-room .waiting-m-player {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--m-border2);
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+
+        .layout-modern #waiting-room .waiting-m-player-avatar {
+            font-size: 1.6em;
+        }
+
+        .layout-modern #waiting-room .waiting-m-player-name {
+            color: var(--m-text);
+            font-size: 1.05em;
+            flex: 1;
+        }
+
+        .layout-modern #waiting-room .waiting-m-player-badge {
+            font-size: 0.75em;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .layout-modern #waiting-room .waiting-m-player-badge.host {
+            background: var(--m-gold);
+            color: #2a1a0f;
+        }
+
+        .layout-modern #waiting-room .waiting-m-player-badge.ai {
+            background: var(--m-border2);
+            color: #2a1a0f;
+        }
+
+        /* Hide legacy waiting room internals in modern */
+        .layout-modern #waiting-room .lobby-title,
+        .layout-modern #waiting-room .room-code-display,
+        .layout-modern #waiting-room .player-list,
+        .layout-modern #waiting-room .ai-controls,
+        .layout-modern #waiting-room #host-controls,
+        .layout-modern #waiting-room #waiting-message,
+        .layout-modern #waiting-room .waiting-legacy-back {
+            display: none !important;
+        }
+
+        /* Show modern waiting room content */
+        .layout-modern #waiting-room .waiting-m-header {
+            display: flex;
+        }
+
+        .layout-modern #waiting-room .waiting-m-body {
+            display: grid;
+        }
+
+        /* ============================================ */
+        /* MODERN LAYOUT — LOBBY MOBILE                */
+        /* ============================================ */
+        @media (max-width: 767px) {
+            .layout-modern #lobby .lobby-m-body {
+                grid-template-columns: 1fr;
+                overflow-y: auto;
+            }
+
+            .layout-modern #lobby .lobby-m-col {
+                padding: 16px 18px;
+            }
+
+            .layout-modern #lobby .lobby-m-col-left {
+                border-right: none;
+                border-bottom: 2px solid var(--m-border2);
+            }
+
+            .layout-modern #lobby {
+                min-height: auto;
+            }
+
+            .layout-modern #lobby .lobby-m-header {
+                padding: 8px 16px;
+            }
+
+            .layout-modern #lobby .lobby-m-title {
+                font-size: 1.4em;
+            }
+
+            .layout-modern #waiting-room .waiting-m-body {
+                grid-template-columns: 1fr;
+                overflow-y: auto;
+            }
+
+            .layout-modern #waiting-room .waiting-m-col {
+                padding: 16px 18px;
+            }
+
+            .layout-modern #waiting-room .waiting-m-col-left {
+                border-right: none;
+                border-bottom: 2px solid var(--m-border2);
+                padding: 20px 18px;
+            }
+
+            .layout-modern #waiting-room .waiting-m-code {
+                font-size: 2.8em;
+                letter-spacing: 8px;
+            }
+
+            .layout-modern #waiting-room .waiting-m-header {
+                padding: 8px 16px;
+            }
+
+            .layout-modern #waiting-room {
+                min-height: auto;
+            }
+        }
+
+        /* Landscape mobile - keep 2-col but compact */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .layout-modern #lobby .lobby-m-body {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .layout-modern #lobby .lobby-m-col {
+                padding: 10px 16px;
+            }
+
+            .layout-modern #lobby .lobby-m-form-group {
+                margin-bottom: 8px;
+            }
+
+            .layout-modern #lobby .lobby-m-emoji-grid .emoji-option {
+                width: 32px;
+                height: 32px;
+                font-size: 18px;
+            }
+
+            .layout-modern #lobby .lobby-m-btn {
+                padding: 8px 16px;
+                font-size: 0.9em;
+            }
+
+            .layout-modern #waiting-room .waiting-m-body {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .layout-modern #waiting-room .waiting-m-col {
+                padding: 10px 16px;
+            }
+
+            .layout-modern #waiting-room .waiting-m-code {
+                font-size: 2.5em;
+                letter-spacing: 8px;
+            }
         }
 
         /* ============================================ */
@@ -2962,6 +3468,11 @@
             50% { opacity: 1; }
         }
 
+        .tut-elevated {
+            position: relative !important;
+            z-index: 2001 !important;
+        }
+
         /* Tutorial game board - reuses modern layout classes */
         #tutorial-game {
             position: fixed;
@@ -3224,7 +3735,103 @@
 
         <!-- Lobby Screen -->
         <div id="lobby" class="lobby-container">
-            <!-- Top Pirates Leaderboard -->
+            <!-- === MODERN LOBBY (hidden in legacy via CSS) === -->
+            <div class="lobby-m-header" style="display:none;">
+                <div>
+                    <span class="lobby-m-title">⚓ Liar's Dice</span>
+                    <span class="lobby-m-subtitle">Pirates of the Caribbean - Multiplayer</span>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button class="m-header-btn" onclick="toggleSettings()" title="Settings">⚙</button>
+                    <button class="m-header-btn" onclick="toggleRules()" title="Rules">📜</button>
+                    <button class="m-header-btn" onclick="toggleLobbyMenu()" title="More Games">🕹️</button>
+                </div>
+            </div>
+            <div class="lobby-m-body" style="display:none;">
+                <!-- Left: Create / Join -->
+                <div class="lobby-m-col lobby-m-col-left">
+                    <div class="lobby-m-section">⚔ Set Sail</div>
+
+                    <div class="lobby-m-form-group">
+                        <label>Pirate Name</label>
+                        <input type="text" id="m-player-name" placeholder="Enter your name..." maxlength="20">
+                    </div>
+
+                    <div class="lobby-m-form-group">
+                        <label>Avatar</label>
+                        <div class="lobby-m-emoji-grid" id="m-emoji-picker">
+                            <div class="emoji-option selected" data-emoji="🏴‍☠️">🏴‍☠️</div>
+                            <div class="emoji-option" data-emoji="⚓">⚓</div>
+                            <div class="emoji-option" data-emoji="🦜">🦜</div>
+                            <div class="emoji-option" data-emoji="💀">💀</div>
+                            <div class="emoji-option" data-emoji="🗡️">🗡️</div>
+                            <div class="emoji-option" data-emoji="🦑">🦑</div>
+                            <div class="emoji-option" data-emoji="🧜‍♀️">🧜‍♀️</div>
+                            <div class="emoji-option" data-emoji="🐙">🐙</div>
+                            <div class="emoji-option" data-emoji="🦈">🦈</div>
+                            <div class="emoji-option" data-emoji="🏝️">🏝️</div>
+                            <div class="emoji-option" data-emoji="⛵">⛵</div>
+                            <div class="emoji-option" data-emoji="🧭">🧭</div>
+                        </div>
+                    </div>
+
+                    <div class="lobby-m-row">
+                        <div class="lobby-m-form-group">
+                            <label>AI Pirates</label>
+                            <select id="m-num-ai">
+                                <option value="0">None</option>
+                                <option value="1">1 AI</option>
+                                <option value="2" selected>2 AI</option>
+                                <option value="3">3 AI</option>
+                            </select>
+                        </div>
+                        <div class="lobby-m-form-group">
+                            <label>Difficulty</label>
+                            <select id="m-ai-difficulty">
+                                <option value="easy">Deckhand</option>
+                                <option value="medium" selected>First Mate</option>
+                                <option value="hard">Blackbeard</option>
+                                <option value="impossible">Captain Jack</option>
+                                <option value="random">Motley Crew</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button class="lobby-m-btn lobby-m-btn-wood" id="m-private-game-btn" onclick="togglePrivateCreate()" style="margin-bottom:10px;">🌐 Public Game</button>
+                    <button class="lobby-m-btn lobby-m-btn-gold" onclick="createGame()">Create Game</button>
+
+                    <hr class="lobby-m-divider">
+
+                    <div class="lobby-m-form-group">
+                        <label>Room Code</label>
+                        <input type="text" id="m-room-code-input" placeholder="XXXX" maxlength="4" style="text-transform: uppercase; text-align: center; font-size: 1.3em; letter-spacing: 5px;">
+                    </div>
+
+                    <div class="lobby-m-row" style="gap:8px;">
+                        <button class="lobby-m-btn lobby-m-btn-wood" onclick="joinGame()">Join Game</button>
+                        <button class="lobby-m-btn lobby-m-btn-wood" onclick="openBrowser()">Browse</button>
+                    </div>
+
+                    <hr class="lobby-m-divider">
+                    <button class="lobby-m-btn lobby-m-btn-wood" onclick="startTutorial()">📜 How to Play</button>
+
+                    <div id="m-lobby-error" class="error-message hidden" style="margin-top:10px;"></div>
+                </div>
+
+                <!-- Right: Leaderboard -->
+                <div class="lobby-m-col lobby-m-col-right">
+                    <div class="lobby-m-section">🏆 Top Pirates</div>
+                    <div class="leaderboard-container">
+                        <div class="leaderboard-podium">
+                            <div id="m-leaderboard-list" class="leaderboard-list">
+                                <div class="leaderboard-empty">No pirates yet! Be the first!</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- === LEGACY LOBBY (hidden in modern via CSS) === -->
             <div class="leaderboard-container">
                 <div class="leaderboard-title">🏆 Top Pirates 🏆</div>
                 <div class="leaderboard-podium">
@@ -3336,6 +3943,54 @@
         <!-- Waiting Room -->
         <div id="waiting-room" class="lobby-container hidden">
             <div class="waiting-room">
+                <!-- === MODERN WAITING ROOM === -->
+                <div class="waiting-m-header" style="display:none;">
+                    <span class="waiting-m-title">⚓ Waiting Room</span>
+                    <button class="m-header-btn" onclick="leaveWaitingRoom()" title="Leave">🚪</button>
+                </div>
+                <div class="waiting-m-body" style="display:none;">
+                    <div class="waiting-m-col waiting-m-col-left">
+                        <div class="waiting-m-code-label">Share this code with friends:</div>
+                        <div class="waiting-m-code" id="m-display-room-code">XXXX</div>
+                        <button id="m-private-badge" class="private-badge-btn" onclick="togglePrivacyWaiting()" style="margin-top:8px;">🌐 Public Game</button>
+                        <div id="m-host-controls" class="hidden" style="margin-top:16px;width:100%;">
+                            <button class="lobby-m-btn lobby-m-btn-gold" onclick="startGame()" style="width:100%;">Start Game</button>
+                        </div>
+                        <div id="m-waiting-message" style="color:var(--m-dimtext);margin-top:14px;font-size:0.9em;">
+                            Waiting for host to start the game...
+                        </div>
+                    </div>
+                    <div class="waiting-m-col waiting-m-col-right">
+                        <div class="waiting-m-section">👥 Crew</div>
+                        <div id="m-player-list"></div>
+
+                        <div id="m-ai-controls" class="hidden" style="margin-top:16px;">
+                            <div class="waiting-m-section" style="margin-top:8px;">🤖 AI Crew</div>
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                                <label style="color:var(--m-amber2);font-size:0.9em;">Pirates:</label>
+                                <button class="ai-count-btn" onclick="changeAiCount(-1)">-</button>
+                                <span id="m-ai-count-display" class="ai-count-display">0</span>
+                                <button class="ai-count-btn" onclick="changeAiCount(1)">+</button>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <label style="color:var(--m-amber2);font-size:0.9em;">Difficulty:</label>
+                                <select id="m-waiting-ai-difficulty" onchange="changeAiDifficulty()" style="flex:1;padding:6px 10px;border:2px solid var(--m-border2);border-radius:6px;background:rgba(0,0,0,0.4);color:var(--m-gold);font-size:0.9em;">
+                                    <option value="easy">Deckhand</option>
+                                    <option value="medium">First Mate</option>
+                                    <option value="hard">Blackbeard</option>
+                                    <option value="impossible">Captain Jack</option>
+                                    <option value="random">Motley Crew</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:auto;padding-top:16px;">
+                            <button class="lobby-m-btn lobby-m-btn-wood" onclick="leaveWaitingRoom()" style="opacity:0.8;">🚪 Back to Main Menu</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- === LEGACY WAITING ROOM === -->
                 <div class="lobby-title">Waiting Room</div>
 
                 <div class="room-code-display">
@@ -3375,7 +4030,7 @@
                     Waiting for host to start the game...
                 </div>
 
-                <div style="margin-top: 20px; text-align: center;">
+                <div class="waiting-legacy-back" style="margin-top: 20px; text-align: center;">
                     <button class="btn btn-red" onclick="leaveWaitingRoom()" style="opacity: 0.8;">🚪 Back to Main Menu</button>
                 </div>
             </div>
@@ -4183,12 +4838,13 @@
                 const canChallenge = gameState.current_bid !== null;
                 const minQty = gameState.current_bid ? gameState.current_bid[0] : 1;
                 const curFace = gameState.current_bid ? gameState.current_bid[1] : 2;
+                const qtyOpts = buildQtyOptions(minQty, gameState.total_dice);
                 html += `<div class="m-move-section">
                     <div class="m-move-label">🎯 MAKE YOUR MOVE</div>
                     <div class="m-move-row">
                         <div class="m-move-input">
                             <label>Qty:</label>
-                            <input type="number" id="m-bid-qty" min="1" max="${gameState.total_dice}" value="${minQty}">
+                            <select id="m-bid-qty">${qtyOpts}</select>
                         </div>
                         <div class="m-move-input">
                             <label>Face:</label>
@@ -4331,6 +4987,15 @@
         function sendModernQuick(msg) {
             if (!roomCode || playerIndex === -1) return;
             sendChatMessage(msg);
+        }
+
+        function buildQtyOptions(min, max, selected) {
+            let html = '';
+            if (selected === undefined) selected = min;
+            for (let i = min; i <= max; i++) {
+                html += `<option value="${i}"${i === selected ? ' selected' : ''}>${i}</option>`;
+            }
+            return html;
         }
 
         function makeBidModern() {
@@ -4664,6 +5329,8 @@
             socket.on('game_created', (data) => {
                 roomCode = data.room_code;
                 document.getElementById('display-room-code').textContent = roomCode;
+                const mRC = document.getElementById('m-display-room-code');
+                if (mRC) mRC.textContent = roomCode;
                 document.getElementById('game-room-code').textContent = roomCode;
 
                 // Close browser if open
@@ -4838,10 +5505,15 @@
         }
 
         function showError(message) {
-            const errorDiv = document.getElementById('lobby-error');
-            errorDiv.textContent = message;
-            errorDiv.classList.remove('hidden');
-            setTimeout(() => errorDiv.classList.add('hidden'), 5000);
+            // Show on both legacy and modern error divs
+            ['lobby-error', 'm-lobby-error'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.textContent = message;
+                    el.classList.remove('hidden');
+                    setTimeout(() => el.classList.add('hidden'), 5000);
+                }
+            });
         }
 
         function showToast(message) {
@@ -4876,10 +5548,32 @@
             });
         });
 
+        function isModernLobby() {
+            return uiLayout === 'modern';
+        }
+
+        function getLobbyInput(legacyId, modernId) {
+            if (isModernLobby()) {
+                const el = document.getElementById(modernId);
+                if (el) return el;
+            }
+            return document.getElementById(legacyId);
+        }
+
+        function showLobbyError(msg) {
+            const id = isModernLobby() ? 'm-lobby-error' : 'lobby-error';
+            const el = document.getElementById(id);
+            if (el) {
+                el.textContent = msg;
+                el.classList.remove('hidden');
+            }
+        }
+
         function createGame() {
-            const name = document.getElementById('player-name').value.trim() || 'Captain';
-            const numAi = parseInt(document.getElementById('num-ai').value);
-            const aiDifficulty = document.getElementById('ai-difficulty').value;
+            const nameEl = getLobbyInput('player-name', 'm-player-name');
+            const name = nameEl.value.trim() || 'Captain';
+            const numAi = parseInt(getLobbyInput('num-ai', 'm-num-ai').value);
+            const aiDifficulty = getLobbyInput('ai-difficulty', 'm-ai-difficulty').value;
 
             // Clear any existing session and reset reconnection flag
             clearSession();
@@ -4899,8 +5593,10 @@
         }
 
         function joinGame() {
-            const name = document.getElementById('player-name').value.trim() || 'Sailor';
-            const code = document.getElementById('room-code').value.trim().toUpperCase();
+            const nameEl = getLobbyInput('player-name', 'm-player-name');
+            const name = nameEl.value.trim() || 'Sailor';
+            const codeEl = getLobbyInput('room-code', 'm-room-code-input');
+            const code = codeEl.value.trim().toUpperCase();
 
             if (!code || code.length !== 4) {
                 openBrowser();
@@ -4998,20 +5694,33 @@
 
         function changeAiDifficulty() {
             if (!gameState || !gameState.is_host || !roomCode) return;
-            const difficulty = document.getElementById('waiting-ai-difficulty').value;
+            const el = document.getElementById('waiting-ai-difficulty') || document.getElementById('m-waiting-ai-difficulty');
+            const difficulty = el ? el.value : 'easy';
             socket.emit('update_ai_difficulty', { room_code: roomCode, ai_difficulty: difficulty });
         }
 
         // Toggle private/public on create screen
         function togglePrivateCreate() {
             const input = document.getElementById('private-game');
-            const btn = document.getElementById('private-game-btn');
             const isNowPrivate = input.value !== 'true';
             input.value = isNowPrivate ? 'true' : 'false';
+
+            // Update legacy button
+            const btn = document.getElementById('private-game-btn');
             btn.textContent = isNowPrivate ? '🔒 Private Game' : '🌐 Public Game';
             btn.className = isNowPrivate ? 'btn btn-red' : 'btn btn-wood';
             btn.style.width = '100%';
             btn.style.marginBottom = '15px';
+
+            // Update modern button
+            const mBtn = document.getElementById('m-private-game-btn');
+            if (mBtn) {
+                mBtn.textContent = isNowPrivate ? '🔒 Private Game' : '🌐 Public Game';
+                mBtn.className = isNowPrivate
+                    ? 'lobby-m-btn lobby-m-btn-wood'
+                    : 'lobby-m-btn lobby-m-btn-wood';
+                mBtn.style.marginBottom = '10px';
+            }
         }
 
         // Toggle private/public in waiting room (host only)
@@ -5251,6 +5960,7 @@
         }
 
         function updateWaitingRoom() {
+            // === Legacy waiting room ===
             const playerList = document.getElementById('player-list');
             playerList.innerHTML = gameState.players.map((p, i) => {
                 let glowClass = '';
@@ -5277,7 +5987,6 @@
                 privateBadge.textContent = '🌐 Public Game';
                 privateBadge.classList.remove('is-private');
             }
-            // Only host can toggle
             privateBadge.disabled = !gameState.is_host;
 
             // AI controls (host only)
@@ -5292,6 +6001,54 @@
                 aiControls.classList.add('hidden');
                 document.getElementById('host-controls').classList.add('hidden');
                 document.getElementById('waiting-message').classList.remove('hidden');
+            }
+
+            // === Modern waiting room ===
+            const mPlayerList = document.getElementById('m-player-list');
+            if (mPlayerList) {
+                mPlayerList.innerHTML = gameState.players.map((p, i) => {
+                    let badge = '';
+                    if (i === 0) badge = '<span class="waiting-m-player-badge host">HOST</span>';
+                    else if (!p.is_human) badge = '<span class="waiting-m-player-badge ai">AI</span>';
+                    const youTag = i === playerIndex ? ' (You)' : '';
+                    return `<div class="waiting-m-player">
+                        <span class="waiting-m-player-avatar">${p.avatar || '⚓'}</span>
+                        <span class="waiting-m-player-name">${p.name || 'Unknown'}${youTag}</span>
+                        ${badge}
+                    </div>`;
+                }).join('');
+            }
+
+            const mRoomCode = document.getElementById('m-display-room-code');
+            if (mRoomCode) mRoomCode.textContent = roomCode || 'XXXX';
+
+            const mPrivateBadge = document.getElementById('m-private-badge');
+            if (mPrivateBadge) {
+                if (gameState.is_private) {
+                    mPrivateBadge.textContent = '🔒 Private Game';
+                    mPrivateBadge.classList.add('is-private');
+                } else {
+                    mPrivateBadge.textContent = '🌐 Public Game';
+                    mPrivateBadge.classList.remove('is-private');
+                }
+                mPrivateBadge.disabled = !gameState.is_host;
+            }
+
+            const mAiControls = document.getElementById('m-ai-controls');
+            const mHostControls = document.getElementById('m-host-controls');
+            const mWaitingMsg = document.getElementById('m-waiting-message');
+            if (gameState.is_host) {
+                if (mAiControls) mAiControls.classList.remove('hidden');
+                if (mHostControls) mHostControls.classList.remove('hidden');
+                if (mWaitingMsg) mWaitingMsg.classList.add('hidden');
+                const mAiCount = document.getElementById('m-ai-count-display');
+                if (mAiCount) mAiCount.textContent = gameState.num_ai;
+                const mAiDiff = document.getElementById('m-waiting-ai-difficulty');
+                if (mAiDiff) mAiDiff.value = gameState.ai_difficulty || 'easy';
+            } else {
+                if (mAiControls) mAiControls.classList.add('hidden');
+                if (mHostControls) mHostControls.classList.add('hidden');
+                if (mWaitingMsg) mWaitingMsg.classList.remove('hidden');
             }
         }
 
@@ -5440,12 +6197,13 @@
             } else if (gameState.phase === 'bidding' && isMyTurn && myPlayer && myPlayer.num_dice > 0) {
                 const canChallenge = gameState.current_bid !== null;
                 const minQty = gameState.current_bid ? gameState.current_bid[0] : 1;
+                const legacyQtyOpts = buildQtyOptions(minQty, gameState.total_dice);
 
                 controls.innerHTML = `
                     <div class="bid-controls">
                         <div class="bid-input">
                             <label>Qty:</label>
-                            <input type="number" id="bid-qty" min="1" max="${gameState.total_dice}" value="${minQty}">
+                            <select id="bid-qty">${legacyQtyOpts}</select>
                         </div>
                         <div class="bid-input">
                             <label>Face:</label>
@@ -5957,21 +6715,23 @@
 
         function updateLeaderboard(topPirates) {
             leaderboardData = topPirates;
+
+            const html = (!topPirates || topPirates.length === 0)
+                ? '<div class="leaderboard-empty">No pirates yet! Be the first!</div>'
+                : topPirates.map(pirate => `
+                    <div class="leaderboard-item rank-${pirate.rank}">
+                        <span class="leaderboard-rank">${pirate.rank}</span>
+                        <span class="leaderboard-avatar">${pirate.avatar}</span>
+                        <span class="leaderboard-name">${pirate.username}</span>
+                        <span class="leaderboard-wins">⚔️ ${pirate.wins}</span>
+                    </div>
+                `).join('');
+
+            // Update both legacy and modern leaderboards
             const listEl = document.getElementById('leaderboard-list');
-
-            if (!topPirates || topPirates.length === 0) {
-                listEl.innerHTML = '<div class="leaderboard-empty">No pirates yet! Be the first!</div>';
-                return;
-            }
-
-            listEl.innerHTML = topPirates.map(pirate => `
-                <div class="leaderboard-item rank-${pirate.rank}">
-                    <span class="leaderboard-rank">${pirate.rank}</span>
-                    <span class="leaderboard-avatar">${pirate.avatar}</span>
-                    <span class="leaderboard-name">${pirate.username}</span>
-                    <span class="leaderboard-wins">⚔️ ${pirate.wins}</span>
-                </div>
-            `).join('');
+            if (listEl) listEl.innerHTML = html;
+            const mListEl = document.getElementById('m-leaderboard-list');
+            if (mListEl) mListEl.innerHTML = html;
         }
 
         // ==================== AUTH SOCKET HANDLERS ====================
@@ -6213,7 +6973,7 @@
             {
                 id: 'wilds',
                 title: "Wild Ones!",
-                body: `Dice showing <strong>1</strong> are <strong>WILD</strong> - they count as ANY face value! The gold-tinted die in your hand is a wild.<div class="tut-tip">This is key to the game. When someone bids "four 5s", all the 1s count as 5s too!</div>`,
+                body: `Dice showing <strong>1</strong> are <strong>WILD</strong> - they count as ANY face value! The gold-tinted die in your hand is a wild.<div class="tut-tip">When someone bids "four 5s", all the 1s count as 5s too! And yes, 1s also count as 1s — you can bid on 1s directly, but wilds won't apply to that bid.</div>`,
                 target: '#tut-dice-grid',
                 arrow: 'down',
                 btns: ['next']
@@ -6308,6 +7068,10 @@
             tutActive = false;
             playSfx('click');
 
+            // Reset elevated target
+            const el = document.querySelector('.tut-elevated');
+            if (el) el.classList.remove('tut-elevated');
+
             // Clean up tutorial elements
             document.getElementById('tutorial-game').classList.add('hidden');
             document.getElementById('tutorial-game').innerHTML = '';
@@ -6352,9 +7116,18 @@
                 backdrop.style.pointerEvents = 'auto';
             }
 
+            // Reset previously elevated target
+            const prevElevated = document.querySelector('.tut-elevated');
+            if (prevElevated) {
+                prevElevated.classList.remove('tut-elevated');
+            }
+
             if (step.target) {
                 const targetEl = document.querySelector(step.target);
                 if (targetEl) {
+                    // Elevate target above backdrop so it appears bright
+                    targetEl.classList.add('tut-elevated');
+
                     const rect = targetEl.getBoundingClientRect();
                     const pad = 8;
                     spotlight.style.left = (rect.left - pad) + 'px';
@@ -6546,7 +7319,7 @@
                         <div class="m-move-row">
                             <div class="m-move-input">
                                 <label>Qty:</label>
-                                <input type="number" id="tut-bid-qty" min="1" max="15" value="2">
+                                <select id="tut-bid-qty">${buildQtyOptions(1, 15, 2)}</select>
                             </div>
                             <div class="m-move-input">
                                 <label>Face:</label>
@@ -6598,7 +7371,7 @@
                         <div class="m-move-row">
                             <div class="m-move-input">
                                 <label>Qty:</label>
-                                <input type="number" id="tut-bid-qty" min="1" max="15" value="6">
+                                <select id="tut-bid-qty">${buildQtyOptions(8, 15, 9)}</select>
                             </div>
                             <div class="m-move-input">
                                 <label>Face:</label>
