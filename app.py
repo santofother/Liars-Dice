@@ -123,10 +123,12 @@ def add_ai_players(game):
             })
 
 def roll_all_dice(game):
-    """Roll dice for all alive players."""
+    """Roll dice for all alive players. Clear dice for eliminated players."""
     for player in game['players']:
         if player['num_dice'] > 0:
             player['dice'] = [random.randint(1, 6) for _ in range(player['num_dice'])]
+        else:
+            player['dice'] = []
 
 def total_dice_in_play(game):
     """Count total dice across all players."""
@@ -402,7 +404,19 @@ def get_alive_players(game):
     return [i for i, p in enumerate(game['players']) if p['num_dice'] > 0]
 
 def next_alive_player(game, current):
-    """Get next alive player index."""
+    """Get next alive player index, following the round's turn order."""
+    turn_order = game.get('turn_order')
+    if turn_order:
+        # Filter turn_order to only alive players
+        alive = get_alive_players(game)
+        if len(alive) <= 1:
+            return None
+        alive_order = [p for p in turn_order if p in alive]
+        if current in alive_order:
+            current_pos = alive_order.index(current)
+            next_pos = (current_pos + 1) % len(alive_order)
+            return alive_order[next_pos]
+    # Fallback to original logic
     alive = get_alive_players(game)
     if len(alive) <= 1:
         return None
@@ -915,6 +929,12 @@ def handle_roll_dice(data):
 
     # Remember who started this round for next rotation
     game['round_starter'] = game['current_player']
+
+    # Build randomized turn order: first player stays, rest are shuffled
+    first_player = game['current_player']
+    others = [p for p in alive if p != first_player]
+    random.shuffle(others)
+    game['turn_order'] = [first_player] + others
 
     current_player = game['players'][game['current_player']]
     game['message'] = f"{current_player['name']}'s turn to bid!"

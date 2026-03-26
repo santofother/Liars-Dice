@@ -207,6 +207,13 @@
             opacity: 0.5;
         }
 
+        .eliminated-skull {
+            font-size: 48px;
+            text-align: center;
+            padding: 10px 0;
+            filter: grayscale(0.3);
+        }
+
         .player-card.disconnected {
             border-color: #666;
         }
@@ -1947,6 +1954,57 @@
         @keyframes slideDown {
             0% { transform: translateX(-50%) translateY(-100%); opacity: 0; }
             100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        /* Mobile Chat Toast Notification */
+        .chat-toast {
+            position: fixed;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(145deg, #3d2817 0%, #2a1a0f 100%);
+            border: 2px solid #b8860b;
+            color: #f5e6d3;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            z-index: 101;
+            max-width: 85vw;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            animation: chatToastIn 0.3s ease-out;
+            pointer-events: none;
+        }
+
+        .chat-toast .chat-toast-sender {
+            color: #ffd700;
+            font-weight: bold;
+            margin-right: 6px;
+        }
+
+        .chat-toast .chat-toast-text {
+            color: #f5e6d3;
+        }
+
+        @keyframes chatToastIn {
+            0% { transform: translateX(-50%) translateY(20px); opacity: 0; }
+            100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        @keyframes chatToastOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+        }
+
+        /* Only show chat toasts on mobile */
+        .layout-modern .chat-toast {
+            display: none;
+        }
+
+        @media (max-width: 767px) {
+            .layout-modern .chat-toast {
+                display: block;
+            }
         }
 
         /* Chat Panel */
@@ -3827,15 +3885,15 @@
                 let crown = '';
                 try { crown = getCrownIcon(getPlayerRank(p.name)); } catch(e) {}
 
-                const status = isEliminated ? 'ELIMINATED' :
+                const status = isEliminated ? '☠️ Davy Jones\' Locker' :
                     !p.connected ? 'Disconnected' :
                     `${p.num_dice} dice${p.is_human ? '' : ' (AI)'}`;
 
                 const kickBtn = (gameState.is_host && idx !== 0 && idx !== playerIndex)
                     ? `<button class="kick-btn" onclick="kickPlayer(${idx})" title="Kick" style="opacity:1;position:static;width:24px;height:24px;">✕</button>` : '';
 
-                return `<div class="${cls}">
-                    <div class="m-opp-avatar">${p.avatar || '⚓'}</div>
+                return `<div class="${cls}" data-player-idx="${idx}">
+                    <div class="m-opp-avatar">${isEliminated ? '☠️' : (p.avatar || '⚓')}</div>
                     <div class="m-opp-info">
                         <div class="m-opp-name">${p.name}${crown}</div>
                         <div class="m-opp-status">${status}</div>
@@ -3982,7 +4040,6 @@
                     <button class="m-chat-tab ${modernChatTab==='taunt'?'active':''}" onclick="setModernChatTab('taunt',this)">Taunts</button>
                     <button class="m-chat-tab ${modernChatTab==='react'?'active':''}" onclick="setModernChatTab('react',this)">Reactions</button>
                     <button class="m-chat-tab ${modernChatTab==='social'?'active':''}" onclick="setModernChatTab('social',this)">Social</button>
-                    <button class="m-chat-tab ${modernChatTab==='custom'?'active':''}" onclick="setModernChatTab('custom',this)">Custom</button>
                 </div>
                 <div class="m-chat-options" id="m-chat-options"></div>
                 <div class="m-chat-input-row">
@@ -5060,13 +5117,18 @@
                     crown = getCrownIcon(rank);
                 } catch (e) { console.error('Rank error:', e); }
 
-                const diceHtml = (player.dice || []).map(d => {
-                    if (d === 0) return '<div class="die hidden"></div>';
-                    return `<div class="die ${d === 1 ? 'wild' : ''}" data-value="${d}"></div>`;
-                }).join('');
+                let diceHtml;
+                if (isEliminated) {
+                    diceHtml = '<div class="eliminated-skull">☠️</div>';
+                } else {
+                    diceHtml = (player.dice || []).map(d => {
+                        if (d === 0) return '<div class="die hidden"></div>';
+                        return `<div class="die ${d === 1 ? 'wild' : ''}" data-value="${d}"></div>`;
+                    }).join('');
+                }
 
                 let status = `${player.num_dice} dice`;
-                if (isEliminated) status = 'ELIMINATED';
+                if (isEliminated) status = 'Davy Jones\' Locker';
                 if (!player.connected) status = 'Disconnected';
                 if (!player.is_human) status += ' (AI)';
 
@@ -5247,10 +5309,11 @@
             const diceDiv = document.getElementById('reveal-dice');
             const resultDiv = document.getElementById('reveal-result');
 
-            // Show all players' dice
+            // Show dice for players who participated this round (have dice in their array)
+            // Excluded: players eliminated in prior rounds (empty dice array)
             let diceHtml = '';
             gameState.players.forEach(player => {
-                if (player.num_dice > 0 || player.dice.length > 0) {
+                if (player.dice && player.dice.length > 0) {
                     const dice = player.dice.map(d =>
                         `<div class="die ${d === 1 ? 'wild' : ''}" data-value="${d}"></div>`
                     ).join('');
@@ -5466,6 +5529,8 @@
             showBubble(playerIndex, message);
         }
 
+        let activeChatToast = null;
+
         function receiveChatMessage(data) {
             const senderIdx = gameState.players.findIndex(p => p.name === data.sender);
 
@@ -5477,11 +5542,36 @@
                 showBubble(senderIdx, data.message);
             }
 
+            // Show mobile chat toast (visible without opening chat)
+            showChatToast(data.sender, data.avatar, data.message);
+
             // Play chat sound and notify if chat is closed
             playSfx('chat');
             if (!chatOpen) {
                 document.getElementById('chat-btn').classList.add('has-notification');
             }
+        }
+
+        function showChatToast(sender, avatar, message) {
+            // Remove existing toast
+            if (activeChatToast) {
+                clearTimeout(activeChatToast.timer);
+                activeChatToast.el.remove();
+                activeChatToast = null;
+            }
+
+            const toast = document.createElement('div');
+            toast.className = 'chat-toast';
+            toast.innerHTML = `<span class="chat-toast-sender">${avatar || '⚓'} ${sender}:</span> <span class="chat-toast-text">${message}</span>`;
+            document.body.appendChild(toast);
+
+            const timer = setTimeout(() => {
+                toast.style.animation = 'chatToastOut 0.5s ease-out forwards';
+                setTimeout(() => toast.remove(), 500);
+                activeChatToast = null;
+            }, 4000);
+
+            activeChatToast = { el: toast, timer };
         }
 
         function addChatMessageToPanel(sender, avatar, message, isOwn) {
