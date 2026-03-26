@@ -1900,14 +1900,13 @@
             display: none !important;
         }
 
-        /* Show modern lobby content (hidden by default for legacy) */
-        .layout-modern #lobby > .lobby-m-header,
-        .layout-modern #lobby > .lobby-m-body {
-            display: flex;
+        /* Show modern lobby content (hidden by default for legacy via inline style) */
+        .layout-modern #lobby > .lobby-m-header {
+            display: flex !important;
         }
 
         .layout-modern #lobby > .lobby-m-body {
-            display: grid;
+            display: grid !important;
         }
 
         /* --- Modern Waiting Room --- */
@@ -2053,13 +2052,13 @@
             display: none !important;
         }
 
-        /* Show modern waiting room content */
+        /* Show modern waiting room content (hidden by default for legacy via inline style) */
         .layout-modern #waiting-room .waiting-m-header {
-            display: flex;
+            display: flex !important;
         }
 
         .layout-modern #waiting-room .waiting-m-body {
-            display: grid;
+            display: grid !important;
         }
 
         /* ============================================ */
