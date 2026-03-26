@@ -1784,18 +1784,18 @@
         }
 
         .layout-modern #lobby .lobby-m-emoji-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+            gap: 8px;
         }
 
         .layout-modern #lobby .lobby-m-emoji-grid .emoji-option {
-            width: 40px;
-            height: 40px;
-            font-size: 22px;
+            width: 100%;
+            aspect-ratio: 1;
+            font-size: 26px;
             background: rgba(0,0,0,0.3);
             border: 2px solid var(--m-border2);
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -1805,13 +1805,24 @@
 
         .layout-modern #lobby .lobby-m-emoji-grid .emoji-option:hover {
             border-color: var(--m-gold);
-            transform: scale(1.1);
+            transform: scale(1.08);
         }
 
         .layout-modern #lobby .lobby-m-emoji-grid .emoji-option.selected {
             border-color: var(--m-gold);
             background: rgba(255,215,0,0.15);
             box-shadow: 0 0 8px rgba(255,215,0,0.3);
+        }
+
+        .layout-modern #lobby .lobby-m-emoji-grid .emoji-option.random-avatar {
+            font-size: 14px;
+            color: var(--m-dimtext);
+            letter-spacing: 0;
+            font-family: 'Georgia', serif;
+        }
+
+        .layout-modern #lobby .lobby-m-emoji-grid .emoji-option.random-avatar.selected {
+            color: var(--m-gold);
         }
 
         .layout-modern #lobby .lobby-m-row {
@@ -2169,6 +2180,16 @@
             transform: scale(1.1);
         }
 
+        .waiting-avatar-popup-grid .emoji-option.random-avatar {
+            font-size: 16px;
+            color: var(--m-dimtext);
+            font-family: 'Georgia', serif;
+        }
+
+        .waiting-avatar-popup-grid .emoji-option.random-avatar.selected {
+            color: var(--m-gold);
+        }
+
         .waiting-avatar-popup-overlay {
             display: none;
             position: fixed;
@@ -2276,8 +2297,8 @@
             }
 
             .layout-modern #lobby .lobby-m-emoji-grid .emoji-option {
-                width: 32px;
-                height: 32px;
+                min-width: 32px;
+                min-height: 32px;
                 font-size: 18px;
             }
 
@@ -3910,8 +3931,11 @@
                             <div class="emoji-option" data-emoji="🏝️">🏝️</div>
                             <div class="emoji-option" data-emoji="⛵">⛵</div>
                             <div class="emoji-option" data-emoji="🧭">🧭</div>
+                            <div class="emoji-option random-avatar" data-emoji="random">🎲?</div>
                         </div>
                     </div>
+
+                    <div style="flex:1;min-height:20px;"></div>
 
                     <button class="lobby-m-btn lobby-m-btn-wood" id="m-private-game-btn" onclick="togglePrivateCreate()" style="margin-bottom:10px;">🌐 Public Game</button>
                     <button class="lobby-m-btn lobby-m-btn-gold" onclick="createGame()">Create Game</button>
@@ -3981,6 +4005,7 @@
                     <div class="emoji-option" data-emoji="🏝️">🏝️</div>
                     <div class="emoji-option" data-emoji="⛵">⛵</div>
                     <div class="emoji-option" data-emoji="🧭">🧭</div>
+                    <div class="emoji-option" data-emoji="random" style="font-size:12px;color:#8b7355;">🎲?</div>
                 </div>
             </div>
 
@@ -4124,6 +4149,7 @@
                         <div class="emoji-option" data-emoji="🏝️" title="Island">🏝️</div>
                         <div class="emoji-option" data-emoji="⛵" title="Ship">⛵</div>
                         <div class="emoji-option" data-emoji="🧭" title="Compass">🧭</div>
+                        <div class="emoji-option random-avatar" data-emoji="random" title="Random">🎲?</div>
                     </div>
                     <button class="lobby-m-btn lobby-m-btn-wood" onclick="closeWaitingAvatarPicker()" style="width:auto;padding:8px 24px;font-size:0.9em;">Set Sail</button>
                 </div>
@@ -5686,6 +5712,14 @@
             });
         });
 
+        const avatarEmojis = ['🏴‍☠️','⚓','🦜','💀','🗡️','🦑','🧜‍♀️','🐙','🦈','🏝️','⛵','🧭'];
+        function resolveAvatar() {
+            if (selectedAvatar === 'random') {
+                return avatarEmojis[Math.floor(Math.random() * avatarEmojis.length)];
+            }
+            return selectedAvatar;
+        }
+
         function isModernLobby() {
             return uiLayout === 'modern';
         }
@@ -5724,7 +5758,7 @@
             socket.emit('create_game', {
                 name,
                 num_ai: numAi,
-                avatar: selectedAvatar,
+                avatar: resolveAvatar(),
                 ai_difficulty: aiDifficulty,
                 is_private: isPrivate,
                 user_token: userToken  // Include auth token
@@ -5751,7 +5785,7 @@
             socket.emit('join_game', {
                 name,
                 room_code: code,
-                avatar: selectedAvatar,
+                avatar: resolveAvatar(),
                 user_token: userToken  // Include auth token
             });
             // Session will be saved when game_state is received
@@ -5805,7 +5839,7 @@
             socket.emit('join_game', {
                 name,
                 room_code: code,
-                avatar: selectedAvatar,
+                avatar: resolveAvatar(),
                 user_token: userToken
             });
         }
@@ -5820,7 +5854,7 @@
             socket.emit('join_game', {
                 name,
                 room_code: code,
-                avatar: selectedAvatar,
+                avatar: resolveAvatar(),
                 user_token: userToken
             });
         }
@@ -6547,8 +6581,9 @@
                 document.querySelectorAll('#waiting-avatar-grid .emoji-option').forEach(o => o.classList.remove('selected'));
                 option.classList.add('selected');
                 selectedAvatar = emoji;
+                const resolved = emoji === 'random' ? avatarEmojis[Math.floor(Math.random() * avatarEmojis.length)] : emoji;
                 if (roomCode) {
-                    socket.emit('change_avatar', { room_code: roomCode, avatar: emoji });
+                    socket.emit('change_avatar', { room_code: roomCode, avatar: resolved });
                 }
                 closeWaitingAvatarPicker();
             });
