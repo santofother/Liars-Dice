@@ -1785,14 +1785,14 @@
 
         .layout-modern #lobby .lobby-m-emoji-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
-            gap: 8px;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 10px;
         }
 
         .layout-modern #lobby .lobby-m-emoji-grid .emoji-option {
             width: 100%;
             aspect-ratio: 1;
-            font-size: 26px;
+            font-size: 32px;
             background: rgba(0,0,0,0.3);
             border: 2px solid var(--m-border2);
             border-radius: 10px;
@@ -3934,8 +3934,6 @@
                             <div class="emoji-option random-avatar" data-emoji="random">🎲?</div>
                         </div>
                     </div>
-
-                    <div style="flex:1;min-height:20px;"></div>
 
                     <button class="lobby-m-btn lobby-m-btn-wood" id="m-private-game-btn" onclick="togglePrivateCreate()" style="margin-bottom:10px;">🌐 Public Game</button>
                     <button class="lobby-m-btn lobby-m-btn-gold" onclick="createGame()">Create Game</button>
