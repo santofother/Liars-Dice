@@ -1024,10 +1024,11 @@
         .layout-modern .m-dice-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            flex: 1 1 0;
+            gap: 8px;
+            flex: 0 1 auto;
             min-height: 0;
             overflow: hidden;
+            max-height: calc(100vh - 300px);
         }
 
         .layout-modern .m-dice-grid .m-die-wrap:nth-child(5) {
@@ -1039,6 +1040,7 @@
             overflow: hidden;
             box-shadow: 0 5px 16px rgba(0,0,0,0.9);
             aspect-ratio: 1;
+            max-width: 100px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1714,7 +1716,7 @@
 
         .layout-modern #lobby .lobby-m-body {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 320px;
             gap: 0;
             flex: 1;
             min-height: 0;
@@ -1735,6 +1737,7 @@
 
         .layout-modern #lobby .lobby-m-col-right {
             background: linear-gradient(180deg, #1c0900, #120600);
+            justify-content: flex-start;
         }
 
         .layout-modern #lobby .lobby-m-section {
@@ -3321,17 +3324,19 @@
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             z-index: 1999;
-            background: rgba(0,0,0,0.7);
+            background: transparent;
             transition: opacity 0.3s;
+            pointer-events: none;
         }
 
         .tut-spotlight {
             position: absolute;
             border-radius: 12px;
-            box-shadow: 0 0 0 9999px rgba(0,0,0,0.72);
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.82);
             z-index: 2001;
             pointer-events: none;
             transition: all 0.4s ease;
+            background: transparent;
         }
 
         .tut-spotlight.pulse {
@@ -3339,8 +3344,8 @@
         }
 
         @keyframes tutPulse {
-            0%, 100% { box-shadow: 0 0 0 9999px rgba(0,0,0,0.72), 0 0 15px 3px rgba(255,215,0,0.5); }
-            50% { box-shadow: 0 0 0 9999px rgba(0,0,0,0.72), 0 0 25px 8px rgba(255,215,0,0.8); }
+            0%, 100% { box-shadow: 0 0 0 9999px rgba(0,0,0,0.82), 0 0 20px 5px rgba(255,215,0,0.6); }
+            50% { box-shadow: 0 0 0 9999px rgba(0,0,0,0.82), 0 0 35px 10px rgba(255,215,0,0.9); }
         }
 
         .tut-popup {
@@ -3467,11 +3472,6 @@
             50% { opacity: 1; }
         }
 
-        .tut-elevated {
-            position: relative !important;
-            z-index: 2001 !important;
-        }
-
         /* Tutorial game board - reuses modern layout classes */
         #tutorial-game {
             position: fixed;
@@ -3523,7 +3523,8 @@
 
     <!-- Settings Overlay -->
     <div id="settings-overlay" class="overlay hidden">
-        <div class="overlay-content" style="max-width: 400px;">
+        <div class="overlay-content" style="max-width: 400px; position: relative;">
+            <button onclick="toggleSettings()" style="position:absolute;top:10px;right:14px;background:none;border:none;color:#ffd700;font-size:1.5em;cursor:pointer;z-index:1;" title="Close">✕</button>
             <div class="overlay-title">⚙️ Settings</div>
 
             <div class="settings-section">
@@ -3771,28 +3772,6 @@
                             <div class="emoji-option" data-emoji="🏝️">🏝️</div>
                             <div class="emoji-option" data-emoji="⛵">⛵</div>
                             <div class="emoji-option" data-emoji="🧭">🧭</div>
-                        </div>
-                    </div>
-
-                    <div class="lobby-m-row">
-                        <div class="lobby-m-form-group">
-                            <label>AI Pirates</label>
-                            <select id="m-num-ai">
-                                <option value="0">None</option>
-                                <option value="1">1 AI</option>
-                                <option value="2" selected>2 AI</option>
-                                <option value="3">3 AI</option>
-                            </select>
-                        </div>
-                        <div class="lobby-m-form-group">
-                            <label>Difficulty</label>
-                            <select id="m-ai-difficulty">
-                                <option value="easy">Deckhand</option>
-                                <option value="medium" selected>First Mate</option>
-                                <option value="hard">Blackbeard</option>
-                                <option value="impossible">Captain Jack</option>
-                                <option value="random">Motley Crew</option>
-                            </select>
                         </div>
                     </div>
 
@@ -5571,8 +5550,10 @@
         function createGame() {
             const nameEl = getLobbyInput('player-name', 'm-player-name');
             const name = nameEl.value.trim() || 'Captain';
-            const numAi = parseInt(getLobbyInput('num-ai', 'm-num-ai').value);
-            const aiDifficulty = getLobbyInput('ai-difficulty', 'm-ai-difficulty').value;
+            const numAiEl = getLobbyInput('num-ai', 'num-ai');
+            const numAi = numAiEl ? parseInt(numAiEl.value) : 2;
+            const aiDiffEl = getLobbyInput('ai-difficulty', 'ai-difficulty');
+            const aiDifficulty = aiDiffEl ? aiDiffEl.value : 'medium';
 
             // Clear any existing session and reset reconnection flag
             clearSession();
@@ -7067,10 +7048,6 @@
             tutActive = false;
             playSfx('click');
 
-            // Reset elevated target
-            const el = document.querySelector('.tut-elevated');
-            if (el) el.classList.remove('tut-elevated');
-
             // Clean up tutorial elements
             document.getElementById('tutorial-game').classList.add('hidden');
             document.getElementById('tutorial-game').innerHTML = '';
@@ -7108,25 +7085,9 @@
             backdrop.classList.remove('hidden');
             overlay.classList.remove('hidden');
 
-            // For waitFor steps, let clicks pass through backdrop to target
-            if (step.waitFor) {
-                backdrop.style.pointerEvents = 'none';
-            } else {
-                backdrop.style.pointerEvents = 'auto';
-            }
-
-            // Reset previously elevated target
-            const prevElevated = document.querySelector('.tut-elevated');
-            if (prevElevated) {
-                prevElevated.classList.remove('tut-elevated');
-            }
-
             if (step.target) {
                 const targetEl = document.querySelector(step.target);
                 if (targetEl) {
-                    // Elevate target above backdrop so it appears bright
-                    targetEl.classList.add('tut-elevated');
-
                     const rect = targetEl.getBoundingClientRect();
                     const pad = 8;
                     spotlight.style.left = (rect.left - pad) + 'px';
