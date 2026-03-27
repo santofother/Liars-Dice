@@ -1,0 +1,357 @@
+/* =============================================
+   PIXEL AVATARS - 8-Bit Character System
+   ============================================= */
+
+/* --- Sprite Container --- */
+.px-sprite-wrap {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    flex-shrink: 0;
+}
+
+.px-sprite-wrap img {
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+}
+
+/* --- Right Panel "Deck" Layout --- */
+body.pixel-avatars-on .layout-modern .m-opp-list {
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(90, 50, 20, 0.15) 0px,
+        rgba(90, 50, 20, 0.15) 2px,
+        transparent 2px,
+        transparent 12px
+    );
+    border-radius: 8px;
+    padding: 4px;
+}
+
+body.pixel-avatars-on .layout-modern .m-opponent-card {
+    padding: 6px 10px;
+    min-height: 72px;
+    gap: 8px;
+    position: relative;
+}
+
+body.pixel-avatars-on .layout-modern .m-opponent-card.active-bidder {
+    border-color: #ffd700;
+    box-shadow: 0 0 16px rgba(255, 215, 0, 0.5);
+}
+
+body.pixel-avatars-on .layout-modern .m-opp-avatar {
+    display: none;
+}
+
+/* --- Current Player Pixel Avatar --- */
+.px-my-avatar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+body:not(.pixel-avatars-on) .px-my-avatar {
+    display: none;
+}
+
+/* --- Idle Animation --- */
+@keyframes px-idle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+}
+
+.px-anim-idle .px-sprite-wrap {
+    animation: px-idle 2s ease-in-out infinite;
+}
+
+/* --- Roll Animation --- */
+@keyframes px-roll {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    20% { transform: translateX(-3px) rotate(-5deg); }
+    40% { transform: translateX(3px) rotate(5deg); }
+    60% { transform: translateX(-2px) rotate(-3deg); }
+    80% { transform: translateX(2px) rotate(3deg); }
+}
+
+.px-anim-roll .px-sprite-wrap {
+    animation: px-roll 0.6s ease-in-out;
+}
+
+/* --- Bid Animation (step forward) --- */
+@keyframes px-bid {
+    0%, 100% { transform: translateX(0); }
+    30%, 70% { transform: translateX(-10px); }
+}
+
+.px-anim-bid .px-sprite-wrap {
+    animation: px-bid 0.8s ease-in-out;
+}
+
+/* --- Call Liar Animation (fist wave) --- */
+@keyframes px-liar {
+    0%, 100% { transform: translateY(0) scale(1); }
+    15% { transform: translateY(-8px) scale(1.08); }
+    30% { transform: translateY(-2px) scale(1); }
+    45% { transform: translateY(-8px) scale(1.08); }
+    60% { transform: translateY(-2px) scale(1); }
+    75% { transform: translateY(-6px) scale(1.05); }
+}
+
+.px-anim-liar .px-sprite-wrap {
+    animation: px-liar 1s ease-in-out;
+}
+
+/* --- Win Animation (victory jump) --- */
+@keyframes px-win {
+    0%, 100% { transform: translateY(0) scale(1); }
+    20% { transform: translateY(-4px); }
+    40% { transform: translateY(-16px) scale(1.1); }
+    55% { transform: translateY(-16px) scale(1.1); }
+    70% { transform: translateY(-4px); }
+    80% { transform: translateY(-8px); }
+    90% { transform: translateY(0); }
+}
+
+.px-anim-win .px-sprite-wrap {
+    animation: px-win 1s ease-in-out;
+}
+
+/* --- Lose Die Animation (flinch) --- */
+@keyframes px-lose {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    10% { transform: translateX(5px) rotate(3deg); }
+    20% { transform: translateX(-5px) rotate(-3deg); }
+    30% { transform: translateX(4px) rotate(2deg); }
+    40% { transform: translateX(-3px) rotate(-2deg); }
+    50% { transform: translateX(2px); }
+}
+
+.px-anim-lose .px-sprite-wrap {
+    animation: px-lose 0.8s ease-in-out;
+}
+
+/* --- Eliminated (ghost) --- */
+.px-anim-eliminated .px-sprite-wrap {
+    filter: grayscale(1) brightness(1.6);
+    opacity: 0.4;
+    transition: filter 0.5s, opacity 0.5s;
+}
+
+/* --- Chat Animation (bobbing talk) --- */
+@keyframes px-chat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    20% { transform: translateY(-3px) rotate(-2deg); }
+    40% { transform: translateY(-1px) rotate(1deg); }
+    60% { transform: translateY(-3px) rotate(-1deg); }
+    80% { transform: translateY(-1px) rotate(2deg); }
+}
+
+.px-anim-chat .px-sprite-wrap {
+    animation: px-chat 0.7s ease-in-out;
+}
+
+/* --- Thinking Animation --- */
+@keyframes px-think {
+    0%, 100% { transform: translateY(0); }
+    25% { transform: translateY(-2px) rotate(-2deg); }
+    75% { transform: translateY(-2px) rotate(2deg); }
+}
+
+.px-anim-think .px-sprite-wrap {
+    animation: px-think 1.5s ease-in-out infinite;
+}
+
+/* --- Character Name Plate --- */
+.px-name-plate {
+    font-family: 'Pirata One', serif;
+    color: #ffd700;
+    font-size: 0.75em;
+    text-align: center;
+    margin-top: -2px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 72px;
+}
+
+/* --- Dice Count Badge --- */
+.px-dice-badge {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    background: linear-gradient(145deg, #3d2817, #2a1a0f);
+    border: 1px solid #ffd700;
+    border-radius: 6px;
+    padding: 1px 6px;
+    font-size: 0.7em;
+    color: #ffd700;
+    font-weight: bold;
+}
+
+/* --- Character Selector (Lobby) --- */
+.px-char-selector {
+    display: none;
+    margin-top: 12px;
+}
+
+body.pixel-avatars-on .px-char-selector {
+    display: block;
+}
+
+.px-char-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+    gap: 6px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 8px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    border: 1px solid rgba(255,215,0,0.2);
+}
+
+.px-char-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.px-char-option:hover {
+    background: rgba(255,215,0,0.1);
+    border-color: rgba(255,215,0,0.3);
+}
+
+.px-char-option.selected {
+    background: rgba(255,215,0,0.15);
+    border-color: #ffd700;
+    box-shadow: 0 0 8px rgba(255,215,0,0.3);
+}
+
+.px-char-option img {
+    width: 40px;
+    height: 40px;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+}
+
+.px-char-label {
+    font-size: 0.55em;
+    color: #d4a574;
+    margin-top: 2px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 52px;
+}
+
+/* --- Category Headers --- */
+.px-cat-header {
+    grid-column: 1 / -1;
+    font-family: 'Pirata One', serif;
+    color: #ffd700;
+    font-size: 0.8em;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,215,0,0.3);
+    margin-bottom: 2px;
+}
+
+/* --- Settings Toggle --- */
+.pixel-toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+}
+
+.pixel-toggle-wrap input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #ffd700;
+    cursor: pointer;
+}
+
+.pixel-toggle-label {
+    color: #d4a574;
+    font-size: 0.95em;
+}
+
+.pixel-toggle-desc {
+    font-size: 0.8em;
+    color: #8b7355;
+    margin-top: 4px;
+}
+
+.pixel-preview-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.pixel-preview-row img {
+    width: 32px;
+    height: 32px;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    opacity: 0.6;
+    transition: opacity 0.3s;
+}
+
+body.pixel-avatars-on .pixel-preview-row img {
+    opacity: 1;
+}
+
+/* --- Mobile Responsive --- */
+@media (max-width: 767px) {
+    .px-sprite-wrap {
+        width: 48px;
+        height: 48px;
+    }
+
+    body.pixel-avatars-on .layout-modern .m-opponent-card {
+        min-height: 56px;
+        padding: 4px 8px;
+    }
+
+    .px-name-plate {
+        font-size: 0.65em;
+        max-width: 56px;
+    }
+
+    .px-char-grid {
+        grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+        gap: 4px;
+        max-height: 200px;
+    }
+
+    .px-char-option img {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+@media (max-height: 500px) {
+    .px-sprite-wrap {
+        width: 48px;
+        height: 48px;
+    }
+
+    body.pixel-avatars-on .layout-modern .m-opponent-card {
+        min-height: 52px;
+        padding: 3px 6px;
+    }
+}

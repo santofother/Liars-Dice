@@ -4275,6 +4275,16 @@
             </div>
 
             <div class="settings-section">
+                <h3>🕹️ Pixel Avatars <span style="font-size:0.6em;color:#d4a574;">(Experimental)</span></h3>
+                <div class="pixel-toggle-wrap">
+                    <input type="checkbox" id="pixel-avatar-toggle" onchange="togglePixelAvatars(this.checked)">
+                    <label for="pixel-avatar-toggle" class="pixel-toggle-label">Enable 8-bit pixel characters</label>
+                </div>
+                <div class="pixel-toggle-desc">Replaces emoji avatars with animated pixel art characters</div>
+                <div class="pixel-preview-row" id="pixel-preview-row"></div>
+            </div>
+
+            <div class="settings-section">
                 <h3>👤 Account</h3>
                 <button class="btn btn-gold" onclick="toggleAccount()" id="account-settings-btn">
                     Sign In / Create Account
@@ -4471,6 +4481,8 @@
                             <div class="emoji-option" data-emoji="🌊">🌊</div>
                             <div class="emoji-option random-avatar" data-emoji="random">🎲?</div>
                         </div>
+                        <!-- Pixel Avatar Character Selector (shown when pixel avatars enabled) -->
+                        <div class="px-char-selector" id="m-pixel-char-picker"></div>
                     </div>
 
                     <button class="lobby-m-btn lobby-m-btn-wood" id="m-private-game-btn" onclick="togglePrivateCreate()" style="margin-bottom:10px;">🌐 Public Game</button>
@@ -4845,6 +4857,7 @@
             <!-- Left: Your Hand -->
             <div class="m-col m-col-left">
                 <div class="m-section-label">⚔ YOUR HAND</div>
+                <div class="px-my-avatar" id="px-my-avatar"></div>
                 <div class="m-your-name" id="m-your-name">☠ Captain (You)</div>
                 <div class="m-dice-grid" id="m-dice-grid"></div>
                 <div class="m-stat-pills">
@@ -5018,6 +5031,75 @@
         let chatOpen = false;
         let currentChatTab = 'taunt';
         let reconnectAttempted = false;
+
+        // ==================== PIXEL AVATAR SYSTEM ====================
+        let pixelAvatarsEnabled = false;
+        let pixelAssetsLoaded = false;
+
+        function togglePixelAvatars(on) {
+            pixelAvatarsEnabled = on;
+            localStorage.setItem('pixelAvatars', on ? '1' : '0');
+            document.body.classList.toggle('pixel-avatars-on', on);
+            if (on && !pixelAssetsLoaded) {
+                loadPixelAvatarAssets();
+            } else if (on && pixelAssetsLoaded) {
+                onPixelAvatarsReady();
+            }
+            if (gameState) updateUI();
+        }
+
+        function loadPixelAvatarAssets() {
+            // Load CSS
+            if (!document.getElementById('px-avatar-css')) {
+                const link = document.createElement('link');
+                link.id = 'px-avatar-css';
+                link.rel = 'stylesheet';
+                link.href = '/static/pixel-avatars.css';
+                document.head.appendChild(link);
+            }
+            // Load JS
+            if (!document.getElementById('px-avatar-js')) {
+                const script = document.createElement('script');
+                script.id = 'px-avatar-js';
+                script.src = '/static/pixel-avatars.js';
+                script.onload = function () {
+                    pixelAssetsLoaded = true;
+                    onPixelAvatarsReady();
+                };
+                document.body.appendChild(script);
+            }
+        }
+
+        function onPixelAvatarsReady() {
+            // Build character picker in lobby
+            if (window.PixelAvatars) {
+                PixelAvatars.buildCharacterPicker('m-pixel-char-picker');
+                // Show preview in settings
+                buildPixelPreview();
+            }
+            if (gameState) updateUI();
+        }
+
+        function buildPixelPreview() {
+            const row = document.getElementById('pixel-preview-row');
+            if (!row || !window.PixelAvatars) return;
+            const previews = ['captain_m_light', 'skeleton', 'parrot', 'redcoat_light', 'octopus', 'mermaid'];
+            row.innerHTML = previews.map(id => {
+                const url = PixelAvatars.getSpriteDataURL(id, 2);
+                return url ? `<img src="${url}" alt="">` : '';
+            }).join('');
+        }
+
+        function initPixelAvatars() {
+            const saved = localStorage.getItem('pixelAvatars');
+            if (saved === '1') {
+                pixelAvatarsEnabled = true;
+                document.body.classList.add('pixel-avatars-on');
+                const toggle = document.getElementById('pixel-avatar-toggle');
+                if (toggle) toggle.checked = true;
+                loadPixelAvatarAssets();
+            }
+        }
 
         // ==================== AUTHENTICATION SYSTEM ====================
         let userToken = null;
@@ -5519,6 +5601,7 @@
 
             // --- Right column: Opponents ---
             const oppList = document.getElementById('m-opp-list');
+            const usePx = pixelAvatarsEnabled && window.PixelAvatars;
             oppList.innerHTML = gameState.players.map((p, idx) => {
                 if (idx === playerIndex) return '';
                 const isEliminated = p.num_dice <= 0;
@@ -5527,6 +5610,9 @@
                 if (isBidder && gameState.phase === 'bidding') cls += ' active-bidder';
                 if (isEliminated) cls += ' eliminated';
                 if (!p.connected) cls += ' disconnected';
+                // Add idle animation for pixel avatars
+                if (usePx && !isEliminated) cls += ' px-anim-idle';
+                if (usePx && isEliminated) cls += ' px-anim-eliminated';
 
                 let crown = '';
                 try { crown = getCrownIcon(getPlayerRank(p.name)); } catch(e) {}
@@ -5538,8 +5624,17 @@
                 const kickBtn = (gameState.is_host && idx !== 0 && idx !== playerIndex)
                     ? `<button class="kick-btn" onclick="kickPlayer(${idx})" title="Kick" style="opacity:1;position:static;width:24px;height:24px;">✕</button>` : '';
 
+                // Pixel avatar or emoji
+                let avatarHtml;
+                if (usePx) {
+                    const charId = PixelAvatars.resolveCharacter(p, idx);
+                    avatarHtml = PixelAvatars.getAvatarHTML(charId);
+                } else {
+                    avatarHtml = `<div class="m-opp-avatar">${isEliminated ? '☠️' : (p.avatar || '⚓')}</div>`;
+                }
+
                 return `<div class="${cls}" data-player-idx="${idx}">
-                    <div class="m-opp-avatar">${isEliminated ? '☠️' : (p.avatar || '⚓')}</div>
+                    ${avatarHtml}
                     <div class="m-opp-info">
                         <div class="m-opp-name">${p.name}${crown}</div>
                         <div class="m-opp-status">${status}</div>
@@ -5547,6 +5642,18 @@
                     ${kickBtn}
                 </div>`;
             }).join('');
+
+            // Update current player's pixel avatar
+            if (usePx && myPlayer) {
+                const myCharId = PixelAvatars.resolveCharacter(myPlayer, playerIndex);
+                const myPxDiv = document.getElementById('px-my-avatar');
+                if (myPxDiv) {
+                    const isElim = myPlayer.num_dice <= 0;
+                    myPxDiv.innerHTML = PixelAvatars.getAvatarHTML(myCharId);
+                    myPxDiv.classList.toggle('px-anim-idle', !isElim);
+                    myPxDiv.classList.toggle('px-anim-eliminated', isElim);
+                }
+            }
 
             // Return to Lobby button (host only, game_over phase)
             const mReturnLobby = document.getElementById('m-return-lobby');
@@ -6618,6 +6725,9 @@
             bubble.innerHTML = (tag ? `<span class="bubble-tag">${tag}</span>` : '') + text;
             card.appendChild(bubble);
 
+            // Trigger pixel avatar chat animation
+            pxAnim(playerIdx, 'chat');
+
             // Add AI messages to chat panel
             if (addToChat && gameState && playerIdx !== playerIndex) {
                 if (player && !player.is_human) {
@@ -6642,10 +6752,23 @@
             return arr[Math.floor(Math.random() * arr.length)];
         }
 
+        function pxAnim(playerIdx, type) {
+            if (!pixelAvatarsEnabled || !window.PixelAvatars) return;
+            if (playerIdx === playerIndex) {
+                PixelAvatars.triggerMyAnimation(type);
+            } else {
+                PixelAvatars.triggerAnimation(playerIdx, type);
+            }
+        }
+
         function checkForQuips(oldState, newState) {
             // Sound effects based on state changes
             if (oldState.phase === 'rolling' && newState.phase === 'bidding') {
                 playSfx('roll');
+                // Trigger roll animation on all alive players
+                newState.players.forEach((p, idx) => {
+                    if (p.num_dice > 0) pxAnim(idx, 'roll');
+                });
             }
             if (newState.phase === 'reveal' && oldState.phase === 'bidding') {
                 setTimeout(() => {
@@ -6681,11 +6804,13 @@
                     const newAction = newState.round_history[newState.round_history.length - 1];
                     const playerIdx = newState.players.findIndex(p => p.name === newAction.player);
 
-                    // Play sound for bids and challenges
+                    // Play sound for bids and challenges + pixel animations
                     if (newAction.action === 'bid') {
                         playSfx('bid');
+                        pxAnim(playerIdx, 'bid');
                     } else if (newAction.action === 'challenge') {
                         playSfx('challenge');
+                        pxAnim(playerIdx, 'liar');
                     }
 
                     if (playerIdx !== -1 && playerIdx !== playerIndex) {
@@ -6735,10 +6860,14 @@
                         // Bidder wins
                         if (bidder !== playerIndex) showBubble(bidder, getRandomQuip('win'));
                         if (challenger !== playerIndex) showBubble(challenger, getRandomQuip('lose'));
+                        pxAnim(bidder, 'win');
+                        pxAnim(challenger, 'lose');
                     } else {
                         // Challenger wins
                         if (challenger !== playerIndex) showBubble(challenger, getRandomQuip('win'));
                         if (bidder !== playerIndex) showBubble(bidder, getRandomQuip('lose'));
+                        pxAnim(challenger, 'win');
+                        pxAnim(bidder, 'lose');
                     }
                 }, 1000);
             }
@@ -6746,6 +6875,7 @@
             // Occasionally show thinking quip when it's AI's turn
             if (newState.phase === 'bidding' && newState.message.includes('thinking')) {
                 const thinkingPlayer = newState.players[newState.current_player];
+                pxAnim(newState.current_player, 'think');
                 if (thinkingPlayer && !thinkingPlayer.is_human && Math.random() < 0.3) {
                     setTimeout(() => showBubble(newState.current_player, getRandomQuip('thinking')), 300);
                 }
@@ -7883,6 +8013,7 @@
             initMusic();
             loadDiceSizePreference();
             loadLayoutPreference();
+            initPixelAvatars();
             initIOSEventListeners();
 
             // Validate existing token
