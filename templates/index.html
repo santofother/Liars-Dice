@@ -5039,14 +5039,14 @@
                 const link = document.createElement('link');
                 link.id = 'px-avatar-css';
                 link.rel = 'stylesheet';
-                link.href = '/static/pixel-avatars.css';
+                link.href = '/static/pixel-avatars.css?v=' + Date.now();
                 document.head.appendChild(link);
             }
             // Load JS
             if (!document.getElementById('px-avatar-js')) {
                 const script = document.createElement('script');
                 script.id = 'px-avatar-js';
-                script.src = '/static/pixel-avatars.js';
+                script.src = '/static/pixel-avatars.js?v=' + Date.now();
                 script.onload = function () {
                     pixelAssetsLoaded = true;
                     onPixelAvatarsReady();
