@@ -2613,7 +2613,7 @@
             padding: 8px 12px;
             border-radius: 15px;
             font-size: 0.85em;
-            max-width: 180px;
+            max-width: 200px;
             text-align: center;
             box-shadow: 0 3px 10px rgba(0,0,0,0.3);
             animation: bubblePop 0.3s ease-out;
@@ -2629,6 +2629,54 @@
             border-width: 10px 10px 0 10px;
             border-style: solid;
             border-color: rgba(255, 255, 255, 0.95) transparent transparent transparent;
+        }
+
+        .speech-bubble.bubble-ghost {
+            background: rgba(120, 100, 160, 0.95);
+            color: #e8e0ff;
+            border: 1px solid rgba(180, 160, 220, 0.6);
+        }
+
+        .speech-bubble.bubble-ghost::after {
+            border-color: rgba(120, 100, 160, 0.95) transparent transparent transparent;
+        }
+
+        .speech-bubble.bubble-top1 {
+            background: linear-gradient(135deg, rgba(255,215,0,0.95), rgba(255,235,128,0.95));
+            color: #2a1a0f;
+            border: 1px solid rgba(255,215,0,0.8);
+            box-shadow: 0 3px 12px rgba(255,215,0,0.3);
+        }
+
+        .speech-bubble.bubble-top1::after {
+            border-color: rgba(255,235,128,0.95) transparent transparent transparent;
+        }
+
+        .speech-bubble.bubble-top2 {
+            background: linear-gradient(135deg, rgba(192,192,192,0.95), rgba(220,220,220,0.95));
+            color: #2a1a0f;
+            border: 1px solid rgba(192,192,192,0.8);
+        }
+
+        .speech-bubble.bubble-top2::after {
+            border-color: rgba(220,220,220,0.95) transparent transparent transparent;
+        }
+
+        .speech-bubble.bubble-top3 {
+            background: linear-gradient(135deg, rgba(205,127,50,0.95), rgba(230,160,80,0.95));
+            color: #2a1a0f;
+            border: 1px solid rgba(205,127,50,0.8);
+        }
+
+        .speech-bubble.bubble-top3::after {
+            border-color: rgba(230,160,80,0.95) transparent transparent transparent;
+        }
+
+        .speech-bubble .bubble-tag {
+            display: block;
+            font-size: 0.7em;
+            opacity: 0.7;
+            margin-bottom: 2px;
         }
 
         @keyframes bubblePop {
@@ -5524,9 +5572,14 @@
             const container = document.getElementById('m-chat-messages');
             if (!container) return;
             const crown = (() => { try { return getCrownIcon(getPlayerRank(sender)); } catch(e) { return ''; } })();
+            let ghostTag = '';
+            if (gameState) {
+                const p = gameState.players.find(pl => pl.name === sender);
+                if (p && p.num_dice <= 0) ghostTag = ' <span style="opacity:0.6;font-size:0.8em;">👻</span>';
+            }
             const div = document.createElement('div');
             div.className = `m-chat-msg ${isOwn ? 'own' : ''}`;
-            div.innerHTML = `<span class="m-chat-sender">${avatar||'⚓'} ${sender}${crown}</span> <span class="m-chat-text">${message}</span>`;
+            div.innerHTML = `<span class="m-chat-sender">${avatar||'⚓'} ${sender}${crown}${ghostTag}</span> <span class="m-chat-text">${message}</span>`;
             container.appendChild(div);
             container.scrollTop = container.scrollHeight;
         }
@@ -6369,15 +6422,39 @@
             const existingBubble = card.querySelector('.speech-bubble');
             if (existingBubble) existingBubble.remove();
 
+            // Determine bubble style based on player status
+            const player = gameState ? gameState.players[playerIdx] : null;
+            let bubbleClass = 'speech-bubble';
+            let tag = '';
+
+            if (player) {
+                const isGhost = player.num_dice <= 0;
+                let rank = 0;
+                try { rank = getPlayerRank(player.name); } catch(e) {}
+
+                if (isGhost) {
+                    bubbleClass += ' bubble-ghost';
+                    tag = '👻 Ghost';
+                } else if (rank === 1) {
+                    bubbleClass += ' bubble-top1';
+                    tag = '👑 #1 Pirate';
+                } else if (rank === 2) {
+                    bubbleClass += ' bubble-top2';
+                    tag = '🥈 #2 Pirate';
+                } else if (rank === 3) {
+                    bubbleClass += ' bubble-top3';
+                    tag = '🥉 #3 Pirate';
+                }
+            }
+
             // Create new bubble
             const bubble = document.createElement('div');
-            bubble.className = 'speech-bubble';
-            bubble.textContent = text;
+            bubble.className = bubbleClass;
+            bubble.innerHTML = (tag ? `<span class="bubble-tag">${tag}</span>` : '') + text;
             card.appendChild(bubble);
 
             // Add AI messages to chat panel
             if (addToChat && gameState && playerIdx !== playerIndex) {
-                const player = gameState.players[playerIdx];
                 if (player && !player.is_human) {
                     addChatMessageToPanel(player.name, player.avatar, text, false);
                     // Notify if chat is closed
@@ -6387,11 +6464,12 @@
                 }
             }
 
-            // Remove after delay
+            // Remove after delay — chat messages last longer
+            const duration = (player && player.is_human) ? 5000 : 3000;
             activeBubbles[playerIdx] = setTimeout(() => {
                 bubble.style.animation = 'bubbleFade 0.5s ease-out forwards';
                 setTimeout(() => bubble.remove(), 500);
-            }, 3000);
+            }, duration);
         }
 
         function getRandomQuip(category) {
@@ -7174,9 +7252,24 @@
                 activeChatToast = null;
             }
 
+            // Build indicator
+            let indicator = '';
+            if (gameState) {
+                const p = gameState.players.find(pl => pl.name === sender);
+                if (p && p.num_dice <= 0) indicator = ' 👻';
+                else {
+                    try {
+                        const rank = getPlayerRank(sender);
+                        if (rank === 1) indicator = ' 👑';
+                        else if (rank === 2) indicator = ' 🥈';
+                        else if (rank === 3) indicator = ' 🥉';
+                    } catch(e) {}
+                }
+            }
+
             const toast = document.createElement('div');
             toast.className = 'chat-toast';
-            toast.innerHTML = `<span class="chat-toast-sender">${avatar || '⚓'} ${sender}:</span> <span class="chat-toast-text">${message}</span>`;
+            toast.innerHTML = `<span class="chat-toast-sender">${avatar || '⚓'} ${sender}${indicator}:</span> <span class="chat-toast-text">${message}</span>`;
             document.body.appendChild(toast);
 
             const timer = setTimeout(() => {
@@ -7189,20 +7282,27 @@
         }
 
         function addChatMessageToPanel(sender, avatar, message, isOwn) {
+            // Determine indicators
+            let ghostTag = '';
+            let crown = '';
+            let glowClass = '';
+            if (gameState) {
+                const p = gameState.players.find(pl => pl.name === sender);
+                if (p && p.num_dice <= 0) ghostTag = ' <span style="opacity:0.7;font-size:0.8em;">👻 Ghost</span>';
+            }
+            try {
+                const rank = getPlayerRank(sender);
+                glowClass = (rank >= 1 && rank <= 3) ? ` top-pirate-${rank}` : '';
+                crown = getCrownIcon(rank);
+            } catch (e) { console.error('Rank error:', e); }
+
             // Legacy chat panel
             const container = document.getElementById('chat-messages');
             if (container) {
                 const msgDiv = document.createElement('div');
-                let glowClass = '';
-                let crown = '';
-                try {
-                    const rank = getPlayerRank(sender);
-                    glowClass = (rank >= 1 && rank <= 3) ? ` top-pirate-${rank}` : '';
-                    crown = getCrownIcon(rank);
-                } catch (e) { console.error('Rank error:', e); }
                 msgDiv.className = `chat-message ${isOwn ? 'own' : ''}${glowClass}`;
                 msgDiv.innerHTML = `
-                    <div class="sender">${avatar || '⚓'} ${sender}${crown}</div>
+                    <div class="sender">${avatar || '⚓'} ${sender}${crown}${ghostTag}</div>
                     <div class="text">${message}</div>
                 `;
                 container.appendChild(msgDiv);
