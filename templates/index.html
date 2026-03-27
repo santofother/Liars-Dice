@@ -233,6 +233,8 @@
         }
 
         .player-card {
+            position: relative;
+            overflow: visible;
             background: linear-gradient(145deg, #3d2817 0%, #2a1a0f 100%);
             border: 3px solid #8b4513;
             border-radius: 15px;
@@ -250,6 +252,7 @@
         .player-card.eliminated {
             opacity: 0.5;
         }
+
 
         .eliminated-skull {
             font-size: 48px;
@@ -1084,6 +1087,10 @@
         }
 
         /* --- Left Column: Your Hand --- */
+        .layout-modern .m-my-card {
+            position: relative;
+        }
+
         .layout-modern .m-your-name {
             font-family: 'Pirata One', serif;
             font-size: 1.4em;
@@ -1554,6 +1561,7 @@
 
         /* --- Right Column: Opponents --- */
         .layout-modern .m-opponent-card {
+            position: relative;
             background: linear-gradient(145deg, var(--m-card), var(--m-bg));
             border: 2px solid var(--m-border2);
             border-radius: 12px;
@@ -1563,6 +1571,7 @@
             align-items: center;
             gap: 12px;
             transition: border-color 0.3s, box-shadow 0.3s;
+            overflow: visible;
         }
 
         .layout-modern .m-opponent-card.active-bidder {
@@ -1855,18 +1864,19 @@
         }
 
         .layout-modern #lobby .lobby-m-emoji-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-            gap: 10px;
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 4px;
         }
 
         .layout-modern #lobby .lobby-m-emoji-grid .emoji-option {
-            width: 100%;
+            flex: 1 1 0;
+            min-width: 0;
             aspect-ratio: 1;
-            font-size: 32px;
+            font-size: 1.3em;
             background: rgba(0,0,0,0.3);
             border: 2px solid var(--m-border2);
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -1886,7 +1896,7 @@
         }
 
         .layout-modern #lobby .lobby-m-emoji-grid .emoji-option.random-avatar {
-            font-size: 14px;
+            font-size: 0.65em;
             color: var(--m-dimtext);
             letter-spacing: 0;
             font-family: 'Georgia', serif;
@@ -1998,7 +2008,10 @@
         .layout-modern #lobby > #private-game-btn,
         .layout-modern #lobby > input[type="hidden"],
         .layout-modern #lobby > #lobby-error,
-        .layout-modern #lobby > .btn {
+        .layout-modern #lobby > .btn,
+        .layout-modern #lobby > .divider,
+        .layout-modern #lobby > #legacy-lobby-account,
+        .layout-modern #lobby > .leaderboard-container {
             display: none !important;
         }
 
@@ -2368,9 +2381,7 @@
             }
 
             .layout-modern #lobby .lobby-m-emoji-grid .emoji-option {
-                min-width: 32px;
-                min-height: 32px;
-                font-size: 18px;
+                font-size: 1em;
             }
 
             .layout-modern .lobby-m-btn {
@@ -2548,6 +2559,12 @@
             .layout-modern .m-bottom-btns .btn {
                 min-height: 44px;
             }
+
+            .speech-bubble {
+                max-width: 160px;
+                font-size: 0.78em;
+                padding: 6px 10px;
+            }
         }
 
         /* Rules Button & Modal */
@@ -2631,10 +2648,7 @@
 
         /* Speech Bubble */
         .speech-bubble {
-            position: absolute;
-            top: -60px;
-            left: 50%;
-            transform: translateX(-50%);
+            position: fixed;
             background: rgba(255, 255, 255, 0.95);
             color: #2a1a0f;
             padding: 8px 12px;
@@ -2644,15 +2658,17 @@
             text-align: center;
             box-shadow: 0 3px 10px rgba(0,0,0,0.3);
             animation: bubblePop 0.3s ease-out;
-            z-index: 10;
+            z-index: 300;
+            white-space: normal;
+            pointer-events: none;
         }
 
         .speech-bubble::after {
             content: '';
             position: absolute;
             bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 30px;
+            transform: none;
             border-width: 10px 10px 0 10px;
             border-style: solid;
             border-color: rgba(255, 255, 255, 0.95) transparent transparent transparent;
@@ -4842,8 +4858,10 @@
             <!-- Left: Your Hand -->
             <div class="m-col m-col-left">
                 <div class="m-section-label">⚔ YOUR HAND</div>
-                <div class="px-my-avatar" id="px-my-avatar"></div>
-                <div class="m-your-name" id="m-your-name">☠ Captain (You)</div>
+                <div class="m-my-card" id="m-my-card">
+                    <div class="px-my-avatar" id="px-my-avatar"></div>
+                    <div class="m-your-name" id="m-your-name">☠ Captain (You)</div>
+                </div>
                 <div class="m-dice-grid" id="m-dice-grid"></div>
                 <div class="m-stat-pills">
                     <div class="m-stat-pill">
@@ -5562,6 +5580,9 @@
             document.getElementById('m-room-code').textContent = gameState.room_code;
 
             // --- Left column: Your Hand ---
+            const myCard = document.getElementById('m-my-card');
+            if (myCard) myCard.setAttribute('data-player-idx', playerIndex);
+
             if (myPlayer) {
                 let crown = '';
                 try { crown = getCrownIcon(getPlayerRank(myPlayer.name)); } catch(e) {}
@@ -6669,15 +6690,12 @@
         function showBubble(playerIdx, text, addToChat = true) {
             // Clear existing bubble for this player
             if (activeBubbles[playerIdx]) {
-                clearTimeout(activeBubbles[playerIdx]);
+                clearTimeout(activeBubbles[playerIdx].timer);
+                if (activeBubbles[playerIdx].el) activeBubbles[playerIdx].el.remove();
             }
 
             const card = document.querySelector(`[data-player-idx="${playerIdx}"]`);
             if (!card) return;
-
-            // Remove existing bubble
-            const existingBubble = card.querySelector('.speech-bubble');
-            if (existingBubble) existingBubble.remove();
 
             // Determine bubble style based on player status
             const player = gameState ? gameState.players[playerIdx] : null;
@@ -6704,11 +6722,29 @@
                 }
             }
 
-            // Create new bubble
+            // Create bubble as fixed-position element on body
             const bubble = document.createElement('div');
             bubble.className = bubbleClass;
             bubble.innerHTML = (tag ? `<span class="bubble-tag">${tag}</span>` : '') + text;
-            card.appendChild(bubble);
+            document.body.appendChild(bubble);
+
+            // Position relative to the card using getBoundingClientRect
+            const rect = card.getBoundingClientRect();
+            const bubbleHeight = 60; // estimate, will adjust after render
+            bubble.style.left = (rect.left + 10) + 'px';
+            bubble.style.top = (rect.top - bubbleHeight) + 'px';
+
+            // Refine position after render
+            requestAnimationFrame(() => {
+                const bRect = bubble.getBoundingClientRect();
+                let top = rect.top - bRect.height - 8;
+                let left = rect.left + 10;
+                // Keep on screen
+                if (top < 4) top = rect.bottom + 8;
+                if (left + bRect.width > window.innerWidth - 4) left = window.innerWidth - bRect.width - 4;
+                bubble.style.top = top + 'px';
+                bubble.style.left = left + 'px';
+            });
 
             // Trigger pixel avatar chat animation
             pxAnim(playerIdx, 'chat');
@@ -6726,10 +6762,14 @@
 
             // Remove after delay — chat messages last longer
             const duration = (player && player.is_human) ? 5000 : 3000;
-            activeBubbles[playerIdx] = setTimeout(() => {
-                bubble.style.animation = 'bubbleFade 0.5s ease-out forwards';
-                setTimeout(() => bubble.remove(), 500);
-            }, duration);
+            activeBubbles[playerIdx] = {
+                el: bubble,
+                timer: setTimeout(() => {
+                    bubble.style.animation = 'bubbleFade 0.5s ease-out forwards';
+                    setTimeout(() => bubble.remove(), 500);
+                    delete activeBubbles[playerIdx];
+                }, duration)
+            };
         }
 
         function getRandomQuip(category) {
