@@ -4088,12 +4088,13 @@
     <button class="settings-btn" onclick="toggleSettings()" title="Settings">⚙️</button>
 
     <!-- Lobby Ace of Spades Button -->
-    <button class="poker-btn" onclick="toggleLobbyMenu()" title="Play My Other Games!">🕹️</button>
+    <button class="poker-btn" onclick="toggleLobbyMenu(event)" title="Play My Other Games!">🕹️</button>
 
     <!-- Lobby Menu Dropdown -->
     <div id="lobby-menu" class="lobby-menu hidden">
         <a href="https://poker.fothergill.com/" target="_blank" rel="noopener noreferrer" class="lobby-menu-item">♠️ Trivia Poker</a>
         <a href="https://lastmagazine.fothergill.com/" target="_blank" rel="noopener noreferrer" class="lobby-menu-item">🧟 Last Magazine</a>
+        <a href="https://santofother.github.io/Tiny-Town-Traffic/" target="_blank" rel="noopener noreferrer" class="lobby-menu-item">🚗 Tiny Town Traffic</a>
     </div>
 
     <!-- Settings Overlay -->
@@ -4319,7 +4320,7 @@
                 <div style="display:flex;gap:8px;">
                     <button class="m-header-btn" onclick="toggleSettings()" title="Settings">⚙</button>
                     <button class="m-header-btn" onclick="toggleRules()" title="Rules">📜</button>
-                    <button class="m-header-btn" onclick="toggleLobbyMenu()" title="More Games">🕹️</button>
+                    <button class="m-header-btn" onclick="toggleLobbyMenu(event)" title="More Games">🕹️</button>
                 </div>
             </div>
             <div class="lobby-m-body" style="display:none;">
@@ -4686,7 +4687,7 @@
             </div>
             <div class="m-header-right">
                 <span class="m-room-pill" id="m-room-code">XXXX</span>
-                <button class="m-header-btn" onclick="toggleLobbyMenu()" title="Game Lobby">♠</button>
+                <button class="m-header-btn" onclick="toggleLobbyMenu(event)" title="More Games">🕹️</button>
                 <button class="m-header-btn" onclick="toggleSettings()" title="Settings">⚙</button>
                 <button class="m-header-btn" onclick="toggleRules()" title="Rules">📜</button>
             </div>
@@ -6395,15 +6396,18 @@
         }
 
         // Lobby menu (ace of spades)
-        function toggleLobbyMenu() {
+        function toggleLobbyMenu(e) {
+            if (e) e.stopPropagation();
             document.getElementById('lobby-menu').classList.toggle('hidden');
         }
 
         // Close lobby menu when clicking outside
         document.addEventListener('click', (e) => {
             const menu = document.getElementById('lobby-menu');
-            const btn = document.querySelector('.poker-btn');
-            if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+            if (!menu || menu.classList.contains('hidden')) return;
+            // Check if click is on any toggle button
+            if (e.target.closest('.poker-btn') || e.target.closest('[onclick*="toggleLobbyMenu"]')) return;
+            if (!menu.contains(e.target)) {
                 menu.classList.add('hidden');
             }
         });
