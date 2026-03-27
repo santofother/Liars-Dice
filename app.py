@@ -98,7 +98,7 @@ def create_game(room_code, host_name, num_ai=0, is_private=False):
 
 def add_ai_players(game):
     """Add AI players to the game."""
-    pirate_names = ['Davy Jones', 'Barbossa', 'Bootstrap Bill', 'Pintel', 'Ragetti']
+    pirate_names = ['Davy Jones', 'Blackbeard', 'Red Beard', 'Salty Pete', 'One-Eyed Willy']
     random.shuffle(pirate_names)
 
     difficulties = ['easy', 'medium', 'hard', 'impossible']
@@ -588,7 +588,7 @@ def resolve_challenge(game, challenger_idx, bidder_idx):
         game['phase'] = 'game_over'
         winner = game['players'][alive[0]] if alive else None
         if winner:
-            game['message'] = f"{winner['name']} WINS! The Black Pearl is theirs!"
+            game['message'] = f"{winner['name']} WINS! The treasure is theirs!"
 
             # Record win if user is logged in
             try:
@@ -890,7 +890,7 @@ def handle_roll_dice(data):
         game['phase'] = 'game_over'
         if alive:
             winner = game['players'][alive[0]]
-            game['message'] = f"{winner['name']} WINS! The Black Pearl is theirs!"
+            game['message'] = f"{winner['name']} WINS! The treasure is theirs!"
             # Record win
             try:
                 if winner.get('user_token'):
@@ -1134,7 +1134,7 @@ def handle_kick_player(data):
         game['phase'] = 'game_over'
         if alive:
             winner = game['players'][alive[0]]
-            game['message'] = f"{winner['name']} WINS! The Black Pearl is theirs!"
+            game['message'] = f"{winner['name']} WINS! The treasure is theirs!"
 
     broadcast_game_state(room_code)
 

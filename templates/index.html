@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liar's Dice - Pirates of the Caribbean</title>
+    <title>Liar's Dice</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pirata+One&display=swap');
@@ -3662,6 +3662,330 @@
 
             .tut-popup-body { font-size: 0.88em; }
         }
+
+        /* ============================================ */
+        /* MINIGAME POPUP                               */
+        /* ============================================ */
+        .minigame-toggle-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 899;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: 2px solid var(--m-gold, #ffd700);
+            background: linear-gradient(145deg, #3d2817, #2a1a0f);
+            color: var(--m-gold, #ffd700);
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5), 0 0 10px rgba(255,215,0,0.2);
+            transition: all 0.2s;
+            animation: ghostPulse 2s ease-in-out infinite;
+        }
+
+        .minigame-toggle-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 20px rgba(255,215,0,0.4);
+        }
+
+        @keyframes ghostPulse {
+            0%, 100% { box-shadow: 0 4px 15px rgba(0,0,0,0.5), 0 0 10px rgba(255,215,0,0.2); }
+            50% { box-shadow: 0 4px 15px rgba(0,0,0,0.5), 0 0 20px rgba(255,215,0,0.4); }
+        }
+
+        .minigame-popup {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 340px;
+            max-height: 520px;
+            z-index: 900;
+            background: linear-gradient(160deg, #3d2817, #1a0a00);
+            border: 2px solid var(--m-gold, #ffd700);
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.7), 0 0 15px rgba(255,215,0,0.15);
+        }
+
+        .minigame-popup-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: linear-gradient(180deg, rgba(74,38,8,0.95), rgba(42,26,15,0.95));
+            border-bottom: 2px solid var(--m-border2, #5a3015);
+            cursor: grab;
+            user-select: none;
+        }
+
+        .minigame-popup-header:active { cursor: grabbing; }
+
+        .minigame-popup-header span {
+            font-family: 'Pirata One', serif;
+            font-size: 1.2em;
+            color: var(--m-gold, #ffd700);
+            text-shadow: 1px 1px 3px #000;
+        }
+
+        .minigame-popup-header button {
+            background: none;
+            border: none;
+            color: var(--m-dimtext, #8b7355);
+            font-size: 1.3em;
+            cursor: pointer;
+            padding: 0 4px;
+            line-height: 1;
+        }
+
+        .minigame-popup-header button:hover { color: var(--m-gold, #ffd700); }
+
+        .minigame-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--m-border2, #5a3015);
+            background: rgba(0,0,0,0.3);
+        }
+
+        .minigame-tab {
+            flex: 1;
+            padding: 8px 0;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--m-dimtext, #8b7355);
+            font-family: 'Georgia', serif;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .minigame-tab:hover { color: var(--m-text, #d4a574); }
+
+        .minigame-tab.active {
+            color: var(--m-gold, #ffd700);
+            border-bottom-color: var(--m-gold, #ffd700);
+        }
+
+        .minigame-body {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .minigame-panel {
+            padding: 14px;
+        }
+
+        /* Ghost Bets */
+        .ghost-bet-balance {
+            text-align: center;
+            font-size: 1.3em;
+            color: var(--m-gold, #ffd700);
+            margin-bottom: 12px;
+            text-shadow: 0 0 8px rgba(255,215,0,0.3);
+        }
+
+        .ghost-bet-section-label {
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--m-dimtext, #8b7355);
+            margin-bottom: 6px;
+        }
+
+        .ghost-bet-form-inner {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--m-border2, #5a3015);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .ghost-bet-form-inner select,
+        .ghost-bet-form-inner input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--m-border2, #5a3015);
+            border-radius: 6px;
+            background: rgba(0,0,0,0.4);
+            color: var(--m-gold, #ffd700);
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .ghost-bet-quick-amounts {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .ghost-bet-quick-amounts button {
+            flex: 1;
+            padding: 4px;
+            border: 1px solid var(--m-border2, #5a3015);
+            border-radius: 4px;
+            background: rgba(0,0,0,0.3);
+            color: var(--m-amber, #d4a574);
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .ghost-bet-quick-amounts button:hover {
+            border-color: var(--m-gold, #ffd700);
+            color: var(--m-gold, #ffd700);
+        }
+
+        .ghost-bet-place-btn {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid var(--m-gold, #ffd700);
+            border-radius: 6px;
+            background: linear-gradient(145deg, var(--m-gold, #ffd700), #b8860b);
+            color: #2a1a0f;
+            font-weight: bold;
+            font-size: 0.9em;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+
+        .ghost-bet-place-btn:hover {
+            background: linear-gradient(145deg, #ffec80, var(--m-gold, #ffd700));
+        }
+
+        .ghost-bet-place-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .ghost-bet-history {
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .ghost-bet-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 8px;
+            border-bottom: 1px solid rgba(90,48,21,0.4);
+            font-size: 0.8em;
+        }
+
+        .ghost-bet-item .bet-desc { color: var(--m-text, #d4a574); flex: 1; }
+        .ghost-bet-item .bet-result-win { color: #7fff50; font-weight: bold; }
+        .ghost-bet-item .bet-result-lose { color: #cc4444; font-weight: bold; }
+        .ghost-bet-item .bet-pending { color: var(--m-dimtext, #8b7355); font-style: italic; }
+
+        .ghost-bet-waiting {
+            text-align: center;
+            color: var(--m-dimtext, #8b7355);
+            font-style: italic;
+            padding: 20px 10px;
+            font-size: 0.9em;
+        }
+
+        /* Ship Snake */
+        .snake-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .snake-score {
+            font-size: 0.9em;
+            color: var(--m-gold, #ffd700);
+        }
+
+        .snake-canvas-wrap {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .snake-canvas-wrap canvas {
+            border: 2px solid var(--m-border2, #5a3015);
+            border-radius: 6px;
+        }
+
+        .snake-controls {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .snake-controls-row { display: flex; gap: 4px; }
+
+        .snake-ctrl-btn {
+            width: 44px;
+            height: 44px;
+            border: 1px solid var(--m-border2, #5a3015);
+            border-radius: 6px;
+            background: rgba(0,0,0,0.4);
+            color: var(--m-gold, #ffd700);
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+
+        .snake-ctrl-btn:active {
+            background: rgba(255,215,0,0.15);
+        }
+
+        .snake-start-btn {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--m-gold, #ffd700);
+            border-radius: 8px;
+            background: linear-gradient(145deg, var(--m-gold, #ffd700), #b8860b);
+            color: #2a1a0f;
+            font-weight: bold;
+            font-family: 'Georgia', serif;
+            font-size: 1em;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .snake-start-btn:hover {
+            background: linear-gradient(145deg, #ffec80, var(--m-gold, #ffd700));
+        }
+
+        .snake-gameover {
+            text-align: center;
+            color: #cc4444;
+            font-family: 'Pirata One', serif;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 767px) {
+            .minigame-popup {
+                width: 90vw;
+                max-height: 70vh;
+                bottom: 10px;
+                right: 5vw;
+            }
+
+            .minigame-toggle-btn {
+                bottom: 12px;
+                right: 12px;
+                width: 46px;
+                height: 46px;
+            }
+
+            .snake-controls { display: flex; }
+        }
+
+        @media (pointer: coarse) {
+            .snake-controls { display: flex; }
+        }
     </style>
 </head>
 <body>
@@ -3880,7 +4204,7 @@
     <div class="container">
         <header>
             <h1>Liar's Dice</h1>
-            <p class="subtitle">Pirates of the Caribbean - Multiplayer</p>
+            <p class="subtitle game-subtitle">A Pirate's Game of Deception</p>
         </header>
 
         <!-- Account Status Banner -->
@@ -3898,7 +4222,7 @@
             <div class="lobby-m-header" style="display:none;">
                 <div>
                     <span class="lobby-m-title">⚓ Liar's Dice</span>
-                    <span class="lobby-m-subtitle">Pirates of the Caribbean - Multiplayer</span>
+                    <span class="lobby-m-subtitle game-subtitle">A Pirate's Game of Deception</span>
                 </div>
                 <div style="display:flex;gap:8px;">
                     <button class="m-header-btn" onclick="toggleSettings()" title="Settings">⚙</button>
@@ -4029,7 +4353,7 @@
                     <option value="easy">🦜 Deckhand - Landlubber tactics</option>
                     <option value="medium" selected>⚓ First Mate - Seasoned sailor</option>
                     <option value="hard">💀 Blackbeard - Cunning strategist</option>
-                    <option value="impossible">🏴‍☠️ Captain Jack - Sees all, knows all!</option>
+                    <option value="impossible">🏴‍☠️ Sea Devil - Sees all, knows all!</option>
                     <option value="random">🎲 Motley Crew - A ragtag bunch of scallywags!</option>
                 </select>
             </div>
@@ -4123,7 +4447,7 @@
                                     <option value="easy">🦜 Deckhand - Landlubber tactics</option>
                                     <option value="medium">⚓ First Mate - Seasoned sailor</option>
                                     <option value="hard">💀 Blackbeard - Cunning strategist</option>
-                                    <option value="impossible">🏴‍☠️ Captain Jack - Sees all, knows all!</option>
+                                    <option value="impossible">🏴‍☠️ Sea Devil - Sees all, knows all!</option>
                                     <option value="random">🎲 Motley Crew - A ragtag bunch of scallywags!</option>
                                 </select>
                             </div>
@@ -4187,7 +4511,7 @@
                             <option value="easy">🦜 Deckhand - Landlubber tactics</option>
                             <option value="medium">⚓ First Mate - Seasoned sailor</option>
                             <option value="hard">💀 Blackbeard - Cunning strategist</option>
-                            <option value="impossible">🏴‍☠️ Captain Jack - Sees all, knows all!</option>
+                            <option value="impossible">🏴‍☠️ Sea Devil - Sees all, knows all!</option>
                             <option value="random">🎲 Motley Crew - A ragtag bunch of scallywags!</option>
                         </select>
                     </div>
@@ -4266,7 +4590,7 @@
         <div class="m-header">
             <div class="m-header-left">
                 <span class="m-header-title">⚓ Liar's Dice</span>
-                <span class="m-header-subtitle">Pirates of the Caribbean · Multiplayer</span>
+                <span class="m-header-subtitle game-subtitle">A Pirate's Game of Deception</span>
             </div>
             <div class="m-header-right">
                 <span class="m-room-pill" id="m-room-code">XXXX</span>
@@ -4380,6 +4704,48 @@
         </div>
     </div>
 
+    <!-- Minigame Popup for Eliminated Players -->
+    <button id="minigame-toggle-btn" class="minigame-toggle-btn hidden" onclick="openMinigamePopup()">👻</button>
+    <div id="minigame-popup" class="minigame-popup hidden">
+        <div class="minigame-popup-header" id="minigame-drag-handle">
+            <span>👻 Ghost Games</span>
+            <button onclick="closeMinigamePopup()">&times;</button>
+        </div>
+        <div class="minigame-tabs">
+            <button class="minigame-tab active" id="mg-tab-bets" onclick="switchMinigameTab('bets')">🪙 Ghost Bets</button>
+            <button class="minigame-tab" id="mg-tab-snake" onclick="switchMinigameTab('snake')">🐍 Ship Snake</button>
+        </div>
+        <div class="minigame-body">
+            <div id="minigame-bets" class="minigame-panel">
+                <div class="ghost-bet-balance">🪙 <span id="ghost-coins">100</span> Ghost Coins</div>
+                <div id="ghost-bet-form"></div>
+                <div class="ghost-bet-section-label" style="margin-top:10px;">Bet History</div>
+                <div class="ghost-bet-history" id="ghost-bet-history">
+                    <div class="ghost-bet-waiting">Place yer first ghostly wager!</div>
+                </div>
+            </div>
+            <div id="minigame-snake" class="minigame-panel hidden">
+                <div class="snake-header">
+                    <span class="snake-score">Score: <span id="snake-score">0</span></span>
+                    <span class="snake-score">Best: <span id="snake-best">0</span></span>
+                </div>
+                <div class="snake-canvas-wrap">
+                    <canvas id="snake-canvas" width="280" height="280"></canvas>
+                </div>
+                <div class="snake-controls">
+                    <button class="snake-ctrl-btn" onclick="setSnakeDir('up')">&#9650;</button>
+                    <div class="snake-controls-row">
+                        <button class="snake-ctrl-btn" onclick="setSnakeDir('left')">&#9664;</button>
+                        <button class="snake-ctrl-btn" onclick="setSnakeDir('down')">&#9660;</button>
+                        <button class="snake-ctrl-btn" onclick="setSnakeDir('right')">&#9654;</button>
+                    </div>
+                </div>
+                <div id="snake-gameover-msg" class="snake-gameover hidden"></div>
+                <button id="snake-start-btn" class="snake-start-btn" onclick="startSnakeGame()">Start Game</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Tutorial Layers (hidden until started) -->
     <div id="tutorial-game" class="hidden"></div>
     <div id="tut-backdrop" class="tut-backdrop hidden"></div>
@@ -4390,6 +4756,17 @@
     <div id="tut-popup" class="tut-popup hidden"></div>
 
     <script>
+        // Randomize game subtitle on load
+        const gameSubtitles = [
+            "Dead Man's Bluff",
+            "Scallywag's Gambit",
+            "Among Scoundrels",
+            "A Pirate's Gamble"
+        ];
+        const chosenSubtitle = gameSubtitles[Math.floor(Math.random() * gameSubtitles.length)];
+        document.title = "Liar's Dice: " + chosenSubtitle;
+        document.querySelectorAll('.game-subtitle').forEach(el => el.textContent = chosenSubtitle);
+
         let socket;
         let gameState = null;
         let roomCode = null;
@@ -5353,7 +5730,7 @@
                 "More rum for me!",
                 "Time to celebrate!",
                 "Yo ho ho and victory!",
-                "The Black Pearl smiles!",
+                "The sea smiles upon ye!",
                 "A glorious day!",
                 "Fortune favors the brave!",
                 "Blessed by Calypso!",
@@ -5542,7 +5919,7 @@
                     const isLobby = g.phase === 'lobby';
                     const statusClass = isLobby ? 'in-port' : 'at-sea';
                     const statusText = isLobby ? 'In Port' : 'At Sea';
-                    const diffNames = {easy:'Deckhand', medium:'First Mate', hard:'Blackbeard', impossible:'Captain Jack', random:'Motley Crew'};
+                    const diffNames = {easy:'Deckhand', medium:'First Mate', hard:'Blackbeard', impossible:'Sea Devil', random:'Motley Crew'};
                     const diffLabel = diffNames[g.ai_difficulty] || g.ai_difficulty;
                     const details = `${g.player_count}/${g.max_players} crew` +
                         (g.ai_count > 0 ? ` + ${g.ai_count} AI (${diffLabel})` : '');
@@ -5576,6 +5953,14 @@
                 // Trigger quips based on state changes
                 if (oldState) {
                     checkForQuips(oldState, state);
+                }
+
+                // Ghost bets: resolve on reveal, update form during bidding
+                if (oldState && oldState.phase === 'bidding' && state.phase === 'reveal') {
+                    resolveGhostBets(state);
+                }
+                if (state.players[playerIndex] && state.players[playerIndex].num_dice <= 0) {
+                    updateGhostBetForm();
                 }
             });
 
@@ -6238,6 +6623,9 @@
                 if (mHostControls) mHostControls.classList.add('hidden');
                 if (mWaitingMsg) mWaitingMsg.classList.remove('hidden');
             }
+
+            // Minigame visibility check
+            checkMinigameVisibility();
         }
 
         function updateGameBoard() {
@@ -6305,7 +6693,7 @@
                 'easy': '🦜 Deckhand',
                 'medium': '⚓ First Mate',
                 'hard': '💀 Blackbeard',
-                'impossible': '🏴‍☠️ Captain Jack',
+                'impossible': '🏴‍☠️ Sea Devil',
                 'random': '🎲 Motley Crew'
             };
             document.getElementById('ai-level').textContent = difficultyDisplay[gameState.ai_difficulty] || 'Deckhand';
@@ -7654,6 +8042,522 @@
             playSfx('click');
             tutNextStep();
         }
+        // ============================================
+        // MINIGAME SYSTEM
+        // ============================================
+        // roundRect polyfill for older browsers
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+                if (typeof r === 'number') r = [r];
+                const rad = r[0] || 0;
+                this.moveTo(x + rad, y);
+                this.lineTo(x + w - rad, y);
+                this.quadraticCurveTo(x + w, y, x + w, y + rad);
+                this.lineTo(x + w, y + h - rad);
+                this.quadraticCurveTo(x + w, y + h, x + w - rad, y + h);
+                this.lineTo(x + rad, y + h);
+                this.quadraticCurveTo(x, y + h, x, y + h - rad);
+                this.lineTo(x, y + rad);
+                this.quadraticCurveTo(x, y, x + rad, y);
+                this.closePath();
+            };
+        }
+        let minigameOpen = false;
+        let ghostCoins = parseInt(sessionStorage.getItem('ghostCoins')) || 100;
+        let ghostBets = [];
+        let ghostBetHistory = JSON.parse(sessionStorage.getItem('ghostBetHistory') || '[]');
+        let wasEliminatedBefore = false;
+
+        // Snake state
+        const SNAKE_GRID = 14;
+        const SNAKE_CELL = 20;
+        const SNAKE_SPEED = 140;
+        let snakeState = null;
+        let snakeInterval = null;
+        let snakeHighScore = parseInt(sessionStorage.getItem('snakeHighScore')) || 0;
+
+        document.getElementById('ghost-coins').textContent = ghostCoins;
+        document.getElementById('snake-best').textContent = snakeHighScore;
+        if (ghostBetHistory.length > 0) renderGhostBetHistory();
+
+        // --- Popup controls ---
+        function openMinigamePopup() {
+            document.getElementById('minigame-popup').classList.remove('hidden');
+            document.getElementById('minigame-toggle-btn').classList.add('hidden');
+            minigameOpen = true;
+            updateGhostBetForm();
+        }
+
+        function closeMinigamePopup() {
+            document.getElementById('minigame-popup').classList.add('hidden');
+            document.getElementById('minigame-toggle-btn').classList.remove('hidden');
+            minigameOpen = false;
+        }
+
+        function switchMinigameTab(tab) {
+            document.getElementById('mg-tab-bets').classList.toggle('active', tab === 'bets');
+            document.getElementById('mg-tab-snake').classList.toggle('active', tab === 'snake');
+            document.getElementById('minigame-bets').classList.toggle('hidden', tab !== 'bets');
+            document.getElementById('minigame-snake').classList.toggle('hidden', tab !== 'snake');
+        }
+
+        function checkMinigameVisibility() {
+            if (!gameState || playerIndex < 0) return;
+            const me = gameState.players[playerIndex];
+            if (!me) return;
+            const eliminated = me.num_dice <= 0 && gameState.phase !== 'lobby' && gameState.phase !== 'game_over';
+            const btn = document.getElementById('minigame-toggle-btn');
+            const popup = document.getElementById('minigame-popup');
+
+            if (eliminated) {
+                if (!wasEliminatedBefore) {
+                    // Just got eliminated — auto-open
+                    wasEliminatedBefore = true;
+                    openMinigamePopup();
+                } else if (!minigameOpen) {
+                    btn.classList.remove('hidden');
+                }
+            } else if (gameState.phase === 'game_over') {
+                // Keep visible but don't auto-open
+                if (!minigameOpen) btn.classList.remove('hidden');
+            } else if (gameState.phase === 'lobby') {
+                // New game — hide and reset
+                popup.classList.add('hidden');
+                btn.classList.add('hidden');
+                minigameOpen = false;
+                wasEliminatedBefore = false;
+                ghostCoins = 100;
+                ghostBets = [];
+                ghostBetHistory = [];
+                sessionStorage.setItem('ghostCoins', ghostCoins);
+                sessionStorage.setItem('ghostBetHistory', '[]');
+                document.getElementById('ghost-coins').textContent = ghostCoins;
+                document.getElementById('ghost-bet-history').innerHTML = '<div class="ghost-bet-waiting">Place yer first ghostly wager!</div>';
+            } else {
+                // Alive — hide everything
+                popup.classList.add('hidden');
+                btn.classList.add('hidden');
+                minigameOpen = false;
+            }
+        }
+
+        // --- Drag logic ---
+        (function() {
+            const handle = document.getElementById('minigame-drag-handle');
+            const popup = document.getElementById('minigame-popup');
+            let dragging = false, ox = 0, oy = 0;
+
+            function onDown(e) {
+                dragging = true;
+                const t = e.touches ? e.touches[0] : e;
+                const rect = popup.getBoundingClientRect();
+                ox = t.clientX - rect.left;
+                oy = t.clientY - rect.top;
+                popup.style.transition = 'none';
+            }
+            function onMove(e) {
+                if (!dragging) return;
+                const t = e.touches ? e.touches[0] : e;
+                let x = t.clientX - ox;
+                let y = t.clientY - oy;
+                x = Math.max(0, Math.min(window.innerWidth - popup.offsetWidth, x));
+                y = Math.max(0, Math.min(window.innerHeight - popup.offsetHeight, y));
+                popup.style.left = x + 'px';
+                popup.style.top = y + 'px';
+                popup.style.right = 'auto';
+                popup.style.bottom = 'auto';
+            }
+            function onUp() { dragging = false; popup.style.transition = ''; }
+
+            handle.addEventListener('mousedown', onDown);
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+            handle.addEventListener('touchstart', onDown, {passive: true});
+            document.addEventListener('touchmove', onMove, {passive: true});
+            document.addEventListener('touchend', onUp);
+        })();
+
+        // ============================================
+        // GHOST BETS
+        // ============================================
+        function updateGhostBetForm() {
+            const form = document.getElementById('ghost-bet-form');
+            if (!form || !gameState) return;
+
+            const me = gameState.players[playerIndex];
+            if (!me || me.num_dice > 0) {
+                form.innerHTML = '';
+                return;
+            }
+
+            if (gameState.phase !== 'bidding') {
+                if (ghostBets.length > 0) {
+                    form.innerHTML = '<div class="ghost-bet-waiting">Bets locked in... awaiting results!</div>';
+                } else {
+                    form.innerHTML = '<div class="ghost-bet-waiting">Wait for bidding to place bets...</div>';
+                }
+                return;
+            }
+
+            if (!gameState.current_bid) {
+                form.innerHTML = '<div class="ghost-bet-waiting">Waiting for the first bid...</div>';
+                return;
+            }
+
+            const alive = gameState.players.filter((p, i) => p.num_dice > 0);
+            const bidQty = gameState.current_bid[0];
+            const bidFace = gameState.current_bid[1];
+
+            form.innerHTML = `
+                <div class="ghost-bet-form-inner">
+                    <div class="ghost-bet-section-label">Wager Type</div>
+                    <select id="ghost-bet-type" onchange="updateGhostBetOptions()">
+                        <option value="caller">Who calls Liar next?</option>
+                        <option value="overunder">Over/Under actual ${bidFace}'s (bid: ${bidQty})</option>
+                    </select>
+                    <div id="ghost-bet-options">
+                        ${alive.map(p => `<label style="display:flex;align-items:center;gap:6px;padding:3px 0;color:var(--m-text);font-size:0.85em;cursor:pointer;">
+                            <input type="radio" name="ghost-bet-choice" value="${p.name}"> ${p.avatar} ${p.name}
+                        </label>`).join('')}
+                    </div>
+                    <div class="ghost-bet-section-label" style="margin-top:8px;">Wager</div>
+                    <div class="ghost-bet-quick-amounts">
+                        <button onclick="setGhostWager(10)">10</button>
+                        <button onclick="setGhostWager(25)">25</button>
+                        <button onclick="setGhostWager(50)">50</button>
+                        <button onclick="setGhostWager(${ghostCoins})">All</button>
+                    </div>
+                    <input type="number" id="ghost-bet-amount" min="1" max="${ghostCoins}" value="10" placeholder="Wager amount">
+                    <button class="ghost-bet-place-btn" onclick="placeGhostBet()" ${ghostCoins <= 0 ? 'disabled' : ''}>
+                        Place Bet
+                    </button>
+                </div>`;
+        }
+
+        function updateGhostBetOptions() {
+            const type = document.getElementById('ghost-bet-type').value;
+            const container = document.getElementById('ghost-bet-options');
+            if (!container || !gameState) return;
+
+            if (type === 'caller') {
+                const alive = gameState.players.filter(p => p.num_dice > 0);
+                container.innerHTML = alive.map(p => `<label style="display:flex;align-items:center;gap:6px;padding:3px 0;color:var(--m-text);font-size:0.85em;cursor:pointer;">
+                    <input type="radio" name="ghost-bet-choice" value="${p.name}"> ${p.avatar} ${p.name}
+                </label>`).join('');
+            } else {
+                const bidQty = gameState.current_bid[0];
+                container.innerHTML = `
+                    <label style="display:flex;align-items:center;gap:6px;padding:3px 0;color:var(--m-text);font-size:0.85em;cursor:pointer;">
+                        <input type="radio" name="ghost-bet-choice" value="over" checked> Over (actual &ge; ${bidQty})
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;padding:3px 0;color:var(--m-text);font-size:0.85em;cursor:pointer;">
+                        <input type="radio" name="ghost-bet-choice" value="under"> Under (actual &lt; ${bidQty})
+                    </label>`;
+            }
+        }
+
+        function setGhostWager(amount) {
+            const el = document.getElementById('ghost-bet-amount');
+            if (el) el.value = Math.min(amount, ghostCoins);
+        }
+
+        function placeGhostBet() {
+            const typeEl = document.getElementById('ghost-bet-type');
+            const amountEl = document.getElementById('ghost-bet-amount');
+            const choiceEl = document.querySelector('input[name="ghost-bet-choice"]:checked');
+
+            if (!typeEl || !amountEl || !choiceEl) { showToast('Select a bet option!'); return; }
+
+            const amount = parseInt(amountEl.value);
+            if (!amount || amount <= 0 || amount > ghostCoins) { showToast('Invalid wager!'); return; }
+
+            const bet = {
+                type: typeEl.value,
+                choice: choiceEl.value,
+                amount: amount,
+                bidQty: gameState.current_bid[0],
+                bidFace: gameState.current_bid[1],
+                resolved: false
+            };
+
+            ghostCoins -= amount;
+            ghostBets.push(bet);
+            sessionStorage.setItem('ghostCoins', ghostCoins);
+            document.getElementById('ghost-coins').textContent = ghostCoins;
+            showToast(`Bet placed: ${amount} coins!`);
+            updateGhostBetForm();
+        }
+
+        function resolveGhostBets(newState) {
+            if (ghostBets.length === 0) return;
+            const reveal = newState.reveal_data;
+            if (!reveal) return;
+
+            ghostBets.forEach(bet => {
+                if (bet.resolved) return;
+                bet.resolved = true;
+                let won = false;
+
+                if (bet.type === 'caller') {
+                    won = bet.choice === reveal.challenger;
+                } else {
+                    if (bet.choice === 'over') won = reveal.actual >= bet.bidQty;
+                    else won = reveal.actual < bet.bidQty;
+                }
+
+                const payout = won ? bet.amount * 2 : 0;
+                if (won) ghostCoins += payout;
+
+                bet.won = won;
+                bet.payout = payout;
+                ghostBetHistory.unshift(bet);
+            });
+
+            ghostBets = [];
+            sessionStorage.setItem('ghostCoins', ghostCoins);
+            sessionStorage.setItem('ghostBetHistory', JSON.stringify(ghostBetHistory.slice(0, 50)));
+            document.getElementById('ghost-coins').textContent = ghostCoins;
+            renderGhostBetHistory();
+        }
+
+        function renderGhostBetHistory() {
+            const container = document.getElementById('ghost-bet-history');
+            if (!container) return;
+            if (ghostBetHistory.length === 0) {
+                container.innerHTML = '<div class="ghost-bet-waiting">Place yer first ghostly wager!</div>';
+                return;
+            }
+            container.innerHTML = ghostBetHistory.slice(0, 20).map(bet => {
+                const desc = bet.type === 'caller'
+                    ? `${bet.choice} calls Liar`
+                    : `${bet.choice === 'over' ? 'Over' : 'Under'} ${bet.bidQty}x ${bet.bidFace}'s`;
+                const resultClass = bet.won ? 'bet-result-win' : 'bet-result-lose';
+                const resultText = bet.won ? `+${bet.payout}` : `-${bet.amount}`;
+                return `<div class="ghost-bet-item">
+                    <span class="bet-desc">${desc}</span>
+                    <span class="${resultClass}">${resultText}</span>
+                </div>`;
+            }).join('');
+        }
+
+        // ============================================
+        // SHIP SNAKE
+        // ============================================
+        function initSnakeState() {
+            return {
+                snake: [{x: 7, y: 7}],
+                dir: {x: 1, y: 0},
+                nextDir: {x: 1, y: 0},
+                fish: null,
+                skulls: [],
+                score: 0,
+                running: false
+            };
+        }
+
+        function startSnakeGame() {
+            snakeState = initSnakeState();
+            snakeState.running = true;
+            placeFish();
+            document.getElementById('snake-start-btn').classList.add('hidden');
+            document.getElementById('snake-gameover-msg').classList.add('hidden');
+            document.getElementById('snake-score').textContent = '0';
+            if (snakeInterval) clearInterval(snakeInterval);
+            snakeInterval = setInterval(snakeTick, SNAKE_SPEED);
+            drawSnake();
+        }
+
+        function placeFish() {
+            if (!snakeState) return;
+            const occupied = new Set();
+            snakeState.snake.forEach(s => occupied.add(s.x + ',' + s.y));
+            snakeState.skulls.forEach(s => occupied.add(s.x + ',' + s.y));
+            let pos;
+            let attempts = 0;
+            do {
+                pos = {x: Math.floor(Math.random() * SNAKE_GRID), y: Math.floor(Math.random() * SNAKE_GRID)};
+                attempts++;
+            } while (occupied.has(pos.x + ',' + pos.y) && attempts < 200);
+            snakeState.fish = pos;
+        }
+
+        function placeSkulls() {
+            if (!snakeState) return;
+            const occupied = new Set();
+            snakeState.snake.forEach(s => occupied.add(s.x + ',' + s.y));
+            snakeState.skulls.forEach(s => occupied.add(s.x + ',' + s.y));
+            if (snakeState.fish) occupied.add(snakeState.fish.x + ',' + snakeState.fish.y);
+            let pos, attempts = 0;
+            do {
+                pos = {x: Math.floor(Math.random() * SNAKE_GRID), y: Math.floor(Math.random() * SNAKE_GRID)};
+                attempts++;
+            } while (occupied.has(pos.x + ',' + pos.y) && attempts < 200);
+            if (attempts < 200) snakeState.skulls.push(pos);
+        }
+
+        function snakeTick() {
+            if (!snakeState || !snakeState.running) return;
+            const s = snakeState;
+            s.dir = {...s.nextDir};
+            const head = s.snake[0];
+            const newHead = {x: head.x + s.dir.x, y: head.y + s.dir.y};
+
+            // Wall collision
+            if (newHead.x < 0 || newHead.x >= SNAKE_GRID || newHead.y < 0 || newHead.y >= SNAKE_GRID) {
+                return snakeGameOver();
+            }
+            // Self collision
+            if (s.snake.some(seg => seg.x === newHead.x && seg.y === newHead.y)) {
+                return snakeGameOver();
+            }
+            // Skull collision
+            if (s.skulls.some(sk => sk.x === newHead.x && sk.y === newHead.y)) {
+                return snakeGameOver();
+            }
+
+            s.snake.unshift(newHead);
+
+            // Fish eaten
+            if (s.fish && newHead.x === s.fish.x && newHead.y === s.fish.y) {
+                s.score++;
+                document.getElementById('snake-score').textContent = s.score;
+                placeFish();
+                if (s.score % 3 === 0) placeSkulls();
+            } else {
+                s.snake.pop();
+            }
+
+            drawSnake();
+        }
+
+        function drawSnake() {
+            const canvas = document.getElementById('snake-canvas');
+            if (!canvas || !snakeState) return;
+            const ctx = canvas.getContext('2d');
+            const cell = SNAKE_CELL;
+
+            // Background
+            ctx.fillStyle = '#1a0a00';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Grid lines
+            ctx.strokeStyle = 'rgba(90,48,21,0.2)';
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i <= SNAKE_GRID; i++) {
+                ctx.beginPath(); ctx.moveTo(i * cell, 0); ctx.lineTo(i * cell, canvas.height); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, i * cell); ctx.lineTo(canvas.width, i * cell); ctx.stroke();
+            }
+
+            // Skulls
+            ctx.font = `${cell - 4}px serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            snakeState.skulls.forEach(sk => {
+                ctx.fillText('💀', sk.x * cell + cell/2, sk.y * cell + cell/2);
+            });
+
+            // Fish
+            if (snakeState.fish) {
+                ctx.fillText('🐟', snakeState.fish.x * cell + cell/2, snakeState.fish.y * cell + cell/2);
+            }
+
+            // Snake body
+            snakeState.snake.forEach((seg, i) => {
+                const isHead = i === 0;
+                ctx.fillStyle = isHead ? '#7fff50' : '#4a9e2f';
+                const pad = isHead ? 1 : 2;
+                ctx.beginPath();
+                ctx.roundRect(seg.x * cell + pad, seg.y * cell + pad, cell - pad*2, cell - pad*2, 3);
+                ctx.fill();
+            });
+
+            // Snake eyes on head
+            if (snakeState.snake.length > 0) {
+                const h = snakeState.snake[0];
+                ctx.fillStyle = '#000';
+                const cx = h.x * cell + cell/2;
+                const cy = h.y * cell + cell/2;
+                const d = snakeState.dir;
+                if (d.x === 1) { ctx.fillRect(cx+3, cy-4, 2, 2); ctx.fillRect(cx+3, cy+2, 2, 2); }
+                else if (d.x === -1) { ctx.fillRect(cx-5, cy-4, 2, 2); ctx.fillRect(cx-5, cy+2, 2, 2); }
+                else if (d.y === 1) { ctx.fillRect(cx-4, cy+3, 2, 2); ctx.fillRect(cx+2, cy+3, 2, 2); }
+                else { ctx.fillRect(cx-4, cy-5, 2, 2); ctx.fillRect(cx+2, cy-5, 2, 2); }
+            }
+        }
+
+        function snakeGameOver() {
+            snakeState.running = false;
+            if (snakeInterval) { clearInterval(snakeInterval); snakeInterval = null; }
+            if (snakeState.score > snakeHighScore) {
+                snakeHighScore = snakeState.score;
+                sessionStorage.setItem('snakeHighScore', snakeHighScore);
+                document.getElementById('snake-best').textContent = snakeHighScore;
+            }
+            document.getElementById('snake-gameover-msg').textContent = `Game Over! Score: ${snakeState.score}`;
+            document.getElementById('snake-gameover-msg').classList.remove('hidden');
+            document.getElementById('snake-start-btn').classList.remove('hidden');
+            document.getElementById('snake-start-btn').textContent = 'Play Again';
+        }
+
+        function setSnakeDir(dir) {
+            if (!snakeState || !snakeState.running) return;
+            const d = snakeState.dir;
+            if (dir === 'up' && d.y !== 1) snakeState.nextDir = {x: 0, y: -1};
+            else if (dir === 'down' && d.y !== -1) snakeState.nextDir = {x: 0, y: 1};
+            else if (dir === 'left' && d.x !== 1) snakeState.nextDir = {x: -1, y: 0};
+            else if (dir === 'right' && d.x !== -1) snakeState.nextDir = {x: 1, y: 0};
+        }
+
+        // Keyboard controls for snake
+        document.addEventListener('keydown', (e) => {
+            if (!snakeState || !snakeState.running) return;
+            if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT' || document.activeElement.tagName === 'TEXTAREA')) return;
+            if (document.getElementById('minigame-snake').classList.contains('hidden')) return;
+            switch (e.key) {
+                case 'ArrowUp': case 'w': setSnakeDir('up'); e.preventDefault(); break;
+                case 'ArrowDown': case 's': setSnakeDir('down'); e.preventDefault(); break;
+                case 'ArrowLeft': case 'a': setSnakeDir('left'); e.preventDefault(); break;
+                case 'ArrowRight': case 'd': setSnakeDir('right'); e.preventDefault(); break;
+            }
+        });
+
+        // Touch swipe on canvas
+        (function() {
+            const canvas = document.getElementById('snake-canvas');
+            let touchStart = null;
+            canvas.addEventListener('touchstart', (e) => {
+                touchStart = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+            }, {passive: true});
+            canvas.addEventListener('touchend', (e) => {
+                if (!touchStart) return;
+                const dx = e.changedTouches[0].clientX - touchStart.x;
+                const dy = e.changedTouches[0].clientY - touchStart.y;
+                if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return;
+                if (Math.abs(dx) > Math.abs(dy)) setSnakeDir(dx > 0 ? 'right' : 'left');
+                else setSnakeDir(dy > 0 ? 'down' : 'up');
+                touchStart = null;
+            }, {passive: true});
+        })();
+
+        // Draw initial empty canvas
+        (function() {
+            const c = document.getElementById('snake-canvas');
+            if (c) {
+                const ctx = c.getContext('2d');
+                ctx.fillStyle = '#1a0a00';
+                ctx.fillRect(0, 0, c.width, c.height);
+                ctx.strokeStyle = 'rgba(90,48,21,0.2)';
+                ctx.lineWidth = 0.5;
+                for (let i = 0; i <= SNAKE_GRID; i++) {
+                    ctx.beginPath(); ctx.moveTo(i*SNAKE_CELL,0); ctx.lineTo(i*SNAKE_CELL,c.height); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(0,i*SNAKE_CELL); ctx.lineTo(c.width,i*SNAKE_CELL); ctx.stroke();
+                }
+                ctx.font = '28px serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🐍', c.width/2, c.height/2);
+            }
+        })();
     </script>
 </body>
 </html>
