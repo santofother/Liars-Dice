@@ -290,105 +290,6 @@
             '0000000000000000',
         ],
 
-        // --- SKELETON - Bones, hollow eyes ---
-        skeleton: [
-            '0000000000000000',
-            '0000000000000000',
-            '0000016610000000',
-            '0000166661000000',
-            '0000616116000000',
-            '0000166661000000',
-            '0000061160000000',
-            '0000006600000000',
-            '0000016610000000',
-            '0000166661000000',
-            '0000060060000000',
-            '0000166661000000',
-            '0000006600000000',
-            '0000066660000000',
-            '0000060060000000',
-            '0000000000000000',
-        ],
-
-        // --- PARROT - Colorful tropical bird ---
-        parrot: [
-            '0000000000000000',
-            '0000000000000000',
-            '0000088800000000',
-            '0000888880000000',
-            '0000818880000000',
-            '0000028800000000',
-            '0000088800000000',
-            '000b877b00000000',
-            '000bb77bb0000000',
-            '00bbb77bbb000000',
-            '000bb77bb0000000',
-            '0000077000000000',
-            '0000fff000000000',
-            '0000fff000000000',
-            '0000080800000000',
-            '0000030300000000',
-        ],
-
-        // --- OCTOPUS / KRAKEN - Tentacles ---
-        octopus: [
-            '0000000000000000',
-            '0000000000000000',
-            '0000019910000000',
-            '0000199991000000',
-            '0000961169000000',
-            '0000999999000000',
-            '0009999999900000',
-            '0009999999900000',
-            '0099009900990000',
-            '0900900090090000',
-            '9009000009090000',
-            '9000900090009000',
-            '0009000009000000',
-            '0000000000000000',
-            '0000000000000000',
-            '0000000000000000',
-        ],
-
-        // --- MERMAID - Fish tail ---
-        mermaid: [
-            '0000000000000000',
-            '0000022220000000',
-            '0000222222000000',
-            '0002244422200000',
-            '0000414114000000',
-            '0000044540000000',
-            '0000214412000000',
-            '0000044440000000',
-            '0000044440000000',
-            '000004ee40000000',
-            '0000eeeeee000000',
-            '000eee11eee00000',
-            '00ee0011000e0000',
-            '0e00001100000000',
-            '0000011110000000',
-            '0000110011000000',
-        ],
-
-        // --- SHARK - Menacing sea creature ---
-        shark: [
-            '0000000000000000',
-            '0000000000000000',
-            '0000000000000000',
-            '0000001000000000',
-            '0000011a00000000',
-            '0000111aa0000000',
-            '000a11aaaa000000',
-            '00aaa1aaaaaaa000',
-            '0aaaa1aaaaaa0000',
-            '0aaaa1aaaa6a0000',
-            '00aaaaaaaaa00000',
-            '000a6a6a6a000000',
-            '0000aaaa00000000',
-            '000000000a000000',
-            '0000000000a00000',
-            '0000000000000000',
-        ],
     };
 
     // ===================================================
@@ -398,65 +299,57 @@
 
     const CHARACTERS = [
         // --- PIRATES ---
-        // Captains (6 variants)
-        { id: 'captain_m_light', base: 'captain_m', name: 'Captain', category: 'Pirates', skin: 'light', hair: 'brown' },
-        { id: 'captain_m_med', base: 'captain_m', name: 'Captain', category: 'Pirates', skin: 'medium', hair: 'black' },
-        { id: 'captain_m_dark', base: 'captain_m', name: 'Captain', category: 'Pirates', skin: 'dark', hair: 'black' },
-        { id: 'captain_f_light', base: 'captain_f', name: 'Captain', category: 'Pirates', skin: 'light', hair: 'red' },
-        { id: 'captain_f_med', base: 'captain_f', name: 'Captain', category: 'Pirates', skin: 'medium', hair: 'brown' },
-        { id: 'captain_f_dark', base: 'captain_f', name: 'Captain', category: 'Pirates', skin: 'dark', hair: 'black' },
+        // Captains — group links variants for the sub-picker
+        { id: 'captain_m_light', base: 'captain_m', name: 'Captain', group: 'captain', category: 'Pirates', skin: 'light', hair: 'brown', primary: true },
+        { id: 'captain_m_med', base: 'captain_m', name: 'Captain', group: 'captain', category: 'Pirates', skin: 'medium', hair: 'black' },
+        { id: 'captain_m_dark', base: 'captain_m', name: 'Captain', group: 'captain', category: 'Pirates', skin: 'dark', hair: 'black' },
+        { id: 'captain_f_light', base: 'captain_f', name: 'Captain', group: 'captain', category: 'Pirates', skin: 'light', hair: 'red' },
+        { id: 'captain_f_med', base: 'captain_f', name: 'Captain', group: 'captain', category: 'Pirates', skin: 'medium', hair: 'brown' },
+        { id: 'captain_f_dark', base: 'captain_f', name: 'Captain', group: 'captain', category: 'Pirates', skin: 'dark', hair: 'black' },
 
-        // First Mates (4 variants)
-        { id: 'firstmate_m_light', base: 'firstmate_m', name: 'First Mate', category: 'Pirates', skin: 'light', hair: 'brown' },
-        { id: 'firstmate_m_dark', base: 'firstmate_m', name: 'First Mate', category: 'Pirates', skin: 'dark', hair: 'black' },
-        { id: 'firstmate_f_light', base: 'firstmate_f', name: 'First Mate', category: 'Pirates', skin: 'light', hair: 'blonde' },
-        { id: 'firstmate_f_dark', base: 'firstmate_f', name: 'First Mate', category: 'Pirates', skin: 'medium', hair: 'black' },
+        // First Mates
+        { id: 'firstmate_m_light', base: 'firstmate_m', name: 'First Mate', group: 'firstmate', category: 'Pirates', skin: 'light', hair: 'brown', primary: true },
+        { id: 'firstmate_m_dark', base: 'firstmate_m', name: 'First Mate', group: 'firstmate', category: 'Pirates', skin: 'dark', hair: 'black' },
+        { id: 'firstmate_f_light', base: 'firstmate_f', name: 'First Mate', group: 'firstmate', category: 'Pirates', skin: 'light', hair: 'blonde' },
+        { id: 'firstmate_f_dark', base: 'firstmate_f', name: 'First Mate', group: 'firstmate', category: 'Pirates', skin: 'medium', hair: 'black' },
 
-        // Deckhands (3 variants)
-        { id: 'deckhand_light', base: 'deckhand', name: 'Deckhand', category: 'Pirates', skin: 'light', hair: 'blonde' },
-        { id: 'deckhand_med', base: 'deckhand', name: 'Deckhand', category: 'Pirates', skin: 'medium', hair: 'brown' },
-        { id: 'deckhand_dark', base: 'deckhand', name: 'Deckhand', category: 'Pirates', skin: 'dark', hair: 'black' },
+        // Deckhands
+        { id: 'deckhand_light', base: 'deckhand', name: 'Deckhand', group: 'deckhand', category: 'Pirates', skin: 'light', hair: 'blonde', primary: true },
+        { id: 'deckhand_med', base: 'deckhand', name: 'Deckhand', group: 'deckhand', category: 'Pirates', skin: 'medium', hair: 'brown' },
+        { id: 'deckhand_dark', base: 'deckhand', name: 'Deckhand', group: 'deckhand', category: 'Pirates', skin: 'dark', hair: 'black' },
 
-        // Gunners (2 variants)
-        { id: 'gunner_light', base: 'gunner', name: 'Gunner', category: 'Pirates', skin: 'light', hair: 'brown' },
-        { id: 'gunner_dark', base: 'gunner', name: 'Gunner', category: 'Pirates', skin: 'dark', hair: 'black' },
+        // Gunners
+        { id: 'gunner_light', base: 'gunner', name: 'Gunner', group: 'gunner', category: 'Pirates', skin: 'light', hair: 'brown', primary: true },
+        { id: 'gunner_dark', base: 'gunner', name: 'Gunner', group: 'gunner', category: 'Pirates', skin: 'dark', hair: 'black' },
 
-        // Navigator (2 variants)
-        { id: 'navigator_light', base: 'navigator', name: 'Navigator', category: 'Pirates', skin: 'light', hair: 'grey' },
-        { id: 'navigator_dark', base: 'navigator', name: 'Navigator', category: 'Pirates', skin: 'medium', hair: 'brown' },
+        // Navigator
+        { id: 'navigator_light', base: 'navigator', name: 'Navigator', group: 'navigator', category: 'Pirates', skin: 'light', hair: 'grey', primary: true },
+        { id: 'navigator_dark', base: 'navigator', name: 'Navigator', group: 'navigator', category: 'Pirates', skin: 'medium', hair: 'brown' },
 
-        // Quartermaster (2 variants)
-        { id: 'quartermaster_light', base: 'quartermaster', name: 'Quartermaster', category: 'Pirates', skin: 'light', hair: 'brown' },
-        { id: 'quartermaster_dark', base: 'quartermaster', name: 'Quartermaster', category: 'Pirates', skin: 'dark', hair: 'grey' },
+        // Quartermaster
+        { id: 'quartermaster_light', base: 'quartermaster', name: 'Quartermaster', group: 'quartermaster', category: 'Pirates', skin: 'light', hair: 'brown', primary: true },
+        { id: 'quartermaster_dark', base: 'quartermaster', name: 'Quartermaster', group: 'quartermaster', category: 'Pirates', skin: 'dark', hair: 'grey' },
 
-        // Lookout (2 variants)
-        { id: 'lookout_light', base: 'lookout', name: 'Lookout', category: 'Pirates', skin: 'light', hair: 'brown' },
-        { id: 'lookout_dark', base: 'lookout', name: 'Lookout', category: 'Pirates', skin: 'medium', hair: 'black' },
+        // Lookout
+        { id: 'lookout_light', base: 'lookout', name: 'Lookout', group: 'lookout', category: 'Pirates', skin: 'light', hair: 'brown', primary: true },
+        { id: 'lookout_dark', base: 'lookout', name: 'Lookout', group: 'lookout', category: 'Pirates', skin: 'medium', hair: 'black' },
 
         // --- MILITARY ---
-        { id: 'eic_officer_light', base: 'eic_officer', name: 'EIC Officer', category: 'Military', skin: 'light', hair: 'brown' },
-        { id: 'eic_officer_dark', base: 'eic_officer', name: 'EIC Officer', category: 'Military', skin: 'medium', hair: 'brown' },
-        { id: 'redcoat_light', base: 'redcoat', name: 'Redcoat', category: 'Military', skin: 'light', hair: 'brown' },
-        { id: 'redcoat_dark', base: 'redcoat', name: 'Redcoat', category: 'Military', skin: 'dark', hair: 'black' },
-        { id: 'naval_light', base: 'naval_officer', name: 'Naval Officer', category: 'Military', skin: 'light', hair: 'brown' },
-        { id: 'naval_dark', base: 'naval_officer', name: 'Naval Officer', category: 'Military', skin: 'dark', hair: 'black' },
-
-        // --- FANTASY ---
-        { id: 'skeleton', base: 'skeleton', name: 'Skeleton', category: 'Fantasy', skin: null, hair: null },
-        { id: 'parrot', base: 'parrot', name: 'Parrot', category: 'Fantasy', skin: null, hair: null },
-        { id: 'octopus', base: 'octopus', name: 'Kraken', category: 'Fantasy', skin: null, hair: null },
-        { id: 'mermaid', base: 'mermaid', name: 'Mermaid', category: 'Fantasy', skin: 'light', hair: 'blonde' },
-        { id: 'mermaid_dark', base: 'mermaid', name: 'Mermaid', category: 'Fantasy', skin: 'dark', hair: 'black' },
-        { id: 'shark', base: 'shark', name: 'Shark', category: 'Fantasy', skin: null, hair: null },
+        { id: 'eic_officer_light', base: 'eic_officer', name: 'EIC Officer', group: 'eic_officer', category: 'Military', skin: 'light', hair: 'brown', primary: true },
+        { id: 'eic_officer_dark', base: 'eic_officer', name: 'EIC Officer', group: 'eic_officer', category: 'Military', skin: 'medium', hair: 'brown' },
+        { id: 'redcoat_light', base: 'redcoat', name: 'Redcoat', group: 'redcoat', category: 'Military', skin: 'light', hair: 'brown', primary: true },
+        { id: 'redcoat_dark', base: 'redcoat', name: 'Redcoat', group: 'redcoat', category: 'Military', skin: 'dark', hair: 'black' },
+        { id: 'naval_light', base: 'naval_officer', name: 'Naval Officer', group: 'naval', category: 'Military', skin: 'light', hair: 'brown', primary: true },
+        { id: 'naval_dark', base: 'naval_officer', name: 'Naval Officer', group: 'naval', category: 'Military', skin: 'dark', hair: 'black' },
     ];
 
     // === AI CHARACTER MAPPING (fixed assignments) ===
     const AI_CHARACTERS = {
-        'Davy Jones': 'octopus',
+        'Davy Jones': 'naval_dark',
         'Blackbeard': 'captain_m_dark',
         'Red Beard': 'firstmate_m_light',
         'Salty Pete': 'deckhand_med',
-        'One-Eyed Willy': 'skeleton',
+        'One-Eyed Willy': 'gunner_light',
     };
 
     // ===================================================
@@ -642,7 +535,7 @@
 
         // AI fallback: assign based on index
         if (!player.is_human) {
-            const fallbacks = ['captain_m_dark', 'firstmate_m_light', 'deckhand_dark', 'gunner_light', 'lookout_dark'];
+            const fallbacks = ['captain_m_dark', 'firstmate_m_light', 'deckhand_dark', 'gunner_light', 'lookout_dark', 'eic_officer_light', 'redcoat_light', 'naval_dark'];
             return fallbacks[idx % fallbacks.length];
         }
 
@@ -668,25 +561,61 @@
     // CHARACTER PICKER UI
     // ===================================================
 
+    // Get the primary (representative) characters — one per group
+    function getPrimaryCharacters() {
+        const seen = new Set();
+        return CHARACTERS.filter(ch => {
+            if (ch.primary && !seen.has(ch.group)) {
+                seen.add(ch.group);
+                return true;
+            }
+            return false;
+        });
+    }
+
+    // Get all variants for a group
+    function getGroupVariants(group) {
+        return CHARACTERS.filter(ch => ch.group === group);
+    }
+
+    // Find which group the currently selected character belongs to
+    function getSelectedGroup() {
+        const sel = localStorage.getItem('pixelAvatar') || 'captain_m_light';
+        const ch = CHARACTERS.find(c => c.id === sel);
+        return ch ? ch.group : null;
+    }
+
     function buildCharacterPicker(containerId) {
         const container = document.getElementById(containerId);
         if (!container) return;
 
+        const selected = localStorage.getItem('pixelAvatar') || 'captain_m_light';
+        const selectedChar = CHARACTERS.find(c => c.id === selected);
+        const selectedGroup = selectedChar ? selectedChar.group : null;
+
+        const primaries = getPrimaryCharacters();
+
+        // Group by category
         const categories = {};
-        CHARACTERS.forEach(ch => {
+        primaries.forEach(ch => {
             if (!categories[ch.category]) categories[ch.category] = [];
             categories[ch.category].push(ch);
         });
-
-        const selected = localStorage.getItem('pixelAvatar') || 'captain_m_light';
 
         let html = '<div class="px-char-grid">';
         for (const [cat, chars] of Object.entries(categories)) {
             html += `<div class="px-cat-header">⚓ ${cat}</div>`;
             chars.forEach(ch => {
-                const url = getSpriteDataURL(ch.id, 3);
-                const sel = ch.id === selected ? ' selected' : '';
-                html += `<div class="px-char-option${sel}" data-char-id="${ch.id}" onclick="PixelAvatars.selectCharacter('${ch.id}', '${containerId}')">
+                // Show selected variant's sprite if this group is selected
+                let displayId = ch.id;
+                if (ch.group === selectedGroup && selectedChar) {
+                    displayId = selectedChar.id;
+                }
+                const url = getSpriteDataURL(displayId, 3);
+                const sel = ch.group === selectedGroup ? ' selected' : '';
+                html += `<div class="px-char-option${sel}" data-group="${ch.group}" data-char-id="${displayId}"
+                    onclick="PixelAvatars.selectGroup('${ch.group}', '${containerId}')"
+                    ondblclick="PixelAvatars.openVariantPicker('${ch.group}', '${containerId}')">
                     <img src="${url}" alt="${ch.name}">
                     <div class="px-char-label">${ch.name}</div>
                 </div>`;
@@ -694,19 +623,71 @@
         }
         html += '</div>';
 
+        // Variant sub-picker (hidden by default)
+        html += '<div class="px-variant-picker hidden" id="px-variant-picker-' + containerId + '"></div>';
+
         container.innerHTML = html;
+    }
+
+    function selectGroup(group, containerId) {
+        // Single click: select the current variant for this group (or the primary)
+        const selected = localStorage.getItem('pixelAvatar') || 'captain_m_light';
+        const selectedChar = CHARACTERS.find(c => c.id === selected);
+
+        // If already in this group, keep current variant
+        if (selectedChar && selectedChar.group === group) return;
+
+        // Otherwise select the primary variant
+        const primary = CHARACTERS.find(c => c.group === group && c.primary);
+        if (primary) {
+            selectCharacter(primary.id, containerId);
+        }
+    }
+
+    function openVariantPicker(group, containerId) {
+        const picker = document.getElementById('px-variant-picker-' + containerId);
+        if (!picker) return;
+
+        const variants = getGroupVariants(group);
+        const selected = localStorage.getItem('pixelAvatar') || 'captain_m_light';
+        const groupName = variants[0]?.name || group;
+
+        let html = `<div class="px-variant-header">
+            <span>Choose ${groupName} Style</span>
+            <button class="px-variant-close" onclick="PixelAvatars.closeVariantPicker('${containerId}')">&times;</button>
+        </div>`;
+        html += '<div class="px-variant-grid">';
+        variants.forEach(ch => {
+            const url = getSpriteDataURL(ch.id, 3);
+            const sel = ch.id === selected ? ' selected' : '';
+            const skinLabel = ch.skin ? ch.skin.charAt(0).toUpperCase() + ch.skin.slice(1) : '';
+            const genderLabel = ch.base.includes('_f') ? 'Female' : ch.base.includes('_m') ? 'Male' : '';
+            const label = [genderLabel, skinLabel].filter(Boolean).join(' · ');
+            html += `<div class="px-char-option${sel}" data-char-id="${ch.id}"
+                onclick="PixelAvatars.selectCharacter('${ch.id}', '${containerId}')">
+                <img src="${url}" alt="${ch.name}">
+                <div class="px-char-label">${label || ch.name}</div>
+            </div>`;
+        });
+        html += '</div>';
+
+        picker.innerHTML = html;
+        picker.classList.remove('hidden');
+    }
+
+    function closeVariantPicker(containerId) {
+        const picker = document.getElementById('px-variant-picker-' + containerId);
+        if (picker) picker.classList.add('hidden');
     }
 
     function selectCharacter(charId, containerId) {
         localStorage.setItem('pixelAvatar', charId);
 
-        // Update selection UI
-        const container = document.getElementById(containerId);
-        if (container) {
-            container.querySelectorAll('.px-char-option').forEach(el => {
-                el.classList.toggle('selected', el.dataset.charId === charId);
-            });
-        }
+        // Close variant picker
+        closeVariantPicker(containerId);
+
+        // Rebuild picker to reflect new selection
+        buildCharacterPicker(containerId);
 
         // Update any visible pixel avatars
         if (typeof updateUI === 'function') {
@@ -739,7 +720,10 @@
         triggerMyAnimation: triggerMyAnimation,
         resolveCharacter: resolveCharacter,
         buildCharacterPicker: buildCharacterPicker,
+        selectGroup: selectGroup,
         selectCharacter: selectCharacter,
+        openVariantPicker: openVariantPicker,
+        closeVariantPicker: closeVariantPicker,
         preloadAll: preloadAll,
     };
 
