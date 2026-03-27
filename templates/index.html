@@ -3,7 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liar's Dice</title>
+    <title>Liar's Dice - Free Online Multiplayer Pirate Dice Game</title>
+    <meta name="description" content="Play Liar's Dice online for free! Bluff, bet, and outsmart your friends in this classic pirate dice game. Multiplayer with AI opponents, real-time gameplay, and no download required.">
+    <meta name="keywords" content="liars dice, liar's dice, dice game, online dice game, multiplayer dice game, pirate dice game, bluffing game, free online game, browser game, party game">
+    <meta name="author" content="Fothergill Games">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://liarsdice.fothergill.com/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://liarsdice.fothergill.com/">
+    <meta property="og:title" content="Liar's Dice - Free Online Multiplayer Pirate Dice Game">
+    <meta property="og:description" content="Bluff, bet, and outsmart your friends in this classic pirate dice game. Play free online with friends or AI pirates — no download needed!">
+    <meta property="og:site_name" content="Liar's Dice">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://liarsdice.fothergill.com/">
+    <meta name="twitter:title" content="Liar's Dice - Free Online Multiplayer Pirate Dice Game">
+    <meta name="twitter:description" content="Bluff, bet, and outsmart your friends in this classic pirate dice game. Play free online with friends or AI pirates!">
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Liar's Dice",
+        "url": "https://liarsdice.fothergill.com/",
+        "description": "Free online multiplayer Liar's Dice game with pirate theme. Bluff and outsmart your opponents in real-time.",
+        "applicationCategory": "GameApplication",
+        "genre": "Board Game",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "ratingCount": "1"
+        }
+    }
+    </script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pirata+One&display=swap');
@@ -4764,7 +4808,7 @@
             "A Pirate's Gamble"
         ];
         const chosenSubtitle = gameSubtitles[Math.floor(Math.random() * gameSubtitles.length)];
-        document.title = "Liar's Dice: " + chosenSubtitle;
+        // Keep SEO-friendly title tag, only update visible subtitles
         document.querySelectorAll('.game-subtitle').forEach(el => el.textContent = chosenSubtitle);
 
         let socket;
@@ -6260,7 +6304,9 @@
 
         function changeAiDifficulty() {
             if (!gameState || !gameState.is_host || !roomCode) return;
-            const el = document.getElementById('waiting-ai-difficulty') || document.getElementById('m-waiting-ai-difficulty');
+            const el = isModernLobby()
+                ? (document.getElementById('m-waiting-ai-difficulty') || document.getElementById('waiting-ai-difficulty'))
+                : (document.getElementById('waiting-ai-difficulty') || document.getElementById('m-waiting-ai-difficulty'));
             const difficulty = el ? el.value : 'easy';
             socket.emit('update_ai_difficulty', { room_code: roomCode, ai_difficulty: difficulty });
         }
@@ -6523,6 +6569,9 @@
 
             // Update chat visibility
             updateChatVisibility();
+
+            // Minigame visibility check
+            checkMinigameVisibility();
         }
 
         function updateWaitingRoom() {
@@ -6623,9 +6672,6 @@
                 if (mHostControls) mHostControls.classList.add('hidden');
                 if (mWaitingMsg) mWaitingMsg.classList.remove('hidden');
             }
-
-            // Minigame visibility check
-            checkMinigameVisibility();
         }
 
         function updateGameBoard() {

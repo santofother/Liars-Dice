@@ -610,6 +610,14 @@ def resolve_challenge(game, challenger_idx, bidder_idx):
 def index():
     return render_template('index.html')
 
+@app.route('/robots.txt')
+def robots():
+    return app.send_static_file('robots.txt')
+
+@app.route('/sitemap.xml')
+def sitemap():
+    return app.send_static_file('sitemap.xml')
+
 # Socket events
 @socketio.on('connect')
 def handle_connect():
