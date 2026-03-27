@@ -556,6 +556,33 @@
             color: #dc143c;
         }
 
+        .reveal-personal {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin: 10px 0 4px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .reveal-personal.personal-lost {
+            background: rgba(220, 20, 60, 0.2);
+            border: 2px solid #dc143c;
+            color: #dc143c;
+        }
+
+        .reveal-personal.personal-safe {
+            background: rgba(50, 205, 50, 0.2);
+            border: 2px solid #32cd32;
+            color: #32cd32;
+        }
+
+        .reveal-personal.personal-neutral {
+            background: rgba(180, 160, 120, 0.15);
+            border: 2px solid #8b7355;
+            color: #d4a574;
+        }
+
         .wild-note {
             font-size: 0.8em;
             color: #8b7355;
@@ -3742,6 +3769,59 @@
             display: none;
         }
 
+        .tut-minimize-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(255,215,0,0.15);
+            border: 1px solid #ffd700;
+            color: #ffd700;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .tut-minimize-btn:hover {
+            background: rgba(255,215,0,0.3);
+        }
+
+        .tut-popup.tut-minimized {
+            padding: 8px 14px;
+            cursor: pointer;
+        }
+        .tut-popup.tut-minimized .tut-popup-title,
+        .tut-popup.tut-minimized .tut-popup-body,
+        .tut-popup.tut-minimized .tut-popup-btns {
+            display: none;
+        }
+        .tut-popup.tut-minimized .tut-minimize-btn {
+            position: static;
+            width: auto;
+            height: auto;
+            background: none;
+            border: none;
+            font-size: 14px;
+            color: #ffd700;
+        }
+        .tut-popup.tut-minimized .tut-step-counter {
+            display: inline;
+            margin-right: 8px;
+        }
+        .tut-minimized-hint {
+            display: none;
+            color: #d4a574;
+            font-size: 0.85em;
+            margin-left: 8px;
+        }
+        .tut-popup.tut-minimized .tut-minimized-hint {
+            display: inline;
+        }
+
         @media (max-width: 767px) {
             .tut-popup {
                 max-width: 92vw;
@@ -3751,8 +3831,25 @@
                 left: 50% !important;
                 transform: translateX(-50%);
             }
+            .tut-popup.tut-top-position {
+                bottom: auto !important;
+                top: 10px !important;
+            }
 
             .tut-popup-body { font-size: 0.88em; }
+        }
+
+        @media (max-height: 500px) {
+            .tut-popup {
+                bottom: 10px !important;
+                top: auto !important;
+                left: 50% !important;
+                transform: translateX(-50%);
+            }
+            .tut-popup.tut-top-position {
+                bottom: auto !important;
+                top: 10px !important;
+            }
         }
 
         /* ============================================ */
@@ -3761,7 +3858,7 @@
         .minigame-toggle-btn {
             position: fixed;
             bottom: 20px;
-            right: 20px;
+            left: 20px;
             z-index: 899;
             width: 52px;
             height: 52px;
@@ -3789,7 +3886,7 @@
         .minigame-popup {
             position: fixed;
             bottom: 20px;
-            right: 20px;
+            left: 20px;
             width: 340px;
             max-height: 520px;
             z-index: 900;
@@ -4062,17 +4159,38 @@
                 width: 90vw;
                 max-height: 70vh;
                 bottom: 10px;
-                right: 5vw;
+                left: 5vw;
+                right: auto;
             }
 
             .minigame-toggle-btn {
                 bottom: 12px;
-                right: 12px;
+                left: 12px;
+                right: auto;
                 width: 46px;
                 height: 46px;
             }
 
             .snake-controls { display: flex; }
+        }
+
+        /* Landscape mobile — compact ghost games */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .minigame-popup {
+                max-height: 90vh;
+                width: 320px;
+                bottom: 10px;
+                left: 10px;
+                right: auto;
+            }
+
+            .minigame-toggle-btn {
+                bottom: 10px;
+                left: 10px;
+                right: auto;
+                width: 42px;
+                height: 42px;
+            }
         }
 
         @media (pointer: coarse) {
@@ -4373,6 +4491,21 @@
                     <hr class="lobby-m-divider">
                     <button class="lobby-m-btn lobby-m-btn-wood" onclick="startTutorial()">📜 How to Play</button>
 
+                    <hr class="lobby-m-divider">
+                    <div id="m-lobby-account">
+                        <div id="m-lobby-logged-in" class="hidden" style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+                            <span id="m-lobby-account-avatar" style="font-size:1.5em;">🏴‍☠️</span>
+                            <div style="flex:1;">
+                                <div style="color:var(--m-gold);font-weight:bold;" id="m-lobby-account-name">Guest</div>
+                                <div style="color:var(--m-dimtext);font-size:0.85em;">⚔️ <span id="m-lobby-account-wins">0</span> wins</div>
+                            </div>
+                            <button class="lobby-m-btn lobby-m-btn-wood" onclick="logoutUser()" style="width:auto;padding:6px 14px;font-size:0.8em;">Logout</button>
+                        </div>
+                        <div id="m-lobby-logged-out">
+                            <button class="lobby-m-btn lobby-m-btn-wood" onclick="toggleAccount()">🔑 Sign In / Create Account</button>
+                        </div>
+                    </div>
+
                     <div id="m-lobby-error" class="error-message hidden" style="margin-top:10px;"></div>
                 </div>
 
@@ -4472,6 +4605,21 @@
 
             <div class="divider">⚓</div>
             <button class="btn btn-wood" onclick="startTutorial()" style="width: 100%;">📜 How to Play (Interactive Tutorial)</button>
+
+            <div class="divider">⚓</div>
+            <div id="legacy-lobby-account">
+                <div id="legacy-lobby-logged-in" class="hidden" style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+                    <span id="legacy-lobby-account-avatar" style="font-size:1.5em;">🏴‍☠️</span>
+                    <div style="flex:1;">
+                        <div style="color:#ffd700;font-weight:bold;" id="legacy-lobby-account-name">Guest</div>
+                        <div style="color:#8b7355;font-size:0.85em;">⚔️ <span id="legacy-lobby-account-wins">0</span> wins</div>
+                    </div>
+                    <button class="btn btn-wood" onclick="logoutUser()" style="padding:6px 14px;font-size:0.85em;">Logout</button>
+                </div>
+                <div id="legacy-lobby-logged-out">
+                    <button class="btn btn-wood" onclick="toggleAccount()" style="width:100%;">🔑 Sign In / Create Account</button>
+                </div>
+            </div>
 
             <div id="lobby-error" class="error-message hidden"></div>
         </div>
@@ -4761,6 +4909,7 @@
             <div class="overlay-title" id="reveal-title">REVEAL!</div>
             <div id="reveal-dice"></div>
             <div class="reveal-result" id="reveal-result"></div>
+            <div id="reveal-personal" class="reveal-personal hidden"></div>
             <p class="wild-note">* Gold dice (1s) are wild and count as any face value</p>
             <button class="btn btn-gold" onclick="continueGame()" id="continue-btn">Continue</button>
         </div>
@@ -5450,6 +5599,18 @@
                 html += `<div class="m-message-box">${gameState.message}</div>`;
             } else if (gameState.phase === 'game_over' || gameState.phase === 'reveal') {
                 html += `<div class="m-message-box">${gameState.message}</div>`;
+                if (gameState.phase === 'reveal' && gameState.reveal_data) {
+                    const rev = gameState.reveal_data;
+                    const mn = gameState.players[playerIndex]?.name;
+                    if (mn && (mn === rev.challenger || mn === rev.bidder)) {
+                        const bTrue = rev.actual >= rev.bid_qty;
+                        const iChal = mn === rev.challenger;
+                        const lost = (bTrue && iChal) || (!bTrue && !iChal);
+                        html += `<div class="reveal-personal ${lost ? 'personal-lost' : 'personal-safe'}" style="margin:8px 16px;">
+                            ${lost ? '☠️ You lost a die!' : '✨ You\'re safe!'}
+                        </div>`;
+                    }
+                }
             } else {
                 html += `<div class="m-message-box">${gameState.message}</div>`;
             }
@@ -7000,6 +7161,19 @@
                 <div style="font-size: 1.2em;">${gameState.message}</div>
             `;
 
+            // Personal outcome banner
+            const personalDiv = document.getElementById('reveal-personal');
+            const myName = gameState.players[playerIndex]?.name;
+            if (myName && (myName === reveal.challenger || myName === reveal.bidder)) {
+                const iChallenger = myName === reveal.challenger;
+                const iLost = (bidTrue && iChallenger) || (!bidTrue && !iChallenger);
+                personalDiv.className = `reveal-personal ${iLost ? 'personal-lost' : 'personal-safe'}`;
+                personalDiv.textContent = iLost ? '☠️ You lost a die!' : '✨ You\'re safe!';
+                personalDiv.classList.remove('hidden');
+            } else {
+                personalDiv.className = 'reveal-personal hidden';
+            }
+
             // Update button text
             const continueBtn = document.getElementById('continue-btn');
             if (gameState.phase === 'game_over') {
@@ -7462,6 +7636,36 @@
                 if (!nameInput.value) {
                     nameInput.value = currentUser.username;
                 }
+
+                // Modern lobby account
+                const mLoggedIn = document.getElementById('m-lobby-logged-in');
+                const mLoggedOut = document.getElementById('m-lobby-logged-out');
+                if (mLoggedIn) {
+                    mLoggedIn.classList.remove('hidden');
+                    mLoggedIn.style.display = 'flex';
+                    document.getElementById('m-lobby-account-avatar').textContent = currentUser.avatar;
+                    document.getElementById('m-lobby-account-name').textContent = currentUser.username;
+                    document.getElementById('m-lobby-account-wins').textContent = currentUser.wins;
+                }
+                if (mLoggedOut) mLoggedOut.classList.add('hidden');
+
+                // Legacy lobby account
+                const lLoggedIn = document.getElementById('legacy-lobby-logged-in');
+                const lLoggedOut = document.getElementById('legacy-lobby-logged-out');
+                if (lLoggedIn) {
+                    lLoggedIn.classList.remove('hidden');
+                    lLoggedIn.style.display = 'flex';
+                    document.getElementById('legacy-lobby-account-avatar').textContent = currentUser.avatar;
+                    document.getElementById('legacy-lobby-account-name').textContent = currentUser.username;
+                    document.getElementById('legacy-lobby-account-wins').textContent = currentUser.wins;
+                }
+                if (lLoggedOut) lLoggedOut.classList.add('hidden');
+
+                // Pre-fill modern name input too
+                const mNameInput = document.getElementById('m-player-name');
+                if (mNameInput && !mNameInput.value) {
+                    mNameInput.value = currentUser.username;
+                }
             } else {
                 // Hide account status banner
                 accountStatus.classList.add('hidden');
@@ -7469,6 +7673,18 @@
                 // Update settings display
                 accountSettingsBtn.textContent = 'Sign In / Create Account';
                 loggedInInfo.classList.add('hidden');
+
+                // Modern lobby account
+                const mLoggedIn = document.getElementById('m-lobby-logged-in');
+                const mLoggedOut = document.getElementById('m-lobby-logged-out');
+                if (mLoggedIn) { mLoggedIn.classList.add('hidden'); mLoggedIn.style.display = 'none'; }
+                if (mLoggedOut) mLoggedOut.classList.remove('hidden');
+
+                // Legacy lobby account
+                const lLoggedIn = document.getElementById('legacy-lobby-logged-in');
+                const lLoggedOut = document.getElementById('legacy-lobby-logged-out');
+                if (lLoggedIn) { lLoggedIn.classList.add('hidden'); lLoggedIn.style.display = 'none'; }
+                if (lLoggedOut) lLoggedOut.classList.remove('hidden');
             }
         }
 
@@ -7918,27 +8134,52 @@
             // waitFor steps have no buttons - action required
 
             popup.innerHTML = `
+                <button class="tut-minimize-btn" onclick="toggleTutMinimize(event)" title="Minimize">▾</button>
                 <div class="tut-step-counter">Step ${tutStep + 1} of ${tutSteps.length}</div>
+                <span class="tut-minimized-hint">tap to expand</span>
                 <div class="tut-popup-title">${step.title}</div>
                 <div class="tut-popup-body">${step.body}</div>
                 <div class="tut-popup-btns">${btnsHtml}</div>
             `;
             popup.classList.remove('hidden');
+            popup.classList.remove('tut-minimized');
+            popup.classList.remove('tut-top-position');
 
             // Position popup smartly
             tutPositionPopup(step);
         }
 
+        function toggleTutMinimize(e) {
+            e.stopPropagation();
+            const popup = document.getElementById('tut-popup');
+            const isMinimized = popup.classList.toggle('tut-minimized');
+            const btn = popup.querySelector('.tut-minimize-btn');
+            if (btn) btn.textContent = isMinimized ? '▸' : '▾';
+            if (isMinimized) {
+                popup.onclick = function(ev) {
+                    if (ev.target.closest('.tut-minimize-btn')) return;
+                    toggleTutMinimize(ev);
+                };
+            } else {
+                popup.onclick = null;
+            }
+        }
+
         function tutPositionPopup(step) {
             const popup = document.getElementById('tut-popup');
             const isMobile = window.innerWidth <= 767;
+            const isLandscape = window.innerHeight < 500;
 
-            if (isMobile) {
-                // On mobile, always pin to bottom center
+            if (isMobile || isLandscape) {
                 popup.style.left = '50%';
                 popup.style.top = 'auto';
                 popup.style.bottom = '10px';
                 popup.style.transform = 'translateX(-50%)';
+
+                // For bid steps, move popup to top so it doesn't cover bid controls
+                if (step.id === 'make-bid' || step.id === 'explain-bid' || step.id === 'call-liar' || step.id === 'raising-rules') {
+                    popup.classList.add('tut-top-position');
+                }
                 return;
             }
 
