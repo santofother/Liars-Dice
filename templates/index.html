@@ -1872,7 +1872,8 @@
 
         /* Hide emoji picker when pixel avatars are enabled */
         body.pixel-avatars-on .layout-modern .lobby-m-emoji-grid,
-        body.pixel-avatars-on #register-emoji-picker {
+        body.pixel-avatars-on #register-emoji-picker,
+        body.pixel-avatars-on #login-emoji-picker {
             display: none !important;
         }
 
@@ -4008,6 +4009,15 @@
 
         .leaderboard-avatar {
             font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 32px;
+        }
+
+        .leaderboard-avatar img {
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
         }
 
         .leaderboard-name {
@@ -4959,19 +4969,48 @@
 
             <!-- Login Form -->
             <div id="login-tab" class="account-tab-content active">
-                <div class="input-group">
-                    <label>Username</label>
-                    <input type="text" id="login-username" placeholder="Enter username...">
+                <!-- Login fields (hidden when logged in) -->
+                <div id="login-fields">
+                    <div class="input-group">
+                        <label>Username</label>
+                        <input type="text" id="login-username" placeholder="Enter username...">
+                    </div>
+                    <div class="input-group">
+                        <label>Password (4-10 digits)</label>
+                        <input type="password" id="login-password"
+                               placeholder="Enter PIN..."
+                               pattern="[0-9]{4,10}"
+                               maxlength="10">
+                    </div>
+                    <button class="btn btn-gold" onclick="loginUser()">Sign In</button>
+                    <div id="login-error" class="error-message hidden"></div>
                 </div>
-                <div class="input-group">
-                    <label>Password (4-10 digits)</label>
-                    <input type="password" id="login-password"
-                           placeholder="Enter PIN..."
-                           pattern="[0-9]{4,10}"
-                           maxlength="10">
+                <!-- Avatar change (shown when logged in) -->
+                <div id="login-avatar-change" class="hidden">
+                    <div style="text-align:center;margin-bottom:10px;">
+                        <span style="color:#ffd700;font-family:'Pirata One',serif;font-size:1.1em;">Change Yer Avatar</span>
+                    </div>
+                    <div id="login-current-avatar" style="text-align:center;margin-bottom:10px;font-size:32px;"></div>
+                    <div class="emoji-picker" id="login-emoji-picker">
+                        <div class="emoji-option" data-emoji="🏴‍☠️">🏴‍☠️</div>
+                        <div class="emoji-option" data-emoji="⚓">⚓</div>
+                        <div class="emoji-option" data-emoji="🦜">🦜</div>
+                        <div class="emoji-option" data-emoji="💀">💀</div>
+                        <div class="emoji-option" data-emoji="🗡️">🗡️</div>
+                        <div class="emoji-option" data-emoji="🦑">🦑</div>
+                        <div class="emoji-option" data-emoji="🧜‍♀️">🧜‍♀️</div>
+                        <div class="emoji-option" data-emoji="🐙">🐙</div>
+                        <div class="emoji-option" data-emoji="🦈">🦈</div>
+                        <div class="emoji-option" data-emoji="🏝️">🏝️</div>
+                        <div class="emoji-option" data-emoji="⛵">⛵</div>
+                        <div class="emoji-option" data-emoji="🧭">🧭</div>
+                    </div>
+                    <div class="px-char-selector" id="login-pixel-char-picker"></div>
+                    <button class="btn btn-gold" onclick="saveAccountAvatar()" style="margin-top:10px;">Save Avatar</button>
+                    <div style="margin-top:15px;border-top:1px solid rgba(255,215,0,0.2);padding-top:15px;">
+                        <button class="btn btn-wood" onclick="logoutUser()">Sign Out</button>
+                    </div>
                 </div>
-                <button class="btn btn-gold" onclick="loginUser()">Sign In</button>
-                <div id="login-error" class="error-message hidden"></div>
             </div>
 
             <!-- Register Form -->
@@ -5758,7 +5797,7 @@
         // Force-toggle emoji vs pixel pickers via JS (CSS alone has proven unreliable)
         function syncAvatarPickerVisibility(pixelOn) {
             // Hide/show all emoji grids
-            document.querySelectorAll('.lobby-m-emoji-grid, #register-emoji-picker').forEach(el => {
+            document.querySelectorAll('.lobby-m-emoji-grid, #register-emoji-picker, #login-emoji-picker').forEach(el => {
                 el.style.display = pixelOn ? 'none' : '';
             });
             // Hide/show all pixel pickers
@@ -5794,12 +5833,17 @@
             if (window.PixelAvatars) {
                 PixelAvatars.buildCharacterPicker('m-pixel-char-picker');
                 PixelAvatars.buildCharacterPicker('register-pixel-char-picker');
+                PixelAvatars.buildCharacterPicker('login-pixel-char-picker');
                 // Show preview in settings
                 buildPixelPreview();
             }
             // Ensure correct picker is visible after assets load
             syncAvatarPickerVisibility(pixelAvatarsEnabled);
             if (gameState) updateUI();
+            // Re-render leaderboard with pixel avatars now that sprites are available
+            if (leaderboardData) updateLeaderboard(leaderboardData);
+            // Re-render account UI with pixel avatar
+            if (currentUser) updateAccountUI();
         }
 
         function buildPixelPreview() {
@@ -5810,6 +5854,13 @@
                 const url = PixelAvatars.getSpriteDataURL(id, 2);
                 return url ? `<img src="${url}" alt="">` : '';
             }).join('');
+        }
+
+        // Called by pixel-avatars.js when a character is selected in any picker
+        function onPixelAvatarSelected(charId) {
+            if (currentUser && userToken && socket && pixelAvatarsEnabled) {
+                socket.emit('update_avatar', { token: userToken, avatar: charId });
+            }
         }
 
         function initPixelAvatars() {
@@ -8645,15 +8696,75 @@
             showToast('Fair winds and following seas! ⛵');
         }
 
+        function isPixelAvatarId(avatar) {
+            return avatar && !avatar.match(/[\u{1F000}-\u{1FFFF}]/u) && avatar.match(/^[a-z_]+$/);
+        }
+
+        function renderPixelAvatarImg(avatarId, size) {
+            size = size || 28;
+            if (window.PixelAvatars) {
+                const url = PixelAvatars.getSpriteDataURL(avatarId, Math.ceil(size / 16));
+                if (url) return `<img src="${url}" style="width:${size}px;height:${size}px;image-rendering:pixelated;vertical-align:middle;">`;
+            }
+            return '🏴‍☠️';
+        }
+
+        function getDefaultPixelAvatar() {
+            return 'captain_m_light';
+        }
+
+        function saveAccountAvatar() {
+            if (!currentUser || !userToken) return;
+            let avatar;
+            if (pixelAvatarsEnabled) {
+                avatar = localStorage.getItem('pixelAvatar') || getDefaultPixelAvatar();
+            } else {
+                // Get selected emoji from login picker
+                const sel = document.querySelector('#login-emoji-picker .emoji-option.selected');
+                avatar = sel ? sel.dataset.emoji : currentUser.avatar;
+            }
+            socket.emit('update_avatar', { token: userToken, avatar: avatar });
+        }
+
         function updateAccountUI() {
             const accountStatus = document.getElementById('account-status');
             const accountSettingsBtn = document.getElementById('account-settings-btn');
             const loggedInInfo = document.getElementById('logged-in-info');
+            const loginFields = document.getElementById('login-fields');
+            const loginAvatarChange = document.getElementById('login-avatar-change');
 
             if (currentUser) {
+                // Show avatar change, hide login fields
+                if (loginFields) loginFields.classList.add('hidden');
+                if (loginAvatarChange) {
+                    loginAvatarChange.classList.remove('hidden');
+                    // Show current avatar
+                    const currentAvatarEl = document.getElementById('login-current-avatar');
+                    if (currentAvatarEl) {
+                        if (isPixelAvatarId(currentUser.avatar)) {
+                            currentAvatarEl.innerHTML = renderPixelAvatarImg(currentUser.avatar, 48);
+                        } else {
+                            currentAvatarEl.textContent = currentUser.avatar;
+                        }
+                    }
+                    // Highlight current emoji in login picker
+                    document.querySelectorAll('#login-emoji-picker .emoji-option').forEach(opt => {
+                        opt.classList.toggle('selected', opt.dataset.emoji === currentUser.avatar);
+                        opt.onclick = function() {
+                            document.querySelectorAll('#login-emoji-picker .emoji-option').forEach(o => o.classList.remove('selected'));
+                            this.classList.add('selected');
+                        };
+                    });
+                }
+
                 // Show account status banner
                 accountStatus.classList.remove('hidden');
-                document.getElementById('account-avatar').textContent = currentUser.avatar;
+                const accountAvatarEl = document.getElementById('account-avatar');
+                if (isPixelAvatarId(currentUser.avatar)) {
+                    accountAvatarEl.innerHTML = renderPixelAvatarImg(currentUser.avatar, 24);
+                } else {
+                    accountAvatarEl.textContent = currentUser.avatar;
+                }
                 document.getElementById('account-username').textContent = currentUser.username;
                 document.getElementById('account-wins-count').textContent = currentUser.wins;
                 document.getElementById('account-coins-count').textContent = currentUser.coins || 0;
@@ -8676,7 +8787,12 @@
                 if (mLoggedIn) {
                     mLoggedIn.classList.remove('hidden');
                     mLoggedIn.style.display = 'flex';
-                    document.getElementById('m-lobby-account-avatar').textContent = currentUser.avatar;
+                    const mAvatarEl = document.getElementById('m-lobby-account-avatar');
+                    if (isPixelAvatarId(currentUser.avatar)) {
+                        mAvatarEl.innerHTML = renderPixelAvatarImg(currentUser.avatar, 24);
+                    } else {
+                        mAvatarEl.textContent = currentUser.avatar;
+                    }
                     document.getElementById('m-lobby-account-name').textContent = currentUser.username;
                     document.getElementById('m-lobby-account-wins').textContent = currentUser.wins;
                 }
@@ -8688,7 +8804,12 @@
                 if (lLoggedIn) {
                     lLoggedIn.classList.remove('hidden');
                     lLoggedIn.style.display = 'flex';
-                    document.getElementById('legacy-lobby-account-avatar').textContent = currentUser.avatar;
+                    const lAvatarEl = document.getElementById('legacy-lobby-account-avatar');
+                    if (isPixelAvatarId(currentUser.avatar)) {
+                        lAvatarEl.innerHTML = renderPixelAvatarImg(currentUser.avatar, 24);
+                    } else {
+                        lAvatarEl.textContent = currentUser.avatar;
+                    }
                     document.getElementById('legacy-lobby-account-name').textContent = currentUser.username;
                     document.getElementById('legacy-lobby-account-wins').textContent = currentUser.wins;
                 }
@@ -8707,6 +8828,10 @@
                     mSigninBtn.onclick = function() { toggleAccount(); };
                 }
             } else {
+                // Show login fields, hide avatar change
+                if (loginFields) loginFields.classList.remove('hidden');
+                if (loginAvatarChange) loginAvatarChange.classList.add('hidden');
+
                 // Hide account status banner
                 accountStatus.classList.add('hidden');
 
@@ -8735,6 +8860,18 @@
             }
         }
 
+        function renderLeaderboardAvatar(avatar) {
+            // If avatar is a pixel avatar ID, render the sprite
+            if (isPixelAvatarId(avatar)) {
+                return renderPixelAvatarImg(avatar, 28);
+            }
+            // If pixel avatars are enabled and player has no pixel avatar, show default pixel
+            if (pixelAvatarsEnabled && window.PixelAvatars) {
+                return renderPixelAvatarImg(getDefaultPixelAvatar(), 28);
+            }
+            return avatar || '🏴‍☠️';
+        }
+
         function updateLeaderboard(topPirates) {
             leaderboardData = topPirates;
 
@@ -8743,7 +8880,7 @@
                 : topPirates.map(pirate => `
                     <div class="leaderboard-item rank-${pirate.rank}">
                         <span class="leaderboard-rank">${pirate.rank}</span>
-                        <span class="leaderboard-avatar">${pirate.avatar}</span>
+                        <span class="leaderboard-avatar">${renderLeaderboardAvatar(pirate.avatar)}</span>
                         <span class="leaderboard-name">${pirate.username}</span>
                         <span class="leaderboard-wins">🪙 ${pirate.coins || 0}</span>
                     </div>
@@ -8790,6 +8927,14 @@
                 wins: data.wins,
                 coins: data.coins || 50
             };
+            // Sync localStorage pixel avatar to account on login
+            if (pixelAvatarsEnabled) {
+                const lsAvatar = localStorage.getItem('pixelAvatar');
+                if (lsAvatar && lsAvatar !== currentUser.avatar) {
+                    currentUser.avatar = lsAvatar;
+                    socket.emit('update_avatar', { token: data.token, avatar: lsAvatar });
+                }
+            }
             saveAuthToken(userToken);
             updateAccountUI();
             toggleAccount();
@@ -8815,6 +8960,14 @@
                 wins: data.wins,
                 coins: data.coins || 50
             };
+            // If pixel avatars enabled and user has a localStorage selection, sync it
+            if (pixelAvatarsEnabled) {
+                const lsAvatar = localStorage.getItem('pixelAvatar');
+                if (lsAvatar && lsAvatar !== currentUser.avatar) {
+                    currentUser.avatar = lsAvatar;
+                    socket.emit('update_avatar', { token: userToken, avatar: lsAvatar });
+                }
+            }
             updateAccountUI();
         });
 
@@ -8823,6 +8976,14 @@
             userToken = null;
             currentUser = null;
             updateAccountUI();
+        });
+
+        socket.on('avatar_updated', (data) => {
+            if (currentUser) {
+                currentUser.avatar = data.avatar;
+                updateAccountUI();
+                showToast('Avatar updated! ⚓');
+            }
         });
 
             // Handle leaderboard updates

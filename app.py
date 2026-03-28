@@ -10,7 +10,8 @@ from database import (
     create_user, authenticate_user, get_user_by_username,
     increment_user_wins, update_last_login, get_top_pirates,
     reset_user_wins, reset_all_wins, get_all_users,
-    increment_user_coins, get_user_coins, get_top_by_coins
+    increment_user_coins, get_user_coins, get_top_by_coins,
+    update_user_avatar
 )
 
 app = Flask(__name__)
@@ -1431,6 +1432,20 @@ def handle_validate_token(data):
             emit('token_invalid')
     else:
         emit('token_invalid')
+
+@socketio.on('update_avatar')
+def handle_update_avatar(data):
+    """Update a user's avatar in the database."""
+    token = data.get('token')
+    avatar = data.get('avatar')
+    session_data = validate_session(token)
+    if session_data and avatar:
+        if update_user_avatar(session_data['username'], avatar):
+            session_data['avatar'] = avatar
+            emit('avatar_updated', {'avatar': avatar})
+            broadcast_leaderboard_update()
+        else:
+            emit('avatar_update_error', {'message': 'Failed to update avatar'})
 
 @socketio.on('get_leaderboard')
 def handle_get_leaderboard():

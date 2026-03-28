@@ -329,6 +329,19 @@ def get_top_pirates(limit=5):
         print(f"Error fetching leaderboard: {e}")
         return []
 
+def update_user_avatar(username, avatar):
+    """Update a user's avatar."""
+    try:
+        with get_db() as conn:
+            conn.execute(
+                'UPDATE users SET avatar = ? WHERE username = ? COLLATE NOCASE',
+                (avatar, username)
+            )
+            return True
+    except Exception as e:
+        print(f"Error updating avatar: {e}")
+        return False
+
 def reset_user_wins(username):
     """Reset wins to 0 for a specific user."""
     try:
