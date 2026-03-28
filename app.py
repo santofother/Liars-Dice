@@ -606,7 +606,9 @@ def resolve_challenge(game, challenger_idx, bidder_idx):
                         user_data = get_user_by_username(session_data['username'])
                         if user_data:
                             session_data['wins'] = user_data['wins']
-                            session_data['coins'] = user_data['coins']
+                            session_data['coins'] = user_data.get('coins', 0)
+                            if winner.get('sid'):
+                                socketio.emit('coins_update', {'coins': user_data.get('coins', 0)}, room=winner['sid'])
                         broadcast_leaderboard_update()
             except Exception as e:
                 print(f"Error recording win: {e}")
@@ -918,7 +920,9 @@ def handle_roll_dice(data):
                         user_data = get_user_by_username(session_data['username'])
                         if user_data:
                             session_data['wins'] = user_data['wins']
-                            session_data['coins'] = user_data['coins']
+                            session_data['coins'] = user_data.get('coins', 0)
+                            if winner.get('sid'):
+                                socketio.emit('coins_update', {'coins': user_data.get('coins', 0)}, room=winner['sid'])
                         broadcast_leaderboard_update()
             except Exception as e:
                 print(f"Error recording win: {e}")
@@ -1165,7 +1169,9 @@ def handle_kick_player(data):
                         user_data = get_user_by_username(session_data['username'])
                         if user_data:
                             session_data['wins'] = user_data['wins']
-                            session_data['coins'] = user_data['coins']
+                            session_data['coins'] = user_data.get('coins', 0)
+                            if winner.get('sid'):
+                                socketio.emit('coins_update', {'coins': user_data.get('coins', 0)}, room=winner['sid'])
                         broadcast_leaderboard_update()
             except Exception as e:
                 print(f"Error recording win: {e}")

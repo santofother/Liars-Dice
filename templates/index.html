@@ -5926,14 +5926,24 @@
 
         // --- Daily Quest System (client-side, localStorage) ---
         const QUEST_POOL = [
-            { desc: 'Call a liar correctly 3 times', goal: 3, reward: 40, key: 'liar_correct' },
-            { desc: 'Win a game without losing a die', goal: 1, reward: 100, key: 'perfect_win' },
-            { desc: 'Survive to the final 2 players', goal: 2, reward: 30, key: 'final_two' },
-            { desc: 'Make 5 successful bids in a row', goal: 5, reward: 50, key: 'bid_streak' },
-            { desc: 'Win with exactly 1 die remaining', goal: 1, reward: 75, key: 'clutch_win' },
-            { desc: 'Challenge opponents 4 times', goal: 4, reward: 35, key: 'challenges' },
-            { desc: 'Play 3 complete games', goal: 3, reward: 25, key: 'games_played' },
-            { desc: 'Win 2 games today', goal: 2, reward: 60, key: 'daily_wins' },
+            { desc: 'Call a liar correctly 3 times', goal: 3, reward: 80, key: 'liar_correct' },
+            { desc: 'Win a game without losing a die', goal: 1, reward: 200, key: 'perfect_win' },
+            { desc: 'Survive to the final 2 players', goal: 2, reward: 60, key: 'final_two' },
+            { desc: 'Make 5 successful bids in a row', goal: 5, reward: 100, key: 'bid_streak' },
+            { desc: 'Win with exactly 1 die remaining', goal: 1, reward: 150, key: 'clutch_win' },
+            { desc: 'Challenge opponents 4 times', goal: 4, reward: 70, key: 'challenges' },
+            { desc: 'Play 3 complete games', goal: 3, reward: 50, key: 'games_played' },
+            { desc: 'Win 2 games today', goal: 2, reward: 120, key: 'daily_wins' },
+            { desc: 'Win 3 games in a row', goal: 3, reward: 240, key: 'win_streak' },
+            { desc: 'Bluff successfully 3 times (bid high, not challenged)', goal: 3, reward: 90, key: 'bluff_success' },
+            { desc: 'Survive 10 rounds in a single game', goal: 10, reward: 70, key: 'rounds_survived' },
+            { desc: 'Make a bid of 6 or higher quantity', goal: 1, reward: 40, key: 'big_bid' },
+            { desc: 'Win against 4 or more opponents', goal: 1, reward: 160, key: 'crowded_win' },
+            { desc: 'Call liar on the very first bid of a round', goal: 2, reward: 110, key: 'first_bid_challenge' },
+            { desc: 'Play 5 complete games', goal: 5, reward: 100, key: 'games_played_5' },
+            { desc: 'Win a game on Sea Devil difficulty', goal: 1, reward: 300, key: 'sea_devil_win' },
+            { desc: 'Catch 2 liars in a single game', goal: 1, reward: 80, key: 'double_catch' },
+            { desc: 'Make 10 bids in a single game', goal: 1, reward: 60, key: 'chatterbox' },
         ];
 
         let dailyQuest = null;
@@ -5997,6 +6007,22 @@
             }
             localStorage.setItem('dailyQuest', JSON.stringify(dailyQuest));
             renderDailyQuest();
+        }
+
+        // ==================== PER-GAME QUEST TRACKING ====================
+        let questGameBids = 0;          // bids made this game
+        let questBidStreak = 0;         // consecutive successful bids
+        let questRoundCount = 0;        // rounds survived this game
+        let questLiarCatches = 0;       // liar catches this game
+        let questWinStreak = parseInt(localStorage.getItem('questWinStreak') || '0');
+        let questLastRoundBidCount = 0; // bids in current round (to detect first-bid challenges)
+
+        function resetPerGameQuestTracking() {
+            questGameBids = 0;
+            questBidStreak = 0;
+            questRoundCount = 0;
+            questLiarCatches = 0;
+            questLastRoundBidCount = 0;
         }
 
         // ==================== AUTHENTICATION SYSTEM ====================
@@ -6817,6 +6843,9 @@
             const qty = parseInt(document.getElementById('m-bid-qty').value);
             const face = parseInt(document.getElementById('m-bid-face').value);
             if (isNaN(qty) || isNaN(face)) return;
+            questGameBids++;
+            questLastRoundBidCount++;
+            if (qty >= 6) advanceDailyQuest('big_bid', 1);
             socket.emit('make_bid', { room_code: roomCode, quantity: qty, face: face });
         }
 
@@ -7707,6 +7736,18 @@
                     if (p.num_dice > 0) pxAnim(idx, 'roll');
                 });
             }
+            // Track new rounds (rolling = new round started)
+            if (oldState.phase === 'rolling' && newState.phase === 'bidding') {
+                questRoundCount++;
+                questLastRoundBidCount = 0;
+                advanceDailyQuest('rounds_survived', 1);
+            }
+
+            // Reset per-game tracking on game start
+            if (oldState.phase === 'lobby' && newState.phase === 'rolling') {
+                resetPerGameQuestTracking();
+            }
+
             if (newState.phase === 'reveal' && oldState.phase === 'bidding') {
                 setTimeout(() => {
                     if (newState.reveal_data) {
@@ -7721,7 +7762,29 @@
                         // Daily quest: track liar calls and challenges
                         if (iAmChallenger) {
                             advanceDailyQuest('challenges', 1);
-                            if (!bidTrue) advanceDailyQuest('liar_correct', 1);
+                            if (!bidTrue) {
+                                advanceDailyQuest('liar_correct', 1);
+                                questLiarCatches++;
+                                if (questLiarCatches >= 2) advanceDailyQuest('double_catch', 1);
+                            }
+                            // First-bid challenge: challenged when only 1 bid was made this round
+                            if (questLastRoundBidCount <= 1) {
+                                advanceDailyQuest('first_bid_challenge', 1);
+                            }
+                        }
+                        // Bid streak tracking
+                        if (iAmBidder) {
+                            if (bidTrue) {
+                                questBidStreak++;
+                                advanceDailyQuest('bid_streak', 1);
+                                // Bluff success: bid was high but not challenged (bidTrue means it held)
+                            } else {
+                                questBidStreak = 0;
+                            }
+                        }
+                        // Bluff success: I made the bid and nobody challenged correctly (bid was true)
+                        if (iAmBidder && bidTrue) {
+                            advanceDailyQuest('bluff_success', 1);
                         }
                     }
                 }, 500);
@@ -7730,13 +7793,28 @@
             // Daily quest: track game completions and wins
             if (newState.phase === 'game_over' && oldState.phase !== 'game_over') {
                 advanceDailyQuest('games_played', 1);
+                advanceDailyQuest('games_played_5', 1);
+                // Chatterbox: made 10+ bids in a single game
+                if (questGameBids >= 10) advanceDailyQuest('chatterbox', 1);
                 const me = newState.players[playerIndex];
                 if (me) {
                     const alive = newState.players.filter(p => p.num_dice > 0);
-                    if (alive.length === 1 && alive[0].name === me.name) {
+                    const iWon = alive.length === 1 && alive[0].name === me.name;
+                    if (iWon) {
                         advanceDailyQuest('daily_wins', 1);
                         if (me.num_dice === 5) advanceDailyQuest('perfect_win', 1);
                         if (me.num_dice === 1) advanceDailyQuest('clutch_win', 1);
+                        // Win streak
+                        questWinStreak++;
+                        localStorage.setItem('questWinStreak', String(questWinStreak));
+                        advanceDailyQuest('win_streak', 1);
+                        // Crowded win: won against 4+ opponents (5+ total players)
+                        if (newState.players.length >= 5) advanceDailyQuest('crowded_win', 1);
+                        // Sea Devil win
+                        if (newState.ai_difficulty === 'impossible') advanceDailyQuest('sea_devil_win', 1);
+                    } else {
+                        questWinStreak = 0;
+                        localStorage.setItem('questWinStreak', '0');
                     }
                     if (alive.length <= 2 && me.num_dice > 0) {
                         advanceDailyQuest('final_two', 1);
@@ -7767,6 +7845,7 @@
                     if (newAction.action === 'bid') {
                         playSfx('bid');
                         pxAnim(playerIdx, 'bid');
+                        questLastRoundBidCount++;
                     } else if (newAction.action === 'challenge') {
                         playSfx('challenge');
                         pxAnim(playerIdx, 'liar');
@@ -8207,6 +8286,9 @@
         function makeBid() {
             const qty = parseInt(document.getElementById('bid-qty').value);
             const face = parseInt(document.getElementById('bid-face').value);
+            questGameBids++;
+            questLastRoundBidCount++;
+            if (qty >= 6) advanceDailyQuest('big_bid', 1);
             socket.emit('make_bid', { room_code: roomCode, quantity: qty, face: face });
         }
 
