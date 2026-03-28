@@ -5034,6 +5034,7 @@
             <div class="account-info">
                 <span id="account-avatar">🏴‍☠️</span>
                 <span id="account-username">Guest</span>
+                <span class="account-wins">🪙 <span id="account-coins-count">0</span></span>
                 <span class="account-wins">⚔️ <span id="account-wins-count">0</span> wins</span>
             </div>
         </div>
@@ -5179,7 +5180,7 @@
 
                 <!-- Right: Leaderboard -->
                 <div class="lobby-m-col lobby-m-col-right">
-                    <div class="lobby-m-section">🏆 Top Pirates</div>
+                    <div class="lobby-m-section">🪙 Most Treasure</div>
                     <div class="leaderboard-container">
                         <div class="leaderboard-podium">
                             <div id="m-leaderboard-list" class="leaderboard-list">
@@ -5192,7 +5193,7 @@
 
             <!-- === LEGACY LOBBY (hidden in modern via CSS) === -->
             <div class="leaderboard-container">
-                <div class="leaderboard-title">🏆 Top Pirates 🏆</div>
+                <div class="leaderboard-title">🪙 Most Treasure 🪙</div>
                 <div class="leaderboard-podium">
                     <div id="leaderboard-list" class="leaderboard-list">
                         <div class="leaderboard-empty">No pirates yet! Be the first!</div>
@@ -5890,7 +5891,7 @@
                 if (!leaderboardData || leaderboardData.length === 0 || !playerName) return 0;
                 for (let i = 0; i < Math.min(3, leaderboardData.length); i++) {
                     const entry = leaderboardData[i];
-                    if (entry && entry.username && entry.wins > 0 &&
+                    if (entry && entry.username && (entry.coins > 0 || entry.wins > 0) &&
                         entry.username.toLowerCase() === playerName.toLowerCase()) {
                         return entry.rank || 0;
                     }
@@ -8592,6 +8593,7 @@
                 document.getElementById('account-avatar').textContent = currentUser.avatar;
                 document.getElementById('account-username').textContent = currentUser.username;
                 document.getElementById('account-wins-count').textContent = currentUser.wins;
+                document.getElementById('account-coins-count').textContent = currentUser.coins || 0;
 
                 // Update settings display
                 accountSettingsBtn.textContent = 'Manage Account';
@@ -8680,7 +8682,7 @@
                         <span class="leaderboard-rank">${pirate.rank}</span>
                         <span class="leaderboard-avatar">${pirate.avatar}</span>
                         <span class="leaderboard-name">${pirate.username}</span>
-                        <span class="leaderboard-wins">⚔️ ${pirate.wins}</span>
+                        <span class="leaderboard-wins">🪙 ${pirate.coins || 0}</span>
                     </div>
                 `).join('');
 
@@ -8701,7 +8703,8 @@
             currentUser = {
                 username: data.username,
                 avatar: data.avatar,
-                wins: data.wins
+                wins: data.wins,
+                coins: data.coins || 50
             };
             saveAuthToken(userToken);
             updateAccountUI();
@@ -8721,7 +8724,8 @@
             currentUser = {
                 username: data.username,
                 avatar: data.avatar,
-                wins: data.wins
+                wins: data.wins,
+                coins: data.coins || 50
             };
             saveAuthToken(userToken);
             updateAccountUI();
@@ -8745,7 +8749,8 @@
             currentUser = {
                 username: data.username,
                 avatar: data.avatar,
-                wins: data.wins
+                wins: data.wins,
+                coins: data.coins || 50
             };
             updateAccountUI();
         });
@@ -8760,6 +8765,18 @@
             // Handle leaderboard updates
             socket.on('leaderboard_update', (data) => {
                 updateLeaderboard(data.top_pirates);
+            });
+
+            // Handle coin balance updates
+            socket.on('coins_update', (data) => {
+                if (currentUser) {
+                    currentUser.coins = data.coins;
+                }
+                // Sync ghost coins with account coins
+                ghostCoins = data.coins;
+                const gcEl = document.getElementById('ghost-coins');
+                if (gcEl) gcEl.textContent = ghostCoins;
+                if (data.error) showToast(data.error);
             });
         }
 
@@ -9438,7 +9455,7 @@
             };
         }
         let minigameOpen = false;
-        let ghostCoins = parseInt(sessionStorage.getItem('ghostCoins')) || 100;
+        let ghostCoins = currentUser ? (currentUser.coins || 50) : 50;
         let ghostBets = [];
         let ghostBetHistory = JSON.parse(sessionStorage.getItem('ghostBetHistory') || '[]');
         let wasEliminatedBefore = false;
@@ -9496,18 +9513,19 @@
                 // Keep visible but don't auto-open
                 if (!minigameOpen) btn.classList.remove('hidden');
             } else if (gameState.phase === 'lobby') {
-                // New game — hide and reset
+                // New game — hide and reset, sync coins from account
                 popup.classList.add('hidden');
                 btn.classList.add('hidden');
                 minigameOpen = false;
                 wasEliminatedBefore = false;
-                ghostCoins = 100;
+                ghostCoins = currentUser ? (currentUser.coins || 50) : 50;
                 ghostBets = [];
                 ghostBetHistory = [];
-                sessionStorage.setItem('ghostCoins', ghostCoins);
                 sessionStorage.setItem('ghostBetHistory', '[]');
                 document.getElementById('ghost-coins').textContent = ghostCoins;
                 document.getElementById('ghost-bet-history').innerHTML = '<div class="ghost-bet-waiting">Place yer first ghostly wager!</div>';
+                // Refresh coins from server if logged in
+                if (userToken && socket) socket.emit('get_coins', { token: userToken });
             } else {
                 // Alive — hide everything
                 popup.classList.add('hidden');
@@ -9657,8 +9675,11 @@
 
             ghostCoins -= amount;
             ghostBets.push(bet);
-            sessionStorage.setItem('ghostCoins', ghostCoins);
             document.getElementById('ghost-coins').textContent = ghostCoins;
+            // Spend from account if logged in
+            if (userToken && socket) {
+                socket.emit('spend_coins', { token: userToken, amount: amount });
+            }
             showToast(`Bet placed: ${amount} coins!`);
             updateGhostBetForm();
         }
@@ -9688,11 +9709,16 @@
                 ghostBetHistory.unshift(bet);
             });
 
+            // Calculate total winnings to award back to account
+            const totalWinnings = ghostBets.filter(b => b.won).reduce((sum, b) => sum + b.payout, 0);
             ghostBets = [];
-            sessionStorage.setItem('ghostCoins', ghostCoins);
             sessionStorage.setItem('ghostBetHistory', JSON.stringify(ghostBetHistory.slice(0, 50)));
             document.getElementById('ghost-coins').textContent = ghostCoins;
             renderGhostBetHistory();
+            // Award winnings to account (payout includes original bet back)
+            if (totalWinnings > 0 && userToken && socket) {
+                socket.emit('award_coins', { token: userToken, amount: totalWinnings, source: 'ghost_bet' });
+            }
         }
 
         function renderGhostBetHistory() {
@@ -9868,7 +9894,23 @@
                 sessionStorage.setItem('snakeHighScore', snakeHighScore);
                 document.getElementById('snake-best').textContent = snakeHighScore;
             }
-            document.getElementById('snake-gameover-msg').textContent = `Game Over! Score: ${snakeState.score}`;
+            // Calculate coin reward: 1 coin at 10, 2 at 20, 4 at 30, 8 at 40... (2^(n-1) per tier)
+            let snakeCoinsEarned = 0;
+            const score = snakeState.score;
+            const tiers = Math.floor(score / 10);
+            for (let t = 0; t < tiers; t++) {
+                snakeCoinsEarned += Math.pow(2, t);
+            }
+            let gameOverMsg = `Game Over! Score: ${score}`;
+            if (snakeCoinsEarned > 0) {
+                gameOverMsg += ` | +${snakeCoinsEarned} coins!`;
+                ghostCoins += snakeCoinsEarned;
+                document.getElementById('ghost-coins').textContent = ghostCoins;
+                if (userToken && socket) {
+                    socket.emit('award_coins', { token: userToken, amount: snakeCoinsEarned, source: 'snake' });
+                }
+            }
+            document.getElementById('snake-gameover-msg').textContent = gameOverMsg;
             document.getElementById('snake-gameover-msg').classList.remove('hidden');
             document.getElementById('snake-start-btn').classList.remove('hidden');
             document.getElementById('snake-start-btn').textContent = 'Play Again';

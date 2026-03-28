@@ -42,12 +42,19 @@ def init_db():
                 avatar TEXT NOT NULL DEFAULT '🏴‍☠️',
                 total_wins INTEGER NOT NULL DEFAULT 0,
                 total_games INTEGER NOT NULL DEFAULT 0,
+                total_coins INTEGER NOT NULL DEFAULT 50,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
         conn.execute('CREATE INDEX IF NOT EXISTS idx_wins ON users(total_wins DESC)')
         conn.execute('CREATE INDEX IF NOT EXISTS idx_username ON users(username COLLATE NOCASE)')
+        # Migration: add total_coins column if missing
+        try:
+            conn.execute('SELECT total_coins FROM users LIMIT 1')
+        except sqlite3.OperationalError:
+            conn.execute('ALTER TABLE users ADD COLUMN total_coins INTEGER NOT NULL DEFAULT 50')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_coins ON users(total_coins DESC)')
 
 def validate_username(username):
     """Validate username format (3-20 alphanumeric characters)."""
@@ -96,14 +103,15 @@ def create_user(username, password, avatar='🏴‍☠️'):
                 (username, password_hash, avatar)
             )
             user = conn.execute(
-                'SELECT username, avatar, total_wins, created_at FROM users WHERE username = ? COLLATE NOCASE',
+                'SELECT username, avatar, total_wins, total_coins, created_at FROM users WHERE username = ? COLLATE NOCASE',
                 (username,)
             ).fetchone()
 
             return True, f"Welcome aboard, {username}! ⚓", {
                 'username': user['username'],
                 'avatar': user['avatar'],
-                'wins': user['total_wins']
+                'wins': user['total_wins'],
+                'coins': user['total_coins']
             }
     except sqlite3.IntegrityError:
         return False, "Arrr! That name's already taken by another scallywag!", None
@@ -139,7 +147,8 @@ def authenticate_user(username, password):
                 return True, f"Welcome back, {user['username']}! Ready to plunder?", {
                     'username': user['username'],
                     'avatar': user['avatar'],
-                    'wins': user['total_wins']
+                    'wins': user['total_wins'],
+                    'coins': user['total_coins']
                 }
             else:
                 return False, "Wrong password, landlubber! Try again!", None
@@ -159,7 +168,7 @@ def get_user_by_username(username):
     try:
         with get_db() as conn:
             user = conn.execute(
-                'SELECT username, avatar, total_wins, total_games FROM users WHERE username = ? COLLATE NOCASE',
+                'SELECT username, avatar, total_wins, total_games, total_coins FROM users WHERE username = ? COLLATE NOCASE',
                 (username,)
             ).fetchone()
 
@@ -168,7 +177,8 @@ def get_user_by_username(username):
                     'username': user['username'],
                     'avatar': user['avatar'],
                     'wins': user['total_wins'],
-                    'games': user['total_games']
+                    'games': user['total_games'],
+                    'coins': user['total_coins']
                 }
             return None
     except Exception as e:
@@ -195,6 +205,57 @@ def increment_user_wins(username):
     except Exception as e:
         print(f"Error incrementing wins: {e}")
         return False
+
+def increment_user_coins(username, amount):
+    """Add coins to a user's account."""
+    try:
+        with get_db() as conn:
+            conn.execute(
+                'UPDATE users SET total_coins = total_coins + ? WHERE username = ? COLLATE NOCASE',
+                (amount, username)
+            )
+            user = conn.execute(
+                'SELECT total_coins FROM users WHERE username = ? COLLATE NOCASE',
+                (username,)
+            ).fetchone()
+            return user['total_coins'] if user else 0
+    except Exception as e:
+        print(f"Error incrementing coins: {e}")
+        return 0
+
+def get_user_coins(username):
+    """Get a user's coin balance."""
+    try:
+        with get_db() as conn:
+            user = conn.execute(
+                'SELECT total_coins FROM users WHERE username = ? COLLATE NOCASE',
+                (username,)
+            ).fetchone()
+            return user['total_coins'] if user else 0
+    except Exception as e:
+        print(f"Error getting coins: {e}")
+        return 0
+
+def get_top_by_coins(limit=5):
+    """Get top players by coins (Most Treasure)."""
+    try:
+        with get_db() as conn:
+            users = conn.execute(
+                'SELECT username, avatar, total_coins FROM users ORDER BY total_coins DESC, created_at ASC LIMIT ?',
+                (limit,)
+            ).fetchall()
+            return [
+                {
+                    'rank': idx + 1,
+                    'username': user['username'],
+                    'avatar': user['avatar'],
+                    'coins': user['total_coins']
+                }
+                for idx, user in enumerate(users)
+            ]
+    except Exception as e:
+        print(f"Error fetching coin leaderboard: {e}")
+        return []
 
 def increment_user_games(username):
     """

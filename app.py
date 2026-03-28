@@ -9,7 +9,8 @@ import time
 from database import (
     create_user, authenticate_user, get_user_by_username,
     increment_user_wins, update_last_login, get_top_pirates,
-    reset_user_wins, reset_all_wins, get_all_users
+    reset_user_wins, reset_all_wins, get_all_users,
+    increment_user_coins, get_user_coins, get_top_by_coins
 )
 
 app = Flask(__name__)
@@ -23,13 +24,14 @@ games = {}
 user_sessions = {}
 SESSION_EXPIRY = 86400  # 24 hours in seconds
 
-def create_session(username, avatar, wins):
+def create_session(username, avatar, wins, coins=50):
     """Create a new session token for a user."""
     token = secrets.token_urlsafe(32)
     user_sessions[token] = {
         'username': username,
         'avatar': avatar,
         'wins': wins,
+        'coins': coins,
         'created_at': time.time()
     }
     return token
@@ -53,8 +55,8 @@ def invalidate_session(token):
         del user_sessions[token]
 
 def broadcast_leaderboard_update():
-    """Broadcast updated leaderboard to all connected clients."""
-    leaderboard = get_top_pirates(5)
+    """Broadcast updated leaderboard (Most Treasure) to all connected clients."""
+    leaderboard = get_top_by_coins(5)
     socketio.emit('leaderboard_update', {
         'top_pirates': leaderboard
     }, broadcast=True)
@@ -590,16 +592,17 @@ def resolve_challenge(game, challenger_idx, bidder_idx):
         if winner:
             game['message'] = f"{winner['name']} WINS! The treasure is theirs!"
 
-            # Record win if user is logged in
+            # Record win and award coins if user is logged in
             try:
                 if winner.get('user_token'):
                     session_data = validate_session(winner['user_token'])
                     if session_data:
                         increment_user_wins(session_data['username'])
-                        # Update session with new win count
+                        new_coins = increment_user_coins(session_data['username'], 100)
                         user_data = get_user_by_username(session_data['username'])
                         if user_data:
                             session_data['wins'] = user_data['wins']
+                            session_data['coins'] = user_data['coins']
                         broadcast_leaderboard_update()
             except Exception as e:
                 print(f"Error recording win: {e}")
@@ -899,15 +902,17 @@ def handle_roll_dice(data):
         if alive:
             winner = game['players'][alive[0]]
             game['message'] = f"{winner['name']} WINS! The treasure is theirs!"
-            # Record win
+            # Record win and award coins
             try:
                 if winner.get('user_token'):
                     session_data = validate_session(winner['user_token'])
                     if session_data:
                         increment_user_wins(session_data['username'])
+                        increment_user_coins(session_data['username'], 100)
                         user_data = get_user_by_username(session_data['username'])
                         if user_data:
                             session_data['wins'] = user_data['wins']
+                            session_data['coins'] = user_data['coins']
                         broadcast_leaderboard_update()
             except Exception as e:
                 print(f"Error recording win: {e}")
@@ -1143,6 +1148,19 @@ def handle_kick_player(data):
         if alive:
             winner = game['players'][alive[0]]
             game['message'] = f"{winner['name']} WINS! The treasure is theirs!"
+            try:
+                if winner.get('user_token'):
+                    session_data = validate_session(winner['user_token'])
+                    if session_data:
+                        increment_user_wins(session_data['username'])
+                        increment_user_coins(session_data['username'], 100)
+                        user_data = get_user_by_username(session_data['username'])
+                        if user_data:
+                            session_data['wins'] = user_data['wins']
+                            session_data['coins'] = user_data['coins']
+                        broadcast_leaderboard_update()
+            except Exception as e:
+                print(f"Error recording win: {e}")
 
     broadcast_game_state(room_code)
 
@@ -1347,12 +1365,13 @@ def handle_register(data):
 
     if success:
         # Create session token
-        token = create_session(user_data['username'], user_data['avatar'], user_data['wins'])
+        token = create_session(user_data['username'], user_data['avatar'], user_data['wins'], user_data.get('coins', 50))
         emit('register_success', {
             'token': token,
             'username': user_data['username'],
             'avatar': user_data['avatar'],
-            'wins': user_data['wins']
+            'wins': user_data['wins'],
+            'coins': user_data.get('coins', 50)
         })
         broadcast_leaderboard_update()
     else:
@@ -1371,12 +1390,13 @@ def handle_login(data):
         update_last_login(user_data['username'])
 
         # Create session token
-        token = create_session(user_data['username'], user_data['avatar'], user_data['wins'])
+        token = create_session(user_data['username'], user_data['avatar'], user_data['wins'], user_data.get('coins', 50))
         emit('login_success', {
             'token': token,
             'username': user_data['username'],
             'avatar': user_data['avatar'],
-            'wins': user_data['wins']
+            'wins': user_data['wins'],
+            'coins': user_data.get('coins', 50)
         })
     else:
         emit('login_error', {'message': message})
@@ -1400,10 +1420,12 @@ def handle_validate_token(data):
         user_data = get_user_by_username(session_data['username'])
         if user_data:
             session_data['wins'] = user_data['wins']
+            session_data['coins'] = user_data.get('coins', 50)
             emit('token_valid', {
                 'username': user_data['username'],
                 'avatar': user_data['avatar'],
-                'wins': user_data['wins']
+                'wins': user_data['wins'],
+                'coins': user_data.get('coins', 50)
             })
         else:
             emit('token_invalid')
@@ -1412,9 +1434,46 @@ def handle_validate_token(data):
 
 @socketio.on('get_leaderboard')
 def handle_get_leaderboard():
-    """Send current leaderboard to client."""
-    leaderboard = get_top_pirates(5)
+    """Send current leaderboard (Most Treasure) to client."""
+    leaderboard = get_top_by_coins(5)
     emit('leaderboard_update', {'top_pirates': leaderboard})
+
+@socketio.on('get_coins')
+def handle_get_coins(data):
+    """Get a user's coin balance."""
+    token = data.get('token')
+    session_data = validate_session(token)
+    if session_data:
+        coins = get_user_coins(session_data['username'])
+        emit('coins_update', {'coins': coins})
+
+@socketio.on('spend_coins')
+def handle_spend_coins(data):
+    """Spend coins from a user's account (for ghost bets)."""
+    token = data.get('token')
+    amount = data.get('amount', 0)
+    session_data = validate_session(token)
+    if session_data and amount > 0:
+        current = get_user_coins(session_data['username'])
+        if current >= amount:
+            new_balance = increment_user_coins(session_data['username'], -amount)
+            session_data['coins'] = new_balance
+            emit('coins_update', {'coins': new_balance})
+        else:
+            emit('coins_update', {'coins': current, 'error': 'Not enough coins!'})
+
+@socketio.on('award_coins')
+def handle_award_coins(data):
+    """Award coins to a user (snake game, quest rewards)."""
+    token = data.get('token')
+    amount = data.get('amount', 0)
+    source = data.get('source', '')
+    session_data = validate_session(token)
+    if session_data and amount > 0:
+        new_balance = increment_user_coins(session_data['username'], amount)
+        session_data['coins'] = new_balance
+        emit('coins_update', {'coins': new_balance})
+        broadcast_leaderboard_update()
 
 # Admin config events
 ADMIN_PASSWORD = 'SantoIsCool'
