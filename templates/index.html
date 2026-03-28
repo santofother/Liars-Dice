@@ -1804,7 +1804,7 @@
         }
 
         .layout-modern #lobby .lobby-m-col {
-            padding: 20px 28px;
+            padding: 16px 20px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -1825,12 +1825,12 @@
             letter-spacing: 2px;
             text-transform: uppercase;
             color: var(--m-dimtext);
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             font-weight: bold;
         }
 
         .layout-modern #lobby .lobby-m-form-group {
-            margin-bottom: 14px;
+            margin-bottom: 8px;
         }
 
         .layout-modern #lobby .lobby-m-form-group label {
@@ -1844,8 +1844,8 @@
         .layout-modern #lobby .lobby-m-form-group input,
         .layout-modern #lobby .lobby-m-form-group select {
             width: 100%;
-            padding: 9px 12px;
-            font-size: 1em;
+            padding: 7px 10px;
+            font-size: 0.95em;
             border: 2px solid var(--m-border2);
             border-radius: 8px;
             background: rgba(0,0,0,0.4);
@@ -1866,17 +1866,17 @@
         .layout-modern #lobby .lobby-m-emoji-grid {
             display: flex;
             flex-wrap: nowrap;
-            gap: 4px;
+            gap: 3px;
         }
 
         .layout-modern #lobby .lobby-m-emoji-grid .emoji-option {
             flex: 1 1 0;
             min-width: 0;
-            aspect-ratio: 1;
-            font-size: 1.3em;
+            padding: 4px 0;
+            font-size: 1.1em;
             background: rgba(0,0,0,0.3);
-            border: 2px solid var(--m-border2);
-            border-radius: 8px;
+            border: 1px solid var(--m-border2);
+            border-radius: 6px;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -1923,8 +1923,8 @@
 
         .layout-modern .lobby-m-btn {
             width: 100%;
-            padding: 11px 20px;
-            font-size: 1em;
+            padding: 8px 14px;
+            font-size: 0.9em;
             font-family: 'Georgia', serif;
             border: none;
             border-radius: 8px;
@@ -4501,25 +4501,22 @@
                         <div class="px-char-selector" id="m-pixel-char-picker"></div>
                     </div>
 
-                    <button class="lobby-m-btn lobby-m-btn-wood" id="m-private-game-btn" onclick="togglePrivateCreate()" style="margin-bottom:10px;">🌐 Public Game</button>
-                    <button class="lobby-m-btn lobby-m-btn-gold" onclick="createGame()">Create Game</button>
-
-                    <hr class="lobby-m-divider">
-
-                    <div class="lobby-m-form-group">
-                        <label>Room Code</label>
-                        <input type="text" id="m-room-code-input" placeholder="XXXX" maxlength="4" style="text-transform: uppercase; text-align: center; font-size: 1.3em; letter-spacing: 5px;">
+                    <div class="lobby-m-row" style="gap:8px;">
+                        <button class="lobby-m-btn lobby-m-btn-wood" id="m-private-game-btn" onclick="togglePrivateCreate()">🌐 Public</button>
+                        <button class="lobby-m-btn lobby-m-btn-gold" onclick="createGame()" style="flex:2;">Create Game</button>
                     </div>
 
                     <div class="lobby-m-row" style="gap:8px;">
-                        <button class="lobby-m-btn lobby-m-btn-wood" onclick="joinGame()">Join Game</button>
-                        <button class="lobby-m-btn lobby-m-btn-wood" onclick="openBrowser()">Browse</button>
+                        <button class="lobby-m-btn lobby-m-btn-wood" onclick="openBrowser()" style="flex:1;">🔍 Browse Games</button>
+                        <button class="lobby-m-btn lobby-m-btn-wood" onclick="promptJoinCode()" style="flex:1;">🔑 Join Code</button>
                     </div>
 
-                    <hr class="lobby-m-divider">
-                    <button class="lobby-m-btn lobby-m-btn-wood" onclick="startTutorial()">📜 How to Play</button>
+                    <div class="lobby-m-row" style="gap:8px;">
+                        <button class="lobby-m-btn lobby-m-btn-wood" onclick="startTutorial()" style="flex:1;">📜 How to Play</button>
+                        <button class="lobby-m-btn lobby-m-btn-wood" onclick="toggleAccount()" style="flex:1;" id="m-lobby-signin-btn">👤 Sign In</button>
+                    </div>
 
-                    <div id="m-lobby-error" class="error-message hidden" style="margin-top:10px;"></div>
+                    <div id="m-lobby-error" class="error-message hidden" style="margin-top:6px;"></div>
                 </div>
 
                 <!-- Right: Leaderboard -->
@@ -6530,11 +6527,28 @@
             // Session will be saved when game_state is received
         }
 
+        function promptJoinCode() {
+            const code = prompt('Enter 4-letter room code:');
+            if (!code || code.trim().length !== 4) return;
+            // Set the legacy input if it exists, then call joinGame
+            const legacyInput = document.getElementById('room-code');
+            if (legacyInput) legacyInput.value = code.trim();
+            // Store for joinGame to use
+            window._joinCode = code.trim().toUpperCase();
+            joinGame();
+        }
+
         function joinGame() {
             const nameEl = getLobbyInput('player-name', 'm-player-name');
             const name = nameEl.value.trim() || 'Sailor';
-            const codeEl = getLobbyInput('room-code', 'm-room-code-input');
-            const code = codeEl.value.trim().toUpperCase();
+            const codeEl = document.getElementById('room-code') || document.getElementById('m-room-code-input');
+            let code = '';
+            if (window._joinCode) {
+                code = window._joinCode;
+                delete window._joinCode;
+            } else if (codeEl) {
+                code = codeEl.value.trim().toUpperCase();
+            }
 
             if (!code || code.length !== 4) {
                 openBrowser();
@@ -7821,6 +7835,13 @@
                 if (mNameInput && !mNameInput.value) {
                     mNameInput.value = currentUser.username;
                 }
+
+                // Update modern lobby sign-in button
+                const mSigninBtn = document.getElementById('m-lobby-signin-btn');
+                if (mSigninBtn) {
+                    mSigninBtn.textContent = '👤 ' + currentUser.username;
+                    mSigninBtn.onclick = function() { toggleAccount(); };
+                }
             } else {
                 // Hide account status banner
                 accountStatus.classList.add('hidden');
@@ -7828,6 +7849,13 @@
                 // Update settings display
                 accountSettingsBtn.textContent = 'Sign In / Create Account';
                 loggedInInfo.classList.add('hidden');
+
+                // Reset modern lobby sign-in button
+                const mSigninBtn = document.getElementById('m-lobby-signin-btn');
+                if (mSigninBtn) {
+                    mSigninBtn.textContent = '👤 Sign In';
+                    mSigninBtn.onclick = function() { toggleAccount(); };
+                }
 
                 // Modern lobby account
                 const mLoggedIn = document.getElementById('m-lobby-logged-in');
