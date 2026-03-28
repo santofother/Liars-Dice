@@ -5699,12 +5699,25 @@
             pixelAvatarsEnabled = on;
             localStorage.setItem('pixelAvatars', on ? '1' : '0');
             document.body.classList.toggle('pixel-avatars-on', on);
+            syncAvatarPickerVisibility(on);
             if (on && !pixelAssetsLoaded) {
                 loadPixelAvatarAssets();
             } else if (on && pixelAssetsLoaded) {
                 onPixelAvatarsReady();
             }
             if (gameState) updateUI();
+        }
+
+        // Force-toggle emoji vs pixel pickers via JS (CSS alone has proven unreliable)
+        function syncAvatarPickerVisibility(pixelOn) {
+            // Hide/show all emoji grids
+            document.querySelectorAll('.lobby-m-emoji-grid, #register-emoji-picker').forEach(el => {
+                el.style.display = pixelOn ? 'none' : '';
+            });
+            // Hide/show all pixel pickers
+            document.querySelectorAll('.px-char-selector').forEach(el => {
+                el.style.display = pixelOn ? 'block' : 'none';
+            });
         }
 
         function loadPixelAvatarAssets() {
@@ -5737,6 +5750,8 @@
                 // Show preview in settings
                 buildPixelPreview();
             }
+            // Ensure correct picker is visible after assets load
+            syncAvatarPickerVisibility(pixelAvatarsEnabled);
             if (gameState) updateUI();
         }
 
@@ -5757,6 +5772,7 @@
                 document.body.classList.add('pixel-avatars-on');
                 const toggle = document.getElementById('pixel-avatar-toggle');
                 if (toggle) toggle.checked = true;
+                syncAvatarPickerVisibility(true);
                 loadPixelAvatarAssets();
             }
         }
