@@ -1959,7 +1959,6 @@
             font-size: 1.15em;
             letter-spacing: 2px;
             box-shadow: 0 0 12px rgba(255,215,0,0.3);
-            margin-top: auto;
         }
 
         .layout-modern .lobby-m-create-btn:hover {
@@ -6768,14 +6767,13 @@
             bubble.innerHTML = (tag ? `<span class="bubble-tag">${tag}</span>` : '') + text;
             document.body.appendChild(bubble);
 
-            // Position relative to the card using getBoundingClientRect
-            const rect = card.getBoundingClientRect();
-            const bubbleHeight = 60; // estimate, will adjust after render
-            bubble.style.left = (rect.left + 10) + 'px';
-            bubble.style.top = (rect.top - bubbleHeight) + 'px';
+            // Position offscreen initially, then place correctly in one step
+            bubble.style.visibility = 'hidden';
+            bubble.style.left = '0px';
+            bubble.style.top = '0px';
 
-            // Refine position after render
             requestAnimationFrame(() => {
+                const rect = card.getBoundingClientRect();
                 const bRect = bubble.getBoundingClientRect();
                 let top = rect.top - bRect.height - 8;
                 let left = rect.left + 10;
@@ -6784,6 +6782,7 @@
                 if (left + bRect.width > window.innerWidth - 4) left = window.innerWidth - bRect.width - 4;
                 bubble.style.top = top + 'px';
                 bubble.style.left = left + 'px';
+                bubble.style.visibility = 'visible';
             });
 
             // Trigger pixel avatar chat animation
