@@ -595,32 +595,23 @@
 
         const primaries = getPrimaryCharacters();
 
-        // Group by category
-        const categories = {};
-        primaries.forEach(ch => {
-            if (!categories[ch.category]) categories[ch.category] = [];
-            categories[ch.category].push(ch);
-        });
-
+        // Single flat grid — all characters (pirates + military) in one row
         let html = '<div class="px-char-grid">';
-        for (const [cat, chars] of Object.entries(categories)) {
-            html += `<div class="px-cat-header">⚓ ${cat}</div>`;
-            chars.forEach(ch => {
-                // Show selected variant's sprite if this group is selected
-                let displayId = ch.id;
-                if (ch.group === selectedGroup && selectedChar) {
-                    displayId = selectedChar.id;
-                }
-                const url = getSpriteDataURL(displayId, 3);
-                const sel = ch.group === selectedGroup ? ' selected' : '';
-                html += `<div class="px-char-option${sel}" data-group="${ch.group}" data-char-id="${displayId}"
-                    onclick="PixelAvatars.selectGroup('${ch.group}', '${containerId}')"
-                    ondblclick="PixelAvatars.openVariantPicker('${ch.group}', '${containerId}')">
-                    <img src="${url}" alt="${ch.name}">
-                    <div class="px-char-label">${ch.name}</div>
-                </div>`;
-            });
-        }
+        primaries.forEach(ch => {
+            // Show selected variant's sprite if this group is selected
+            let displayId = ch.id;
+            if (ch.group === selectedGroup && selectedChar) {
+                displayId = selectedChar.id;
+            }
+            const url = getSpriteDataURL(displayId, 3);
+            const sel = ch.group === selectedGroup ? ' selected' : '';
+            html += `<div class="px-char-option${sel}" data-group="${ch.group}" data-char-id="${displayId}"
+                onclick="PixelAvatars.selectGroup('${ch.group}', '${containerId}')"
+                ondblclick="PixelAvatars.openVariantPicker('${ch.group}', '${containerId}')">
+                <img src="${url}" alt="${ch.name}">
+                <div class="px-char-label">${ch.name}</div>
+            </div>`;
+        });
         html += '</div>';
 
         // Variant sub-picker (hidden by default)

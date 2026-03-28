@@ -1869,6 +1869,12 @@
             gap: 3px;
         }
 
+        /* Hide emoji picker when pixel avatars are enabled */
+        body.pixel-avatars-on .layout-modern .lobby-m-emoji-grid,
+        body.pixel-avatars-on #register-emoji-picker {
+            display: none !important;
+        }
+
         .layout-modern #lobby .lobby-m-emoji-grid .emoji-option {
             flex: 1 1 0;
             min-width: 0;
@@ -4386,6 +4392,8 @@
                         <div class="emoji-option" data-emoji="⛵">⛵</div>
                         <div class="emoji-option" data-emoji="🧭">🧭</div>
                     </div>
+                    <!-- Pixel Avatar picker for account creation (shown when pixel avatars enabled) -->
+                    <div class="px-char-selector" id="register-pixel-char-picker"></div>
                 </div>
 
                 <button class="btn btn-gold" onclick="registerUser()">Create Account</button>
@@ -4502,18 +4510,15 @@
                     </div>
 
                     <div class="lobby-m-row" style="gap:8px;">
-                        <button class="lobby-m-btn lobby-m-btn-wood" id="m-private-game-btn" onclick="togglePrivateCreate()">🌐 Public</button>
-                        <button class="lobby-m-btn lobby-m-btn-gold" onclick="createGame()" style="flex:2;">Create Game</button>
+                        <button class="lobby-m-btn lobby-m-btn-wood" id="m-private-game-btn" onclick="togglePrivateCreate()" style="flex:0 0 auto;padding:8px 12px;">🌐 Public</button>
+                        <button class="lobby-m-btn lobby-m-btn-gold" onclick="createGame()" style="flex:1;padding:12px 14px;font-size:1.05em;">Create Game</button>
                     </div>
 
-                    <div class="lobby-m-row" style="gap:8px;">
-                        <button class="lobby-m-btn lobby-m-btn-wood" onclick="openBrowser()" style="flex:1;">🔍 Browse Games</button>
-                        <button class="lobby-m-btn lobby-m-btn-wood" onclick="promptJoinCode()" style="flex:1;">🔑 Join Code</button>
-                    </div>
-
-                    <div class="lobby-m-row" style="gap:8px;">
-                        <button class="lobby-m-btn lobby-m-btn-wood" onclick="startTutorial()" style="flex:1;">📜 How to Play</button>
-                        <button class="lobby-m-btn lobby-m-btn-wood" onclick="toggleAccount()" style="flex:1;" id="m-lobby-signin-btn">👤 Sign In</button>
+                    <div class="lobby-m-row" style="gap:6px;">
+                        <button class="lobby-m-btn lobby-m-btn-wood" onclick="openBrowser()" style="flex:1;font-size:0.78em;padding:7px 4px;">🔍 Browse</button>
+                        <button class="lobby-m-btn lobby-m-btn-wood" onclick="promptJoinCode()" style="flex:1;font-size:0.78em;padding:7px 4px;">🔑 Join Code</button>
+                        <button class="lobby-m-btn lobby-m-btn-wood" onclick="startTutorial()" style="flex:1;font-size:0.78em;padding:7px 4px;">📜 How to Play</button>
+                        <button class="lobby-m-btn lobby-m-btn-wood" onclick="toggleAccount()" style="flex:1;font-size:0.78em;padding:7px 4px;" id="m-lobby-signin-btn">👤 Sign In</button>
                     </div>
 
                     <div id="m-lobby-error" class="error-message hidden" style="margin-top:6px;"></div>
@@ -5071,9 +5076,10 @@
         }
 
         function onPixelAvatarsReady() {
-            // Build character picker in lobby
+            // Build character pickers in lobby and account creation
             if (window.PixelAvatars) {
                 PixelAvatars.buildCharacterPicker('m-pixel-char-picker');
+                PixelAvatars.buildCharacterPicker('register-pixel-char-picker');
                 // Show preview in settings
                 buildPixelPreview();
             }
@@ -7732,7 +7738,9 @@
         function registerUser() {
             const username = document.getElementById('register-username').value.trim();
             const password = document.getElementById('register-password').value.trim();
-            const avatar = registerSelectedAvatar;
+            const avatar = pixelAvatarsEnabled
+                ? (localStorage.getItem('pixelAvatar') || 'captain_m_light')
+                : registerSelectedAvatar;
 
             // Client-side validation
             if (username.length < 3 || username.length > 20) {

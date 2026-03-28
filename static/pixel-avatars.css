@@ -206,8 +206,8 @@ body.pixel-avatars-on .px-char-selector {
 }
 
 .px-char-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 6px;
     max-height: 300px;
     overflow-y: auto;
@@ -394,7 +394,6 @@ body.pixel-avatars-on .pixel-preview-row img {
     }
 
     .px-char-grid {
-        grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
         gap: 4px;
         max-height: 200px;
     }
