@@ -4931,7 +4931,7 @@
             </div>
 
             <div class="settings-section">
-                <h3>🕹️ Pixel Avatars <span style="font-size:0.6em;color:#d4a574;">(Experimental)</span></h3>
+                <h3>🕹️ Pixel Avatars</h3>
                 <div class="pixel-toggle-wrap">
                     <input type="checkbox" id="pixel-avatar-toggle" onchange="togglePixelAvatars(this.checked)">
                     <label for="pixel-avatar-toggle" class="pixel-toggle-label">Enable 8-bit pixel characters</label>
@@ -5865,7 +5865,8 @@
 
         function initPixelAvatars() {
             const saved = localStorage.getItem('pixelAvatars');
-            if (saved === '1') {
+            // Default to ON unless explicitly turned off
+            if (saved !== '0') {
                 pixelAvatarsEnabled = true;
                 document.body.classList.add('pixel-avatars-on');
                 const toggle = document.getElementById('pixel-avatar-toggle');
