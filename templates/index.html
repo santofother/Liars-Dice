@@ -131,6 +131,13 @@
             color: #ffd700;
         }
 
+        .input-group select option,
+        .dark-select option,
+        select#waiting-ai-difficulty option {
+            background: #2a1a0f;
+            color: #ffd700;
+        }
+
         .input-group input::placeholder {
             color: #8b7355;
         }
@@ -5332,8 +5339,8 @@
                 <label>Difficulty</label>
                 <select id="ai-difficulty">
                     <option value="easy">🦜 Deckhand - Landlubber tactics</option>
-                    <option value="medium" selected>⚓ First Mate - Seasoned sailor</option>
-                    <option value="hard">💀 Blackbeard - Cunning strategist</option>
+                    <option value="medium">⚓ First Mate - Seasoned sailor</option>
+                    <option value="hard" selected>💀 Blackbeard - Cunning strategist</option>
                     <option value="impossible">🏴‍☠️ Sea Devil - Sees all, knows all!</option>
                     <option value="random">🎲 Motley Crew - A ragtag bunch of scallywags!</option>
                 </select>
@@ -5439,7 +5446,7 @@
                             </div>
                             <div style="display:flex;align-items:center;gap:10px;">
                                 <label style="color:var(--m-amber2);font-size:0.9em;">Difficulty:</label>
-                                <select id="m-waiting-ai-difficulty" onchange="changeAiDifficulty()" style="flex:1;padding:6px 10px;border:2px solid var(--m-border2);border-radius:6px;background:rgba(0,0,0,0.4);color:var(--m-gold);font-size:0.9em;">
+                                <select id="m-waiting-ai-difficulty" onchange="changeAiDifficulty()" style="flex:1;padding:6px 10px;border:2px solid var(--m-border2);border-radius:6px;background:rgba(0,0,0,0.4);color:var(--m-gold);font-size:0.9em;" class="dark-select">
                                     <option value="easy">🦜 Deckhand - Landlubber tactics</option>
                                     <option value="medium">⚓ First Mate - Seasoned sailor</option>
                                     <option value="hard">💀 Blackbeard - Cunning strategist</option>
@@ -7399,7 +7406,7 @@
             const numAiEl = getLobbyInput('num-ai', 'num-ai');
             const numAi = numAiEl ? parseInt(numAiEl.value) : 2;
             const aiDiffEl = getLobbyInput('ai-difficulty', 'ai-difficulty');
-            const aiDifficulty = aiDiffEl ? aiDiffEl.value : 'medium';
+            const aiDifficulty = aiDiffEl ? aiDiffEl.value : 'hard';
 
             // Clear any existing session and reset reconnection flag
             clearSession();
@@ -7934,7 +7941,7 @@
             if (gameState.is_host) {
                 aiControls.classList.remove('hidden');
                 document.getElementById('ai-count-display').textContent = gameState.num_ai;
-                document.getElementById('waiting-ai-difficulty').value = gameState.ai_difficulty || 'easy';
+                document.getElementById('waiting-ai-difficulty').value = gameState.ai_difficulty || 'hard';
                 document.getElementById('host-controls').classList.remove('hidden');
                 document.getElementById('waiting-message').classList.add('hidden');
             } else {
@@ -7991,7 +7998,7 @@
                 const mAiCount = document.getElementById('m-ai-count-display');
                 if (mAiCount) mAiCount.textContent = gameState.num_ai;
                 const mAiDiff = document.getElementById('m-waiting-ai-difficulty');
-                if (mAiDiff) mAiDiff.value = gameState.ai_difficulty || 'easy';
+                if (mAiDiff) mAiDiff.value = gameState.ai_difficulty || 'hard';
             } else {
                 if (mAiControls) mAiControls.classList.add('hidden');
                 if (mHostControls) mHostControls.classList.add('hidden');

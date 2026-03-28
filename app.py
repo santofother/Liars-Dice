@@ -112,7 +112,7 @@ def add_ai_players(game):
             if game.get('ai_difficulty') == 'random':
                 ai_difficulty = random.choice(difficulties)
             else:
-                ai_difficulty = game.get('ai_difficulty', 'easy')
+                ai_difficulty = game.get('ai_difficulty', 'hard')
 
             game['players'].append({
                 'name': pirate_names[i],
@@ -166,7 +166,7 @@ def is_valid_bid(game, quantity, face_value):
 def get_ai_action(game, player):
     """AI decides to bid or challenge based on difficulty."""
     # Use individual AI difficulty if set, otherwise fall back to game difficulty
-    difficulty = player.get('ai_difficulty', game.get('ai_difficulty', 'easy'))
+    difficulty = player.get('ai_difficulty', game.get('ai_difficulty', 'hard'))
 
     # Handle random mode fallback (shouldn't happen but just in case)
     if difficulty == 'random':
@@ -485,7 +485,7 @@ def get_game_state_for_player(game, player_sid):
         'host': game['host'],
         'waiting_players': waiting_data,
         'is_waiting': is_waiting,
-        'ai_difficulty': game.get('ai_difficulty', 'easy'),
+        'ai_difficulty': game.get('ai_difficulty', 'hard'),
         'is_private': game.get('is_private', False),
         'num_ai': game.get('num_ai', 0)
     }
@@ -599,7 +599,10 @@ def resolve_challenge(game, challenger_idx, bidder_idx):
                     session_data = validate_session(winner['user_token'])
                     if session_data:
                         increment_user_wins(session_data['username'])
-                        new_coins = increment_user_coins(session_data['username'], 100)
+                        # Only award coins on hard+ difficulty
+                        diff = game.get('ai_difficulty', 'hard')
+                        if diff in ('hard', 'impossible', 'random'):
+                            increment_user_coins(session_data['username'], 100)
                         user_data = get_user_by_username(session_data['username'])
                         if user_data:
                             session_data['wins'] = user_data['wins']
@@ -656,12 +659,12 @@ def handle_create_game(data):
     player_name = data.get('name', 'Captain')[:20]
     num_ai = int(data.get('num_ai', 2))
     avatar = data.get('avatar', '🏴‍☠️')
-    ai_difficulty = data.get('ai_difficulty', 'easy')
+    ai_difficulty = data.get('ai_difficulty', 'hard')
     user_token = data.get('user_token')
 
     # Validate difficulty
     if ai_difficulty not in ['easy', 'medium', 'hard', 'impossible', 'random']:
-        ai_difficulty = 'easy'
+        ai_difficulty = 'hard'
 
     is_private = bool(data.get('is_private', False))
 
@@ -909,7 +912,9 @@ def handle_roll_dice(data):
                     session_data = validate_session(winner['user_token'])
                     if session_data:
                         increment_user_wins(session_data['username'])
-                        increment_user_coins(session_data['username'], 100)
+                        diff = game.get('ai_difficulty', 'hard')
+                        if diff in ('hard', 'impossible', 'random'):
+                            increment_user_coins(session_data['username'], 100)
                         user_data = get_user_by_username(session_data['username'])
                         if user_data:
                             session_data['wins'] = user_data['wins']
@@ -1154,7 +1159,9 @@ def handle_kick_player(data):
                     session_data = validate_session(winner['user_token'])
                     if session_data:
                         increment_user_wins(session_data['username'])
-                        increment_user_coins(session_data['username'], 100)
+                        diff = game.get('ai_difficulty', 'hard')
+                        if diff in ('hard', 'impossible', 'random'):
+                            increment_user_coins(session_data['username'], 100)
                         user_data = get_user_by_username(session_data['username'])
                         if user_data:
                             session_data['wins'] = user_data['wins']
@@ -1305,7 +1312,7 @@ def handle_browse_games():
             'max_players': game['max_players'],
             'phase': game['phase'],
             'ai_count': game.get('num_ai', 0),
-            'ai_difficulty': game.get('ai_difficulty', 'easy')
+            'ai_difficulty': game.get('ai_difficulty', 'hard')
         })
     emit('game_list', {'games': game_list})
 
@@ -1335,7 +1342,7 @@ def handle_update_ai_difficulty(data):
     # Host-only
     if game['players'][0].get('sid') != request.sid:
         return
-    difficulty = data.get('ai_difficulty', 'easy')
+    difficulty = data.get('ai_difficulty', 'hard')
     if difficulty not in ['easy', 'medium', 'hard', 'impossible', 'random']:
         difficulty = 'easy'
     game['ai_difficulty'] = difficulty
