@@ -6045,10 +6045,10 @@
             dailyQuest.progress += (amount || 1);
             if (dailyQuest.progress >= dailyQuest.quest.goal) {
                 dailyQuest.completed = true;
-                // Award coins
-                let coins = parseInt(localStorage.getItem('pirateCoins') || '0');
-                coins += dailyQuest.quest.reward;
-                localStorage.setItem('pirateCoins', String(coins));
+                // Award coins to server account
+                if (userToken && socket) {
+                    socket.emit('award_coins', { token: userToken, amount: dailyQuest.quest.reward, source: 'daily_quest' });
+                }
             }
             localStorage.setItem('dailyQuest', JSON.stringify(dailyQuest));
             renderDailyQuest();
