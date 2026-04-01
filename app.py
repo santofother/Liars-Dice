@@ -1545,6 +1545,22 @@ def handle_admin_reset_all(data):
     else:
         emit('admin_reset_error', {'message': 'Failed to reset leaderboard'})
 
+@socketio.on('debug_reveal_dice')
+def handle_debug_reveal_dice(data):
+    """Return all players' actual dice for debug mode."""
+    room_code = data.get('room_code')
+    game = games.get(room_code)
+    if not game or game['phase'] not in ['bidding', 'reveal', 'game_over']:
+        return
+    result = []
+    for p in game['players']:
+        result.append({
+            'name': p['name'],
+            'dice': p['dice'] if p['num_dice'] > 0 else [],
+            'num_dice': p['num_dice']
+        })
+    emit('debug_dice_data', {'players': result})
+
 if __name__ == '__main__':
     import os
 

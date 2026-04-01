@@ -1179,6 +1179,92 @@
             font-size: 0.85em;
         }
 
+        .layout-modern .m-diff-pill {
+            position: relative;
+            cursor: help;
+        }
+        .layout-modern .m-diff-tooltip {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-top: 6px;
+            background: rgba(0,0,0,0.9);
+            border: 1px solid var(--m-gold);
+            border-radius: 6px;
+            padding: 8px 10px;
+            color: var(--m-dimtext);
+            font-size: 1em;
+            white-space: nowrap;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .layout-modern .m-diff-tooltip .diff-tip-name {
+            color: var(--m-gold);
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        .layout-modern .m-diff-pill:hover .m-diff-tooltip {
+            display: block;
+        }
+
+        .layout-modern .m-quest-tracker {
+            margin-top: 10px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--m-border2);
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 0.75em;
+            flex-shrink: 0;
+        }
+        .layout-modern .m-quest-tracker-title {
+            color: var(--m-gold);
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 4px;
+        }
+        .layout-modern .m-quest-tracker-desc {
+            color: var(--m-dimtext);
+            font-size: 0.95em;
+            margin-bottom: 6px;
+        }
+        .layout-modern .m-quest-tracker-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .layout-modern .m-quest-tracker-fill {
+            height: 100%;
+            background: var(--m-gold);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .layout-modern .m-quest-tracker-text {
+            color: var(--m-dimtext);
+            font-size: 0.85em;
+            text-align: right;
+            margin-top: 3px;
+        }
+
+        .m-opp-debug-dice {
+            display: flex;
+            gap: 2px;
+            margin-top: 2px;
+            font-size: 0.75em;
+        }
+        .m-opp-debug-die {
+            background: rgba(255,215,0,0.15);
+            border: 1px solid var(--m-gold);
+            border-radius: 3px;
+            padding: 1px 4px;
+            color: var(--m-gold);
+            font-weight: bold;
+        }
+
         /* --- Center Column --- */
         .layout-modern .m-turn-banner {
             display: flex;
@@ -5667,10 +5753,19 @@
                         <div class="m-stat-val" id="m-total-dice">10</div>
                         <div class="m-stat-lbl">Total Dice</div>
                     </div>
-                    <div class="m-stat-pill">
+                    <div class="m-stat-pill m-diff-pill" id="m-diff-pill">
                         <div class="m-stat-val" id="m-difficulty">⚓</div>
                         <div class="m-stat-lbl">Difficulty</div>
+                        <div class="m-diff-tooltip" id="m-diff-tooltip"></div>
                     </div>
+                </div>
+                <div class="m-quest-tracker hidden" id="m-quest-tracker">
+                    <div class="m-quest-tracker-title">⚓ Daily Quest</div>
+                    <div class="m-quest-tracker-desc" id="m-quest-desc"></div>
+                    <div class="m-quest-tracker-bar">
+                        <div class="m-quest-tracker-fill" id="m-quest-fill"></div>
+                    </div>
+                    <div class="m-quest-tracker-text" id="m-quest-text">0/0</div>
                 </div>
             </div>
             <!-- Center: Game Action -->
@@ -5750,6 +5845,13 @@
                     <div id="admin-user-list" class="admin-user-list">
                         <div style="color: #8b7355; text-align: center; padding: 20px;">Loading pirates...</div>
                     </div>
+                </div>
+                <div class="settings-section" style="margin-top: 15px;">
+                    <h3>🔧 Debug Tools</h3>
+                    <label style="display: flex; align-items: center; gap: 8px; color: #d4a574; cursor: pointer;">
+                        <input type="checkbox" id="debug-show-dice" onchange="toggleDebugDice()" style="accent-color: #b8860b;">
+                        <span>Show all opponents' dice</span>
+                    </label>
                 </div>
             </div>
 
@@ -5972,24 +6074,119 @@
 
         // --- Daily Quest System (client-side, localStorage) ---
         const QUEST_POOL = [
+            // --- Liar calls ---
             { desc: 'Call a liar correctly 3 times', goal: 3, reward: 80, key: 'liar_correct' },
-            { desc: 'Win a game without losing a die', goal: 1, reward: 200, key: 'perfect_win' },
-            { desc: 'Survive to the final 2 players', goal: 2, reward: 60, key: 'final_two' },
-            { desc: 'Make 5 successful bids in a row', goal: 5, reward: 100, key: 'bid_streak' },
-            { desc: 'Win with exactly 1 die remaining', goal: 1, reward: 150, key: 'clutch_win' },
-            { desc: 'Challenge opponents 4 times', goal: 4, reward: 70, key: 'challenges' },
-            { desc: 'Play 3 complete games', goal: 3, reward: 50, key: 'games_played' },
-            { desc: 'Win 2 games today', goal: 2, reward: 120, key: 'daily_wins' },
-            { desc: 'Win 3 games in a row', goal: 3, reward: 240, key: 'win_streak' },
-            { desc: 'Bluff successfully 3 times (bid high, not challenged)', goal: 3, reward: 90, key: 'bluff_success' },
-            { desc: 'Survive 10 rounds in a single game', goal: 10, reward: 70, key: 'rounds_survived' },
-            { desc: 'Make a bid of 6 or higher quantity', goal: 1, reward: 40, key: 'big_bid' },
-            { desc: 'Win against 4 or more opponents', goal: 1, reward: 160, key: 'crowded_win' },
+            { desc: 'Call a liar correctly 5 times', goal: 5, reward: 140, key: 'liar_correct' },
+            { desc: 'Call a liar correctly in 2 different games', goal: 2, reward: 70, key: 'liar_correct' },
             { desc: 'Call liar on the very first bid of a round', goal: 2, reward: 110, key: 'first_bid_challenge' },
-            { desc: 'Play 5 complete games', goal: 5, reward: 100, key: 'games_played_5' },
-            { desc: 'Win a game on Sea Devil difficulty', goal: 1, reward: 300, key: 'sea_devil_win' },
+            { desc: 'Call liar on the first bid 3 times', goal: 3, reward: 170, key: 'first_bid_challenge' },
             { desc: 'Catch 2 liars in a single game', goal: 1, reward: 80, key: 'double_catch' },
+            { desc: 'Catch 3 liars in a single game', goal: 1, reward: 150, key: 'triple_catch' },
+
+            // --- Winning ---
+            { desc: 'Win a game without losing a die', goal: 1, reward: 200, key: 'perfect_win' },
+            { desc: 'Win with exactly 1 die remaining', goal: 1, reward: 150, key: 'clutch_win' },
+            { desc: 'Win 2 games today', goal: 2, reward: 120, key: 'daily_wins' },
+            { desc: 'Win 3 games today', goal: 3, reward: 180, key: 'daily_wins' },
+            { desc: 'Win 5 games today', goal: 5, reward: 320, key: 'daily_wins' },
+            { desc: 'Win 3 games in a row', goal: 3, reward: 240, key: 'win_streak' },
+            { desc: 'Win 2 games in a row', goal: 2, reward: 140, key: 'win_streak' },
+            { desc: 'Win against 4 or more opponents', goal: 1, reward: 160, key: 'crowded_win' },
+            { desc: 'Win against 5 or more opponents', goal: 1, reward: 250, key: 'crowded_win' },
+            { desc: 'Win your very first game of the day', goal: 1, reward: 60, key: 'daily_wins' },
+            { desc: 'Win a game on Sea Devil difficulty', goal: 1, reward: 300, key: 'sea_devil_win' },
+            { desc: 'Win 2 games on Sea Devil difficulty', goal: 2, reward: 500, key: 'sea_devil_win' },
+            { desc: 'Win a game after being down to 1 die', goal: 1, reward: 200, key: 'clutch_win' },
+
+            // --- Survival ---
+            { desc: 'Survive to the final 2 players', goal: 2, reward: 60, key: 'final_two' },
+            { desc: 'Survive to the final 2 players 3 times', goal: 3, reward: 100, key: 'final_two' },
+            { desc: 'Survive 10 rounds in a single game', goal: 10, reward: 70, key: 'rounds_survived' },
+            { desc: 'Survive 15 rounds in a single game', goal: 15, reward: 130, key: 'rounds_survived' },
+            { desc: 'Survive 20 rounds in a single game', goal: 20, reward: 200, key: 'rounds_survived' },
+            { desc: 'Survive 5 rounds without losing a die', goal: 5, reward: 90, key: 'rounds_no_loss' },
+            { desc: 'Survive 8 rounds without losing a die', goal: 8, reward: 160, key: 'rounds_no_loss' },
+
+            // --- Bidding ---
+            { desc: 'Make 5 successful bids in a row', goal: 5, reward: 100, key: 'bid_streak' },
+            { desc: 'Make 8 successful bids in a row', goal: 8, reward: 180, key: 'bid_streak' },
+            { desc: 'Make a bid of 6 or higher quantity', goal: 1, reward: 40, key: 'big_bid' },
+            { desc: 'Make a bid of 8 or higher quantity', goal: 1, reward: 80, key: 'big_bid' },
+            { desc: 'Make a bid of 10 or higher quantity', goal: 1, reward: 130, key: 'big_bid' },
             { desc: 'Make 10 bids in a single game', goal: 1, reward: 60, key: 'chatterbox' },
+            { desc: 'Make 15 bids in a single game', goal: 1, reward: 110, key: 'chatterbox' },
+            { desc: 'Bid only ones in a round and survive', goal: 1, reward: 90, key: 'ones_bid' },
+            { desc: 'Raise the quantity 3 times in a row', goal: 3, reward: 70, key: 'raise_streak' },
+            { desc: 'Raise the face value 5 times in a row', goal: 5, reward: 100, key: 'face_streak' },
+
+            // --- Bluffing ---
+            { desc: 'Bluff successfully 3 times (bid high, not challenged)', goal: 3, reward: 90, key: 'bluff_success' },
+            { desc: 'Bluff successfully 5 times', goal: 5, reward: 160, key: 'bluff_success' },
+            { desc: 'Bluff on a bid of all sixes and not get called', goal: 1, reward: 120, key: 'bluff_sixes' },
+            { desc: 'Win a round where you had no matching dice', goal: 1, reward: 100, key: 'pure_bluff_win' },
+
+            // --- Challenges ---
+            { desc: 'Challenge opponents 4 times', goal: 4, reward: 70, key: 'challenges' },
+            { desc: 'Challenge opponents 6 times', goal: 6, reward: 110, key: 'challenges' },
+            { desc: 'Challenge opponents 10 times', goal: 10, reward: 180, key: 'challenges' },
+            { desc: 'Successfully challenge 3 different players', goal: 3, reward: 130, key: 'unique_challenges' },
+
+            // --- Games played ---
+            { desc: 'Play 3 complete games', goal: 3, reward: 50, key: 'games_played' },
+            { desc: 'Play 5 complete games', goal: 5, reward: 100, key: 'games_played_5' },
+            { desc: 'Play 7 complete games', goal: 7, reward: 150, key: 'games_played_7' },
+            { desc: 'Play 10 complete games', goal: 10, reward: 220, key: 'games_played_10' },
+            { desc: 'Play a game with 5 or more players', goal: 1, reward: 50, key: 'full_lobby' },
+            { desc: 'Play a game with 6 players', goal: 1, reward: 70, key: 'max_lobby' },
+            { desc: 'Play 3 games with different player counts', goal: 3, reward: 100, key: 'variety_games' },
+
+            // --- Miscellaneous ---
+            { desc: 'Be the last player eliminated (2nd place)', goal: 1, reward: 40, key: 'runner_up' },
+            { desc: 'Finish 2nd place twice', goal: 2, reward: 90, key: 'runner_up' },
+            { desc: 'Eliminate an opponent by calling liar', goal: 2, reward: 80, key: 'eliminator' },
+            { desc: 'Eliminate 3 opponents by calling liar', goal: 3, reward: 140, key: 'eliminator' },
+            { desc: 'Win a round where everyone had 1 die left', goal: 1, reward: 120, key: 'showdown_win' },
+            { desc: 'Play a game that lasts 20+ rounds', goal: 1, reward: 80, key: 'marathon_game' },
+            { desc: 'Win a game in under 5 rounds', goal: 1, reward: 180, key: 'speed_win' },
+
+            // --- Dice-specific ---
+            { desc: 'Roll three of a kind on your dice', goal: 2, reward: 60, key: 'three_of_kind' },
+            { desc: 'Roll four of a kind on your dice', goal: 1, reward: 100, key: 'four_of_kind' },
+            { desc: 'Roll five of a kind (Yahtzee!)', goal: 1, reward: 250, key: 'five_of_kind' },
+            { desc: 'Roll all different faces on your 5 dice', goal: 1, reward: 70, key: 'all_different' },
+            { desc: 'Have all your dice show 1s', goal: 1, reward: 200, key: 'all_ones' },
+            { desc: 'Have all your dice show 6s', goal: 1, reward: 200, key: 'all_sixes' },
+            { desc: 'Start a round with exactly 2 dice', goal: 3, reward: 50, key: 'two_dice_round' },
+
+            // --- Strategic play ---
+            { desc: 'Win a game without ever calling liar', goal: 1, reward: 220, key: 'pacifist_win' },
+            { desc: 'Call liar every round in a game', goal: 1, reward: 180, key: 'always_challenge' },
+            { desc: 'Win 3 rounds in a row by calling liar', goal: 3, reward: 160, key: 'liar_streak' },
+            { desc: 'Successfully bid on ones 3 times', goal: 3, reward: 80, key: 'aces_bid' },
+            { desc: 'Bid the exact count on the table', goal: 2, reward: 140, key: 'exact_bid' },
+            { desc: 'Overbid by 3 or more and not get caught', goal: 2, reward: 120, key: 'bold_bluff' },
+            { desc: 'Make 3 bids in a single round', goal: 1, reward: 50, key: 'multi_bid_round' },
+            { desc: 'Make 5 bids in a single round', goal: 1, reward: 110, key: 'heavy_bidder' },
+
+            // --- Endurance ---
+            { desc: 'Lose a die and come back to win', goal: 2, reward: 100, key: 'comeback' },
+            { desc: 'Lose 3 dice and still win the game', goal: 1, reward: 280, key: 'big_comeback' },
+            { desc: 'Play for 30 total rounds across games', goal: 30, reward: 120, key: 'total_rounds' },
+            { desc: 'Play for 50 total rounds across games', goal: 50, reward: 200, key: 'total_rounds_50' },
+            { desc: 'Go 5 rounds without losing a die', goal: 5, reward: 80, key: 'iron_will' },
+
+            // --- Social / lobby ---
+            { desc: 'Play 2 public games', goal: 2, reward: 60, key: 'public_games' },
+            { desc: 'Play 3 public games', goal: 3, reward: 100, key: 'public_games' },
+            { desc: 'Win a public game', goal: 1, reward: 90, key: 'public_win' },
+            { desc: 'Win 2 public games', goal: 2, reward: 170, key: 'public_win' },
+
+            // --- Challenge mastery ---
+            { desc: 'Call liar correctly 3 times in one game', goal: 1, reward: 190, key: 'liar_ace' },
+            { desc: 'Never get caught lying in a game', goal: 1, reward: 150, key: 'honest_pirate' },
+            { desc: 'Get called a liar and survive 3 times', goal: 3, reward: 110, key: 'tough_bluffer' },
+            { desc: 'Win the final showdown (1v1 last round)', goal: 2, reward: 130, key: 'duel_winner' },
+            { desc: 'Win 3 final showdowns', goal: 3, reward: 200, key: 'duel_winner' },
         ];
 
         let dailyQuest = null;
@@ -6031,13 +6228,27 @@
             const rewardEl = document.getElementById('quest-reward');
             const fillEl = document.getElementById('quest-progress-fill');
             const textEl = document.getElementById('quest-progress-text');
-            if (!descEl) return;
+            if (descEl) {
+                descEl.textContent = q.desc;
+                rewardEl.textContent = dailyQuest.completed ? '✅ Done!' : ('🪙 ' + q.reward);
+                const pct = Math.min(100, Math.round((dailyQuest.progress / q.goal) * 100));
+                fillEl.style.width = pct + '%';
+                textEl.textContent = Math.min(dailyQuest.progress, q.goal) + '/' + q.goal;
+            }
 
-            descEl.textContent = q.desc;
-            rewardEl.textContent = dailyQuest.completed ? '✅ Done!' : ('🪙 ' + q.reward);
-            const pct = Math.min(100, Math.round((dailyQuest.progress / q.goal) * 100));
-            fillEl.style.width = pct + '%';
-            textEl.textContent = Math.min(dailyQuest.progress, q.goal) + '/' + q.goal;
+            // Update in-game quest tracker
+            const tracker = document.getElementById('m-quest-tracker');
+            if (tracker) {
+                if (dailyQuest.completed) {
+                    tracker.classList.add('hidden');
+                } else {
+                    tracker.classList.remove('hidden');
+                    document.getElementById('m-quest-desc').textContent = q.desc;
+                    const pctG = Math.min(100, Math.round((dailyQuest.progress / q.goal) * 100));
+                    document.getElementById('m-quest-fill').style.width = pctG + '%';
+                    document.getElementById('m-quest-text').textContent = Math.min(dailyQuest.progress, q.goal) + '/' + q.goal + ' — 🪙 ' + q.reward;
+                }
+            }
         }
 
         function advanceDailyQuest(key, amount) {
@@ -6053,6 +6264,46 @@
             }
             localStorage.setItem('dailyQuest', JSON.stringify(dailyQuest));
             renderDailyQuest();
+        }
+
+        // ==================== DEBUG TOOLS ====================
+        let debugShowDice = false;
+
+        function toggleDebugDice() {
+            debugShowDice = document.getElementById('debug-show-dice').checked;
+            if (debugShowDice && roomCode) {
+                socket.emit('debug_reveal_dice', { room_code: roomCode });
+            } else {
+                clearDebugDice();
+            }
+        }
+
+        function clearDebugDice() {
+            document.querySelectorAll('.m-opp-debug-dice').forEach(el => el.remove());
+        }
+
+        socket.on('debug_dice_data', function(data) {
+            if (!debugShowDice) return;
+            clearDebugDice();
+            const cards = document.querySelectorAll('.m-opponent-card');
+            cards.forEach(card => {
+                const idx = parseInt(card.dataset.playerIdx);
+                const p = data.players[idx];
+                if (!p || p.dice.length === 0) return;
+                const diceHtml = p.dice.map(d => '<span class="m-opp-debug-die">' + d + '</span>').join('');
+                const div = document.createElement('div');
+                div.className = 'm-opp-debug-dice';
+                div.innerHTML = diceHtml;
+                const info = card.querySelector('.m-opp-info');
+                if (info) info.appendChild(div);
+            });
+        });
+
+        // Re-fetch debug dice on each game state update if enabled
+        function refreshDebugDice() {
+            if (debugShowDice && roomCode) {
+                socket.emit('debug_reveal_dice', { room_code: roomCode });
+            }
         }
 
         // ==================== PER-GAME QUEST TRACKING ====================
@@ -6570,7 +6821,20 @@
             document.getElementById('m-total-dice').textContent = gameState.total_dice;
 
             const diffEmoji = {easy:'🦜', medium:'⚓', hard:'💀', impossible:'🏴‍☠️', random:'🎲'};
+            const diffTipNames = {easy:'Deckhand', medium:'First Mate', hard:'Blackbeard', impossible:'Sea Devil', random:'Motley Crew'};
+            const diffTipDesc = {
+                easy: 'AI bids conservatively and rarely bluffs',
+                medium: 'AI uses basic strategy and occasional bluffs',
+                hard: 'AI counts dice, bluffs smart, and punishes mistakes',
+                impossible: 'AI plays near-perfect with aggressive reads',
+                random: 'AI difficulty changes each game randomly'
+            };
             document.getElementById('m-difficulty').textContent = diffEmoji[gameState.ai_difficulty] || '⚓';
+            const tipEl = document.getElementById('m-diff-tooltip');
+            if (tipEl) {
+                const d = gameState.ai_difficulty || 'medium';
+                tipEl.innerHTML = '<div class="diff-tip-name">' + (diffTipNames[d] || d) + '</div>' + (diffTipDesc[d] || '');
+            }
 
             // --- Right column: Opponents ---
             const oppList = document.getElementById('m-opp-list');
@@ -7283,6 +7547,7 @@
                 gameState = state;
                 playerIndex = state.player_index;
                 updateUI();
+                refreshDebugDice();
 
                 // Save session when we successfully join a game
                 if (state.player_index !== -1 && !state.is_waiting && roomCode) {
