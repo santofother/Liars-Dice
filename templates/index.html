@@ -2127,6 +2127,7 @@
             height: 50%;
             opacity: 0;
             transition: opacity 2s steps(4);
+            z-index: 1;
         }
         .scene-island-land {
             position: absolute;
@@ -5948,7 +5949,7 @@
                 island.style.opacity = '0';
             }
         }
-        setInterval(togglePirateScene, 50000); // every 50s
+        setInterval(togglePirateScene, 30000); // every 30s
 
         // --- Weather rotation ---
         const weatherTypes = ['clear', 'fog', 'rain', 'lightning', 'clear', 'clear'];
@@ -7641,11 +7642,8 @@
             // Update modern button
             const mBtn = document.getElementById('m-private-game-btn');
             if (mBtn) {
-                mBtn.textContent = isNowPrivate ? '🔒 Private Game' : '🌐 Public Game';
-                mBtn.className = isNowPrivate
-                    ? 'lobby-m-btn lobby-m-btn-wood'
-                    : 'lobby-m-btn lobby-m-btn-wood';
-                mBtn.style.marginBottom = '10px';
+                mBtn.textContent = isNowPrivate ? '🔒 Private' : '🌐 Public';
+                mBtn.className = 'lobby-m-btn lobby-m-btn-wood';
             }
         }
 
