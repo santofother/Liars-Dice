@@ -1183,30 +1183,23 @@
             position: relative;
             cursor: help;
         }
-        .layout-modern .m-diff-tooltip {
+        .m-diff-tooltip {
             display: none;
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            margin-top: 6px;
-            background: rgba(0,0,0,0.9);
-            border: 1px solid var(--m-gold);
+            position: fixed;
+            background: rgba(0,0,0,0.95);
+            border: 1px solid #b8860b;
             border-radius: 6px;
             padding: 8px 10px;
-            color: var(--m-dimtext);
-            font-size: 1em;
+            color: #d4a574;
+            font-size: 0.8em;
             white-space: nowrap;
-            z-index: 10;
+            z-index: 1000;
             pointer-events: none;
         }
-        .layout-modern .m-diff-tooltip .diff-tip-name {
-            color: var(--m-gold);
+        .m-diff-tooltip .diff-tip-name {
+            color: #ffd700;
             font-weight: bold;
             margin-bottom: 3px;
-        }
-        .layout-modern .m-diff-pill:hover .m-diff-tooltip {
-            display: block;
         }
 
         .layout-modern .m-quest-tracker {
@@ -4022,6 +4015,37 @@
             font-size: 1em;
         }
 
+        .pirate-coin {
+            display: inline-block;
+            width: 1.1em;
+            height: 1.1em;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #ffe566, #d4a017 50%, #996515 100%);
+            border: 1.5px solid #8b6914;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.4), inset 0 -1px 2px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.3);
+            vertical-align: middle;
+            position: relative;
+            font-size: inherit;
+            line-height: 1;
+            margin-right: 2px;
+        }
+        .pirate-coin::after {
+            content: '✦';
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.55em;
+            color: #8b6914;
+            text-shadow: 0 0 1px rgba(255,215,0,0.5);
+        }
+        .pirate-coin-lg {
+            width: 1.4em;
+            height: 1.4em;
+            border-width: 2px;
+        }
+
         .account-wins {
             color: #b8860b;
             font-size: 0.9em;
@@ -5230,7 +5254,7 @@
             <div class="account-info">
                 <span id="account-avatar">🏴‍☠️</span>
                 <span id="account-username">Guest</span>
-                <span class="account-wins">🪙 <span id="account-coins-count">0</span></span>
+                <span class="account-wins"><span class="pirate-coin"></span> <span id="account-coins-count">0</span></span>
                 <span class="account-wins">⚔️ <span id="account-wins-count">0</span> wins</span>
             </div>
         </div>
@@ -5370,7 +5394,7 @@
                     <div class="lobby-daily-quest" id="lobby-daily-quest">
                         <div class="quest-header">
                             <span class="quest-title">⚓ Daily Quest</span>
-                            <span class="quest-reward" id="quest-reward">🪙 50</span>
+                            <span class="quest-reward" id="quest-reward"><span class="pirate-coin"></span> 50</span>
                         </div>
                         <div class="quest-desc" id="quest-desc">Loading quest...</div>
                         <div class="quest-progress-bar">
@@ -5384,7 +5408,7 @@
 
                 <!-- Right: Leaderboard -->
                 <div class="lobby-m-col lobby-m-col-right">
-                    <div class="lobby-m-section">🪙 Most Treasure</div>
+                    <div class="lobby-m-section"><span class="pirate-coin"></span> Most Treasure</div>
                     <div class="leaderboard-container">
                         <div class="leaderboard-podium">
                             <div id="m-leaderboard-list" class="leaderboard-list">
@@ -5407,7 +5431,7 @@
 
             <!-- === LEGACY LOBBY (hidden in modern via CSS) === -->
             <div class="leaderboard-container">
-                <div class="leaderboard-title">🪙 Most Treasure 🪙</div>
+                <div class="leaderboard-title"><span class="pirate-coin"></span> Most Treasure <span class="pirate-coin"></span></div>
                 <div class="leaderboard-podium">
                     <div id="leaderboard-list" class="leaderboard-list">
                         <div class="leaderboard-empty">No pirates yet! Be the first!</div>
@@ -5756,7 +5780,6 @@
                     <div class="m-stat-pill m-diff-pill" id="m-diff-pill">
                         <div class="m-stat-val" id="m-difficulty">⚓</div>
                         <div class="m-stat-lbl">Difficulty</div>
-                        <div class="m-diff-tooltip" id="m-diff-tooltip"></div>
                     </div>
                 </div>
                 <div class="m-quest-tracker hidden" id="m-quest-tracker">
@@ -5783,6 +5806,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Difficulty Tooltip (at body level to avoid overflow clipping) -->
+    <div class="m-diff-tooltip" id="m-diff-tooltip"></div>
 
     <!-- Spectator Banner -->
     <div id="spectator-banner" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(145deg, #8b4513 0%, #5a2d0a 100%); color: #ffd700; text-align: center; padding: 10px; z-index: 200; border-bottom: 2px solid #ffd700;">
@@ -5837,11 +5863,8 @@
             <!-- Admin Panel (hidden until authenticated) -->
             <div id="admin-panel" class="hidden">
                 <div class="settings-section">
-                    <h3>🏆 Leaderboard Management</h3>
-                    <button class="btn btn-red" onclick="adminResetAll()" style="width: 100%; margin-bottom: 15px;">
-                        ☠️ Reset ALL Pirate Wins
-                    </button>
-                    <h4 style="color: #b8860b; margin-bottom: 10px;">Individual Reset:</h4>
+                    <h3>💰 Coin Management</h3>
+                    <h4 style="color: #b8860b; margin-bottom: 10px;">Adjust Pirate Treasure:</h4>
                     <div id="admin-user-list" class="admin-user-list">
                         <div style="color: #8b7355; text-align: center; padding: 20px;">Loading pirates...</div>
                     </div>
@@ -5867,12 +5890,12 @@
             <button onclick="closeMinigamePopup()">&times;</button>
         </div>
         <div class="minigame-tabs">
-            <button class="minigame-tab active" id="mg-tab-bets" onclick="switchMinigameTab('bets')">🪙 Ghost Bets</button>
+            <button class="minigame-tab active" id="mg-tab-bets" onclick="switchMinigameTab('bets')"><span class="pirate-coin"></span> Ghost Bets</button>
             <button class="minigame-tab" id="mg-tab-snake" onclick="switchMinigameTab('snake')">🐍 Ship Snake</button>
         </div>
         <div class="minigame-body">
             <div id="minigame-bets" class="minigame-panel">
-                <div class="ghost-bet-balance">🪙 <span id="ghost-coins">100</span> Ghost Coins</div>
+                <div class="ghost-bet-balance"><span class="pirate-coin pirate-coin-lg"></span> <span id="ghost-coins">100</span> Ghost Coins</div>
                 <div id="ghost-bet-form"></div>
                 <div class="ghost-bet-section-label" style="margin-top:10px;">Bet History</div>
                 <div class="ghost-bet-history" id="ghost-bet-history">
@@ -6230,7 +6253,7 @@
             const textEl = document.getElementById('quest-progress-text');
             if (descEl) {
                 descEl.textContent = q.desc;
-                rewardEl.textContent = dailyQuest.completed ? '✅ Done!' : ('🪙 ' + q.reward);
+                rewardEl.innerHTML = dailyQuest.completed ? '✅ Done!' : ('<span class="pirate-coin"></span> ' + q.reward);
                 const pct = Math.min(100, Math.round((dailyQuest.progress / q.goal) * 100));
                 fillEl.style.width = pct + '%';
                 textEl.textContent = Math.min(dailyQuest.progress, q.goal) + '/' + q.goal;
@@ -6246,7 +6269,7 @@
                     document.getElementById('m-quest-desc').textContent = q.desc;
                     const pctG = Math.min(100, Math.round((dailyQuest.progress / q.goal) * 100));
                     document.getElementById('m-quest-fill').style.width = pctG + '%';
-                    document.getElementById('m-quest-text').textContent = Math.min(dailyQuest.progress, q.goal) + '/' + q.goal + ' — 🪙 ' + q.reward;
+                    document.getElementById('m-quest-text').innerHTML = Math.min(dailyQuest.progress, q.goal) + '/' + q.goal + ' — <span class="pirate-coin"></span> ' + q.reward;
                 }
             }
         }
@@ -6282,22 +6305,21 @@
             document.querySelectorAll('.m-opp-debug-dice').forEach(el => el.remove());
         }
 
-        socket.on('debug_dice_data', function(data) {
-            if (!debugShowDice) return;
-            clearDebugDice();
-            const cards = document.querySelectorAll('.m-opponent-card');
-            cards.forEach(card => {
-                const idx = parseInt(card.dataset.playerIdx);
-                const p = data.players[idx];
-                if (!p || p.dice.length === 0) return;
-                const diceHtml = p.dice.map(d => '<span class="m-opp-debug-die">' + d + '</span>').join('');
-                const div = document.createElement('div');
-                div.className = 'm-opp-debug-dice';
-                div.innerHTML = diceHtml;
-                const info = card.querySelector('.m-opp-info');
-                if (info) info.appendChild(div);
+        // Difficulty tooltip positioning (fixed to avoid overflow clipping)
+        (function() {
+            const pill = document.getElementById('m-diff-pill');
+            const tip = document.getElementById('m-diff-tooltip');
+            if (!pill || !tip) return;
+            pill.addEventListener('mouseenter', function() {
+                const rect = pill.getBoundingClientRect();
+                tip.style.display = 'block';
+                tip.style.left = rect.left + 'px';
+                tip.style.top = (rect.bottom + 6) + 'px';
             });
-        });
+            pill.addEventListener('mouseleave', function() {
+                tip.style.display = 'none';
+            });
+        })();
 
         // Re-fetch debug dice on each game state update if enabled
         function refreshDebugDice() {
@@ -7665,6 +7687,24 @@
             // Attach authentication handlers
             attachAuthHandlers();
             attachAdminHandlers();
+
+            // Debug: show opponent dice
+            socket.on('debug_dice_data', function(data) {
+                if (!debugShowDice) return;
+                clearDebugDice();
+                const cards = document.querySelectorAll('.m-opponent-card');
+                cards.forEach(card => {
+                    const idx = parseInt(card.dataset.playerIdx);
+                    const p = data.players[idx];
+                    if (!p || p.dice.length === 0) return;
+                    const diceHtml = p.dice.map(d => '<span class="m-opp-debug-die">' + d + '</span>').join('');
+                    const div = document.createElement('div');
+                    div.className = 'm-opp-debug-dice';
+                    div.innerHTML = diceHtml;
+                    const info = card.querySelector('.m-opp-info');
+                    if (info) info.appendChild(div);
+                });
+            });
         }
 
         function showError(message) {
@@ -9280,7 +9320,7 @@
                         <span class="leaderboard-rank">${pirate.rank}</span>
                         <span class="leaderboard-avatar">${renderLeaderboardAvatar(pirate.avatar)}</span>
                         <span class="leaderboard-name">${pirate.username}</span>
-                        <span class="leaderboard-wins">🪙 ${pirate.coins || 0}</span>
+                        <span class="leaderboard-wins"><span class="pirate-coin"></span> ${pirate.coins || 0}</span>
                     </div>
                 `).join('');
 
@@ -9443,23 +9483,22 @@
                         <span>${u.avatar}</span>
                         <span>${u.username}</span>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span class="user-wins">⚔️ ${u.wins}</span>
-                        <button class="btn-reset" onclick="adminResetUser('${u.username.replace(/'/g, "\\'")}')">Reset</button>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span class="coin-icon">💰</span>
+                        <input type="number" min="0" value="${u.coins || 0}" id="admin-coins-${u.username.replace(/[^a-zA-Z0-9]/g, '_')}" style="width: 70px; padding: 4px 6px; background: rgba(0,0,0,0.4); border: 1px solid #5c3018; border-radius: 4px; color: #ffd700; font-size: 0.9em; text-align: center;">
+                        <button class="btn-reset" onclick="adminSetCoins('${u.username.replace(/'/g, "\\'")}')">Set</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        function adminResetUser(username) {
-            if (!confirm(`Reset all wins for ${username}?`)) return;
-            socket.emit('admin_reset_user', { password: adminPassword, username: username });
-        }
-
-        function adminResetAll() {
-            if (!confirm('Reset ALL pirate wins to 0? This cannot be undone!')) return;
-            if (!confirm('Are ye REALLY sure? All rankings will be lost!')) return;
-            socket.emit('admin_reset_all', { password: adminPassword });
+        function adminSetCoins(username) {
+            const inputId = 'admin-coins-' + username.replace(/[^a-zA-Z0-9]/g, '_');
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const amount = parseInt(input.value);
+            if (isNaN(amount) || amount < 0) return;
+            socket.emit('admin_set_coins', { password: adminPassword, username: username, amount: amount });
         }
 
         function attachAdminHandlers() {

@@ -11,7 +11,7 @@ from database import (
     increment_user_wins, update_last_login, get_top_pirates,
     reset_user_wins, reset_all_wins, get_all_users,
     increment_user_coins, get_user_coins, get_top_by_coins,
-    update_user_avatar
+    update_user_avatar, set_user_coins
 )
 
 app = Flask(__name__)
@@ -1544,6 +1544,23 @@ def handle_admin_reset_all(data):
         broadcast_leaderboard_update()
     else:
         emit('admin_reset_error', {'message': 'Failed to reset leaderboard'})
+
+@socketio.on('admin_set_coins')
+def handle_admin_set_coins(data):
+    """Set a user's coin balance."""
+    password = data.get('password', '')
+    if password != ADMIN_PASSWORD:
+        emit('admin_auth_error', {'message': 'Unauthorized!'})
+        return
+    username = data.get('username', '')
+    amount = data.get('amount', 0)
+    if not username or amount < 0:
+        emit('admin_reset_error', {'message': 'Invalid input'})
+        return
+    set_user_coins(username, amount)
+    users = get_all_users()
+    emit('admin_reset_success', {'message': f'Set {username}\'s coins to {amount}', 'users': users})
+    broadcast_leaderboard_update()
 
 @socketio.on('debug_reveal_dice')
 def handle_debug_reveal_dice(data):

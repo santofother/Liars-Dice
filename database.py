@@ -365,18 +365,32 @@ def reset_all_wins():
         print(f"Error resetting all wins: {e}")
         return False
 
+def set_user_coins(username, amount):
+    """Set a user's coin balance to a specific amount."""
+    try:
+        with get_db() as conn:
+            conn.execute(
+                'UPDATE users SET total_coins = ? WHERE username = ? COLLATE NOCASE',
+                (amount, username)
+            )
+            return amount
+    except Exception as e:
+        print(f"Error setting coins: {e}")
+        return 0
+
 def get_all_users():
-    """Get all users with their win counts."""
+    """Get all users with their win counts and coins."""
     try:
         with get_db() as conn:
             users = conn.execute(
-                'SELECT username, avatar, total_wins FROM users ORDER BY total_wins DESC, username ASC'
+                'SELECT username, avatar, total_wins, total_coins FROM users ORDER BY total_coins DESC, username ASC'
             ).fetchall()
             return [
                 {
                     'username': user['username'],
                     'avatar': user['avatar'],
-                    'wins': user['total_wins']
+                    'wins': user['total_wins'],
+                    'coins': user['total_coins']
                 }
                 for user in users
             ]
