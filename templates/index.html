@@ -4029,16 +4029,25 @@
             line-height: 1;
             margin-right: 2px;
         }
-        .pirate-coin::after {
-            content: '✦';
+        .pirate-coin::before {
+            content: '';
             position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.55em;
-            color: #8b6914;
-            text-shadow: 0 0 1px rgba(255,215,0,0.5);
+            top: 25%;
+            left: 45%;
+            width: 10%;
+            height: 50%;
+            background: #8b6914;
+            border-radius: 1px;
+        }
+        .pirate-coin::after {
+            content: '';
+            position: absolute;
+            top: 45%;
+            left: 25%;
+            width: 50%;
+            height: 10%;
+            background: #8b6914;
+            border-radius: 1px;
         }
         .pirate-coin-lg {
             width: 1.4em;
@@ -6283,10 +6292,23 @@
                 // Award coins to server account
                 if (userToken && socket) {
                     socket.emit('award_coins', { token: userToken, amount: dailyQuest.quest.reward, source: 'daily_quest' });
+                    dailyQuest.coins_awarded = true;
+                } else {
+                    dailyQuest.coins_awarded = false;
                 }
             }
             localStorage.setItem('dailyQuest', JSON.stringify(dailyQuest));
             renderDailyQuest();
+        }
+
+        // Retry awarding quest coins if they failed (e.g. user wasn't logged in)
+        function retryQuestCoinAward() {
+            if (!dailyQuest || !dailyQuest.completed || dailyQuest.coins_awarded) return;
+            if (userToken && socket) {
+                socket.emit('award_coins', { token: userToken, amount: dailyQuest.quest.reward, source: 'daily_quest' });
+                dailyQuest.coins_awarded = true;
+                localStorage.setItem('dailyQuest', JSON.stringify(dailyQuest));
+            }
         }
 
         // ==================== DEBUG TOOLS ====================
@@ -9376,6 +9398,7 @@
             saveAuthToken(userToken);
             updateAccountUI();
             toggleAccount();
+            retryQuestCoinAward();
             showToast(`Welcome back, ${data.username}! ⚓`);
             playSfx('win');
         });
@@ -9407,6 +9430,7 @@
                 }
             }
             updateAccountUI();
+            retryQuestCoinAward();
         });
 
         socket.on('token_invalid', () => {
@@ -9438,6 +9462,9 @@
                 ghostCoins = data.coins;
                 const gcEl = document.getElementById('ghost-coins');
                 if (gcEl) gcEl.textContent = ghostCoins;
+                // Update account display
+                const acEl = document.getElementById('account-coins-count');
+                if (acEl) acEl.textContent = data.coins;
                 if (data.error) showToast(data.error);
             });
         }
