@@ -11,7 +11,7 @@ from database import (
     increment_user_wins, update_last_login, get_top_pirates,
     reset_user_wins, reset_all_wins, get_all_users,
     increment_user_coins, get_user_coins, get_top_by_coins,
-    update_user_avatar, set_user_coins
+    update_user_avatar, set_user_coins, get_user_rank
 )
 
 app = Flask(__name__)
@@ -1473,7 +1473,18 @@ def handle_get_coins(data):
     session_data = validate_session(token)
     if session_data:
         coins = get_user_coins(session_data['username'])
-        emit('coins_update', {'coins': coins})
+        rank = get_user_rank(session_data['username'])
+        emit('coins_update', {'coins': coins, 'rank': rank})
+
+@socketio.on('get_my_rank')
+def handle_get_my_rank(data):
+    """Get the requesting user's rank and coins."""
+    token = data.get('token')
+    session_data = validate_session(token)
+    if session_data:
+        coins = get_user_coins(session_data['username'])
+        rank = get_user_rank(session_data['username'])
+        emit('my_rank_update', {'coins': coins, 'rank': rank, 'username': session_data['username']})
 
 @socketio.on('spend_coins')
 def handle_spend_coins(data):

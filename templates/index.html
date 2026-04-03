@@ -152,13 +152,15 @@
 
         .btn {
             flex: 1;
-            padding: 15px 25px;
-            font-size: 1.2em;
+            padding: clamp(10px, 2vh, 15px) clamp(16px, 3vw, 25px);
+            font-size: clamp(0.85em, 2vw, 1.2em);
             font-family: 'Georgia', serif;
             border: none;
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s ease;
+            min-height: 44px;
+            box-sizing: border-box;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -1835,9 +1837,6 @@
             display: none;
         }
 
-        .layout-modern .account-status {
-            display: none !important;
-        }
 
         .layout-modern .container {
             max-width: 100%;
@@ -2019,13 +2018,15 @@
 
         .layout-modern .lobby-m-btn {
             width: 100%;
-            padding: 7px 10px;
-            font-size: 0.82em;
+            padding: clamp(6px, 1.2vh, 10px) clamp(8px, 1.5vw, 14px);
+            font-size: clamp(0.72em, 1.8vw, 0.9em);
             font-family: 'Georgia', serif;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
+            min-height: 36px;
+            box-sizing: border-box;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -2044,8 +2045,9 @@
 
         /* Prominent Create Game button */
         .layout-modern .lobby-m-create-btn {
-            padding: 12px 20px;
-            font-size: 1.1em;
+            padding: clamp(10px, 2vh, 14px) clamp(16px, 2.5vw, 20px);
+            font-size: clamp(0.9em, 2.2vw, 1.1em);
+            min-height: 44px;
             letter-spacing: 2px;
             box-shadow: 0 0 12px rgba(255,215,0,0.3);
             margin-top: 5px;
@@ -3042,8 +3044,8 @@
             }
 
             .layout-modern .lobby-m-create-btn {
-                padding: 10px 16px;
-                font-size: 1em;
+                padding: clamp(8px, 2vh, 12px) 16px;
+                font-size: clamp(0.85em, 2.5vw, 1em);
             }
 
             .lobby-pirate-scene {
@@ -3983,36 +3985,15 @@
             background: #dc143c;
         }
 
-        /* Account Status Banner */
-        .account-status {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: linear-gradient(145deg, #3d2817 0%, #2a1a0f 100%);
-            border: 2px solid #ffd700;
-            border-radius: 12px;
-            padding: 10px 15px;
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        /* Your Rank Bar (below leaderboard) */
+        .your-rank-bar {
+            margin-top: 6px;
+            border-top: 1px dashed rgba(255,215,0,0.2);
+            padding-top: 6px;
         }
-
-        .account-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .account-status #account-avatar {
-            font-size: 24px;
-        }
-
-        .account-status #account-username {
-            color: #ffd700;
-            font-weight: bold;
-            font-size: 1em;
+        .your-rank-bar .leaderboard-item {
+            border-left-color: #ffd700;
+            background: rgba(255, 215, 0, 0.1);
         }
 
         .pirate-coin {
@@ -5258,14 +5239,13 @@
             <p class="subtitle game-subtitle">A Pirate's Game of Deception</p>
         </header>
 
-        <!-- Account Status Banner -->
-        <div id="account-status" class="account-status hidden">
-            <div class="account-info">
-                <span id="account-avatar">🏴‍☠️</span>
-                <span id="account-username">Guest</span>
-                <span class="account-wins"><span class="pirate-coin"></span> <span id="account-coins-count">0</span></span>
-                <span class="account-wins">⚔️ <span id="account-wins-count">0</span> wins</span>
-            </div>
+        <!-- Account status (hidden, used for JS references) -->
+        <div id="account-status" class="hidden" style="display:none !important;">
+            <span id="account-avatar">🏴‍☠️</span>
+            <span id="account-username">Guest</span>
+            <span id="account-coins-count">0</span>
+            <span id="account-wins-count">0</span>
+            <span id="account-rank">#-</span>
         </div>
 
         <!-- Lobby Screen -->
@@ -5424,6 +5404,7 @@
                                 <div class="leaderboard-empty">No pirates yet! Be the first!</div>
                             </div>
                         </div>
+                        <div id="m-your-rank-bar" class="your-rank-bar hidden"></div>
                     </div>
                     <!-- Ad below leaderboard -->
                     <div class="ad-container ad-below-leaderboard">
@@ -5446,6 +5427,7 @@
                         <div class="leaderboard-empty">No pirates yet! Be the first!</div>
                     </div>
                 </div>
+                <div id="legacy-your-rank-bar" class="your-rank-bar hidden"></div>
             </div>
 
             <!-- Ad below legacy leaderboard -->
@@ -6228,23 +6210,35 @@
             return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
         }
 
+        function hashString(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                hash |= 0;
+            }
+            return Math.abs(hash);
+        }
+
         function initDailyQuest() {
             const today = getDailyQuestSeed();
+            const username = (currentUser && currentUser.username) ? currentUser.username : 'guest';
+            const playerSeed = today + hashString(username);
             const saved = localStorage.getItem('dailyQuest');
             if (saved) {
                 try {
                     const parsed = JSON.parse(saved);
-                    if (parsed.day === today) {
+                    if (parsed.day === today && parsed.player === username) {
                         dailyQuest = parsed;
                         renderDailyQuest();
                         return;
                     }
                 } catch(e) {}
             }
-            // New day — pick quest deterministically from date
-            const idx = today % QUEST_POOL.length;
+            // New day or different player — pick quest deterministically from date + username
+            const idx = playerSeed % QUEST_POOL.length;
             dailyQuest = {
                 day: today,
+                player: username,
                 quest: QUEST_POOL[idx],
                 progress: 0,
                 completed: false
@@ -6356,7 +6350,8 @@
         let questRoundCount = 0;        // rounds survived this game
         let questLiarCatches = 0;       // liar catches this game
         let questWinStreak = parseInt(localStorage.getItem('questWinStreak') || '0');
-        let questLastRoundBidCount = 0; // bids in current round (to detect first-bid challenges)
+        let questLastRoundBidCount = 0; // all bids in current round (to detect first-bid challenges)
+        let questMyRoundBids = 0;       // player's own bids in current round
 
         function resetPerGameQuestTracking() {
             questGameBids = 0;
@@ -6364,6 +6359,7 @@
             questRoundCount = 0;
             questLiarCatches = 0;
             questLastRoundBidCount = 0;
+            questMyRoundBids = 0;
         }
 
         // ==================== AUTHENTICATION SYSTEM ====================
@@ -7199,7 +7195,13 @@
             if (isNaN(qty) || isNaN(face)) return;
             questGameBids++;
             questLastRoundBidCount++;
+            questMyRoundBids++;
             if (qty >= 6) advanceDailyQuest('big_bid', 1);
+            if (qty >= 8) advanceDailyQuest('big_bid', 1);
+            if (qty >= 10) advanceDailyQuest('big_bid', 1);
+            if (questMyRoundBids >= 3) advanceDailyQuest('multi_bid_round', 1);
+            if (questMyRoundBids >= 5) advanceDailyQuest('heavy_bidder', 1);
+            if (face === 1) advanceDailyQuest('aces_bid', 1);
             socket.emit('make_bid', { room_code: roomCode, quantity: qty, face: face });
         }
 
@@ -8110,6 +8112,7 @@
             if (oldState.phase === 'rolling' && newState.phase === 'bidding') {
                 questRoundCount++;
                 questLastRoundBidCount = 0;
+                questMyRoundBids = 0;
                 advanceDailyQuest('rounds_survived', 1);
             }
 
@@ -8164,8 +8167,14 @@
             if (newState.phase === 'game_over' && oldState.phase !== 'game_over') {
                 advanceDailyQuest('games_played', 1);
                 advanceDailyQuest('games_played_5', 1);
+                advanceDailyQuest('games_played_7', 1);
+                advanceDailyQuest('games_played_10', 1);
+                advanceDailyQuest('total_rounds', questRoundCount);
+                advanceDailyQuest('total_rounds_50', questRoundCount);
+                if (questRoundCount >= 20) advanceDailyQuest('marathon_game', 1);
                 // Chatterbox: made 10+ bids in a single game
                 if (questGameBids >= 10) advanceDailyQuest('chatterbox', 1);
+                if (questGameBids >= 15) advanceDailyQuest('chatterbox', 1);
                 const me = newState.players[playerIndex];
                 if (me) {
                     const alive = newState.players.filter(p => p.num_dice > 0);
@@ -8658,7 +8667,13 @@
             const face = parseInt(document.getElementById('bid-face').value);
             questGameBids++;
             questLastRoundBidCount++;
+            questMyRoundBids++;
             if (qty >= 6) advanceDailyQuest('big_bid', 1);
+            if (qty >= 8) advanceDailyQuest('big_bid', 1);
+            if (qty >= 10) advanceDailyQuest('big_bid', 1);
+            if (questMyRoundBids >= 3) advanceDailyQuest('multi_bid_round', 1);
+            if (questMyRoundBids >= 5) advanceDailyQuest('heavy_bidder', 1);
+            if (face === 1) advanceDailyQuest('aces_bid', 1);
             socket.emit('make_bid', { room_code: roomCode, quantity: qty, face: face });
         }
 
@@ -9217,8 +9232,6 @@
                     });
                 }
 
-                // Show account status banner
-                accountStatus.classList.remove('hidden');
                 const accountAvatarEl = document.getElementById('account-avatar');
                 if (isPixelAvatarId(currentUser.avatar)) {
                     accountAvatarEl.innerHTML = renderPixelAvatarImg(currentUser.avatar, 24);
@@ -9228,6 +9241,10 @@
                 document.getElementById('account-username').textContent = currentUser.username;
                 document.getElementById('account-wins-count').textContent = currentUser.wins;
                 document.getElementById('account-coins-count').textContent = currentUser.coins || 0;
+                // Request rank from server
+                if (userToken && socket) {
+                    socket.emit('get_my_rank', { token: userToken });
+                }
 
                 // Update settings display
                 accountSettingsBtn.textContent = 'Manage Account';
@@ -9317,6 +9334,8 @@
                 const lLoggedOut = document.getElementById('legacy-lobby-logged-out');
                 if (lLoggedIn) { lLoggedIn.classList.add('hidden'); lLoggedIn.style.display = 'none'; }
                 if (lLoggedOut) lLoggedOut.classList.remove('hidden');
+
+                renderYourRankBar();
             }
         }
 
@@ -9351,6 +9370,41 @@
             if (listEl) listEl.innerHTML = html;
             const mListEl = document.getElementById('m-leaderboard-list');
             if (mListEl) mListEl.innerHTML = html;
+
+            // Refresh your-rank bar
+            renderYourRankBar();
+        }
+
+        function renderYourRankBar() {
+            const bars = [document.getElementById('m-your-rank-bar'), document.getElementById('legacy-your-rank-bar')];
+            if (!currentUser) {
+                bars.forEach(b => { if (b) b.classList.add('hidden'); });
+                return;
+            }
+            // Check if user is already in top 5
+            const inTop = leaderboardData && leaderboardData.some(p => p.username === currentUser.username);
+            if (inTop) {
+                bars.forEach(b => { if (b) b.classList.add('hidden'); });
+                return;
+            }
+            const rank = document.getElementById('account-rank')?.textContent || '#?';
+            const coins = currentUser.coins || 0;
+            const avatarHtml = isPixelAvatarId(currentUser.avatar)
+                ? renderPixelAvatarImg(currentUser.avatar, 20)
+                : currentUser.avatar;
+            const html = `
+                <div class="leaderboard-item">
+                    <span class="leaderboard-rank">${rank.replace('#','')}</span>
+                    <span class="leaderboard-avatar">${avatarHtml}</span>
+                    <span class="leaderboard-name">${currentUser.username} (You)</span>
+                    <span class="leaderboard-wins"><span class="pirate-coin"></span> ${coins}</span>
+                </div>`;
+            bars.forEach(b => {
+                if (b) {
+                    b.innerHTML = html;
+                    b.classList.remove('hidden');
+                }
+            });
         }
 
         // ==================== AUTH SOCKET HANDLERS ====================
@@ -9398,6 +9452,7 @@
             saveAuthToken(userToken);
             updateAccountUI();
             toggleAccount();
+            initDailyQuest();
             retryQuestCoinAward();
             showToast(`Welcome back, ${data.username}! ⚓`);
             playSfx('win');
@@ -9430,6 +9485,7 @@
                 }
             }
             updateAccountUI();
+            initDailyQuest();
             retryQuestCoinAward();
         });
 
@@ -9465,7 +9521,23 @@
                 // Update account display
                 const acEl = document.getElementById('account-coins-count');
                 if (acEl) acEl.textContent = data.coins;
+                // Update rank if provided
+                if (data.rank) {
+                    const rankEl = document.getElementById('account-rank');
+                    if (rankEl) rankEl.textContent = '#' + data.rank;
+                    renderYourRankBar();
+                }
                 if (data.error) showToast(data.error);
+            });
+
+            // Handle rank updates
+            socket.on('my_rank_update', (data) => {
+                const rankEl = document.getElementById('account-rank');
+                if (rankEl) rankEl.textContent = '#' + data.rank;
+                const acEl = document.getElementById('account-coins-count');
+                if (acEl) acEl.textContent = data.coins;
+                if (currentUser) currentUser.coins = data.coins;
+                renderYourRankBar();
             });
         }
 

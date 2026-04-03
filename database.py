@@ -365,6 +365,21 @@ def reset_all_wins():
         print(f"Error resetting all wins: {e}")
         return False
 
+def get_user_rank(username):
+    """Get a user's rank by coins."""
+    try:
+        with get_db() as conn:
+            rows = conn.execute(
+                'SELECT username FROM users ORDER BY total_coins DESC, created_at ASC'
+            ).fetchall()
+            for idx, row in enumerate(rows):
+                if row['username'].lower() == username.lower():
+                    return idx + 1
+            return None
+    except Exception as e:
+        print(f"Error getting user rank: {e}")
+        return None
+
 def set_user_coins(username, amount):
     """Set a user's coin balance to a specific amount."""
     try:
