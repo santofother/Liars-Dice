@@ -5094,21 +5094,28 @@
             <!-- Login Form -->
             <div id="login-tab" class="account-tab-content active">
                 <!-- Login fields (hidden when logged in) -->
-                <div id="login-fields">
+                <form id="login-fields" onsubmit="event.preventDefault(); loginUser();" autocomplete="on">
                     <div class="input-group">
-                        <label>Username</label>
-                        <input type="text" id="login-username" placeholder="Enter username...">
+                        <label for="login-username">Username</label>
+                        <input type="text" id="login-username" name="username"
+                               placeholder="Enter username..."
+                               autocomplete="username"
+                               autocapitalize="off"
+                               autocorrect="off"
+                               spellcheck="false">
                     </div>
                     <div class="input-group">
-                        <label>Password (4-10 digits)</label>
-                        <input type="password" id="login-password"
+                        <label for="login-password">Password (4-10 digits)</label>
+                        <input type="password" id="login-password" name="password"
                                placeholder="Enter PIN..."
                                pattern="[0-9]{4,10}"
-                               maxlength="10">
+                               maxlength="10"
+                               autocomplete="current-password"
+                               inputmode="numeric">
                     </div>
-                    <button class="btn btn-gold" onclick="loginUser()">Sign In</button>
+                    <button type="submit" class="btn btn-gold">Sign In</button>
                     <div id="login-error" class="error-message hidden"></div>
-                </div>
+                </form>
                 <!-- Avatar change (shown when logged in) -->
                 <div id="login-avatar-change" class="hidden">
                     <div style="text-align:center;margin-bottom:10px;">
@@ -5138,7 +5145,7 @@
             </div>
 
             <!-- Register Form -->
-            <div id="register-tab" class="account-tab-content hidden">
+            <form id="register-tab" class="account-tab-content hidden" onsubmit="event.preventDefault(); registerUser();" autocomplete="on">
                 <div class="pirate-warning">
                     <strong>⚠️ Ahoy, Matey!</strong><br>
                     Choose yer password wisely! We be usin' numbers only (4-10 digits)
@@ -5147,19 +5154,25 @@
                 </div>
 
                 <div class="input-group">
-                    <label>Username (3-20 characters)</label>
-                    <input type="text" id="register-username"
+                    <label for="register-username">Username (3-20 characters)</label>
+                    <input type="text" id="register-username" name="username"
                            placeholder="Enter username..."
                            minlength="3"
-                           maxlength="20">
+                           maxlength="20"
+                           autocomplete="username"
+                           autocapitalize="off"
+                           autocorrect="off"
+                           spellcheck="false">
                 </div>
 
                 <div class="input-group">
-                    <label>Password (4-10 digits ONLY)</label>
-                    <input type="password" id="register-password"
+                    <label for="register-password">Password (4-10 digits ONLY)</label>
+                    <input type="password" id="register-password" name="new-password"
                            placeholder="e.g., 1234"
                            pattern="[0-9]{4,10}"
-                           maxlength="10">
+                           maxlength="10"
+                           autocomplete="new-password"
+                           inputmode="numeric">
                     <div class="password-hint">Numbers only! Easy to remember, savvy?</div>
                 </div>
 
@@ -5183,9 +5196,9 @@
                     <div class="px-char-selector" id="register-pixel-char-picker"></div>
                 </div>
 
-                <button class="btn btn-gold" onclick="registerUser()">Create Account</button>
+                <button type="submit" class="btn btn-gold">Create Account</button>
                 <div id="register-error" class="error-message hidden"></div>
-            </div>
+            </form>
 
             <button class="btn btn-wood" onclick="toggleAccount()" style="margin-top: 20px;">Close</button>
         </div>
@@ -6222,19 +6235,26 @@
         function initDailyQuest() {
             const today = getDailyQuestSeed();
             const username = (currentUser && currentUser.username) ? currentUser.username : 'guest';
-            const playerSeed = today + hashString(username);
             const saved = localStorage.getItem('dailyQuest');
             if (saved) {
                 try {
                     const parsed = JSON.parse(saved);
-                    if (parsed.day === today && parsed.player === username) {
+                    // Preserve same-day progress even if the stored player is 'guest' and we're
+                    // now logged in (or vice-versa). This prevents the auth handshake from
+                    // wiping quest progress on refresh, which let users re-claim the coin reward.
+                    if (parsed.day === today && (parsed.player === username || parsed.player === 'guest')) {
                         dailyQuest = parsed;
+                        if (parsed.player === 'guest' && username !== 'guest') {
+                            dailyQuest.player = username;
+                            localStorage.setItem('dailyQuest', JSON.stringify(dailyQuest));
+                        }
                         renderDailyQuest();
                         return;
                     }
                 } catch(e) {}
             }
-            // New day or different player — pick quest deterministically from date + username
+            // New day or first-time player — pick quest deterministically from date + username
+            const playerSeed = today + hashString(username);
             const idx = playerSeed % QUEST_POOL.length;
             dailyQuest = {
                 day: today,
@@ -6352,6 +6372,19 @@
         let questWinStreak = parseInt(localStorage.getItem('questWinStreak') || '0');
         let questLastRoundBidCount = 0; // all bids in current round (to detect first-bid challenges)
         let questMyRoundBids = 0;       // player's own bids in current round
+        // Extended trackers
+        let questChallengesMadeByMe = 0;
+        let questUniqueChallengedSet = new Set();
+        let questIGotCaughtLying = false;
+        let questMyDiceLost = 0;
+        let questLiarRoundStreak = 0;
+        let questMyRoundFaces = [];
+        let questMyRoundBidsList = [];  // [{qty, face}] for bold_bluff check at reveal
+        let questMyPrevBidQty = 0;
+        let questMyPrevBidFace = 0;
+        let questRoundsIChallenged = 0;
+        let questWasFinalTwo = false;
+        let questNoLossRoundStreak = 0;
 
         function resetPerGameQuestTracking() {
             questGameBids = 0;
@@ -6360,6 +6393,41 @@
             questLiarCatches = 0;
             questLastRoundBidCount = 0;
             questMyRoundBids = 0;
+            questChallengesMadeByMe = 0;
+            questUniqueChallengedSet = new Set();
+            questIGotCaughtLying = false;
+            questMyDiceLost = 0;
+            questLiarRoundStreak = 0;
+            questMyRoundFaces = [];
+            questMyRoundBidsList = [];
+            questMyPrevBidQty = 0;
+            questMyPrevBidFace = 0;
+            questRoundsIChallenged = 0;
+            questWasFinalTwo = false;
+            questNoLossRoundStreak = 0;
+        }
+
+        // Track quest progress for a bid I just made (called from both makeBid variants).
+        // Note: questLastRoundBidCount is incremented from round_history instead so every
+        // player's bid is counted exactly once.
+        function trackQuestBidMade(qty, face) {
+            questGameBids++;
+            questMyRoundBids++;
+            questMyRoundFaces.push(face);
+            questMyRoundBidsList.push({qty, face});
+            if (qty >= 6) advanceDailyQuest('big_bid', 1);
+            if (qty >= 8) advanceDailyQuest('big_bid', 1);
+            if (qty >= 10) advanceDailyQuest('big_bid', 1);
+            if (questMyRoundBids >= 3) advanceDailyQuest('multi_bid_round', 1);
+            if (questMyRoundBids >= 5) advanceDailyQuest('heavy_bidder', 1);
+            if (face === 1) advanceDailyQuest('aces_bid', 1);
+            // Raise streaks: relative to my previous bid in this game
+            if (questMyPrevBidQty > 0) {
+                if (qty > questMyPrevBidQty) advanceDailyQuest('raise_streak', 1);
+                if (face > questMyPrevBidFace) advanceDailyQuest('face_streak', 1);
+            }
+            questMyPrevBidQty = qty;
+            questMyPrevBidFace = face;
         }
 
         // ==================== AUTHENTICATION SYSTEM ====================
@@ -7193,15 +7261,7 @@
             const qty = parseInt(document.getElementById('m-bid-qty').value);
             const face = parseInt(document.getElementById('m-bid-face').value);
             if (isNaN(qty) || isNaN(face)) return;
-            questGameBids++;
-            questLastRoundBidCount++;
-            questMyRoundBids++;
-            if (qty >= 6) advanceDailyQuest('big_bid', 1);
-            if (qty >= 8) advanceDailyQuest('big_bid', 1);
-            if (qty >= 10) advanceDailyQuest('big_bid', 1);
-            if (questMyRoundBids >= 3) advanceDailyQuest('multi_bid_round', 1);
-            if (questMyRoundBids >= 5) advanceDailyQuest('heavy_bidder', 1);
-            if (face === 1) advanceDailyQuest('aces_bid', 1);
+            trackQuestBidMade(qty, face);
             socket.emit('make_bid', { room_code: roomCode, quantity: qty, face: face });
         }
 
@@ -8113,7 +8173,36 @@
                 questRoundCount++;
                 questLastRoundBidCount = 0;
                 questMyRoundBids = 0;
+                questMyRoundFaces = [];
+                questMyRoundBidsList = [];
                 advanceDailyQuest('rounds_survived', 1);
+
+                const me = newState.players[playerIndex];
+                if (me) {
+                    // Two-dice round quest
+                    if (me.num_dice === 2) advanceDailyQuest('two_dice_round', 1);
+
+                    // Dice-pattern quests: check my dice for this roll
+                    if (Array.isArray(me.dice) && me.dice.length > 0 && !me.dice.includes(0)) {
+                        const counts = {};
+                        for (const d of me.dice) counts[d] = (counts[d] || 0) + 1;
+                        const maxCount = Math.max(...Object.values(counts));
+                        if (maxCount >= 3) advanceDailyQuest('three_of_kind', 1);
+                        if (maxCount >= 4) advanceDailyQuest('four_of_kind', 1);
+                        if (maxCount >= 5) advanceDailyQuest('five_of_kind', 1);
+                        if (me.dice.length === 5 && Object.keys(counts).length === 5) {
+                            advanceDailyQuest('all_different', 1);
+                        }
+                        if (me.dice.every(d => d === 1)) advanceDailyQuest('all_ones', 1);
+                        if (me.dice.every(d => d === 6)) advanceDailyQuest('all_sixes', 1);
+                    }
+                }
+
+                // Flag "final two" — used later for runner_up quest
+                const aliveNow = newState.players.filter(p => p.num_dice > 0);
+                if (aliveNow.length === 2 && me && me.num_dice > 0) {
+                    questWasFinalTwo = true;
+                }
             }
 
             // Reset per-game tracking on game start
@@ -8121,46 +8210,127 @@
                 resetPerGameQuestTracking();
             }
 
-            if (newState.phase === 'reveal' && oldState.phase === 'bidding') {
+            // Reveal-based quest tracking — fires for every reveal, including the final one
+            // where the server may skip straight from bidding → game_over (reveal_data still present).
+            const revealFired = oldState.phase === 'bidding' &&
+                (newState.phase === 'reveal' || newState.phase === 'game_over') &&
+                newState.reveal_data;
+            if (revealFired) {
+                const rd = newState.reveal_data;
+                const bidTrue = rd.actual >= rd.bid_qty;
+                const iAmChallenger = newState.players[playerIndex]?.name === rd.challenger;
+                const iAmBidder = newState.players[playerIndex]?.name === rd.bidder;
+                const bidderIdx = newState.players.findIndex(p => p.name === rd.bidder);
+
+                // Play SFX shortly after for effect
                 setTimeout(() => {
-                    if (newState.reveal_data) {
-                        const bidTrue = newState.reveal_data.actual >= newState.reveal_data.bid_qty;
-                        const iAmChallenger = newState.players[playerIndex]?.name === newState.reveal_data.challenger;
-                        const iAmBidder = newState.players[playerIndex]?.name === newState.reveal_data.bidder;
-                        if ((bidTrue && iAmBidder) || (!bidTrue && iAmChallenger)) {
-                            playSfx('win');
-                        } else if ((bidTrue && iAmChallenger) || (!bidTrue && iAmBidder)) {
-                            playSfx('lose');
-                        }
-                        // Daily quest: track liar calls and challenges
-                        if (iAmChallenger) {
-                            advanceDailyQuest('challenges', 1);
-                            if (!bidTrue) {
-                                advanceDailyQuest('liar_correct', 1);
-                                questLiarCatches++;
-                                if (questLiarCatches >= 2) advanceDailyQuest('double_catch', 1);
-                            }
-                            // First-bid challenge: challenged when only 1 bid was made this round
-                            if (questLastRoundBidCount <= 1) {
-                                advanceDailyQuest('first_bid_challenge', 1);
-                            }
-                        }
-                        // Bid streak tracking
-                        if (iAmBidder) {
-                            if (bidTrue) {
-                                questBidStreak++;
-                                advanceDailyQuest('bid_streak', 1);
-                                // Bluff success: bid was high but not challenged (bidTrue means it held)
-                            } else {
-                                questBidStreak = 0;
-                            }
-                        }
-                        // Bluff success: I made the bid and nobody challenged correctly (bid was true)
-                        if (iAmBidder && bidTrue) {
-                            advanceDailyQuest('bluff_success', 1);
-                        }
+                    if ((bidTrue && iAmBidder) || (!bidTrue && iAmChallenger)) {
+                        playSfx('win');
+                    } else if ((bidTrue && iAmChallenger) || (!bidTrue && iAmBidder)) {
+                        playSfx('lose');
                     }
                 }, 500);
+
+                // Compute alive-before-reveal from oldState (server already decremented loser in newState)
+                const aliveBefore = oldState.players.filter(p => p.num_dice > 0);
+                const allHad1Die = aliveBefore.length > 0 && aliveBefore.every(p => p.num_dice === 1);
+                const myDidLose = (iAmBidder && !bidTrue) || (iAmChallenger && bidTrue);
+                const iWonReveal = (iAmBidder && bidTrue) || (iAmChallenger && !bidTrue);
+
+                // Challenger-side tracking
+                if (iAmChallenger) {
+                    questChallengesMadeByMe++;
+                    questRoundsIChallenged++;
+                    advanceDailyQuest('challenges', 1);
+                    if (!bidTrue) {
+                        advanceDailyQuest('liar_correct', 1);
+                        questLiarCatches++;
+                        if (questLiarCatches >= 2) advanceDailyQuest('double_catch', 1);
+                        if (questLiarCatches >= 3) {
+                            advanceDailyQuest('triple_catch', 1);
+                            advanceDailyQuest('liar_ace', 1);
+                        }
+                        // Eliminator: bidder just lost their last die
+                        const bidderNew = newState.players[bidderIdx];
+                        if (bidderNew && bidderNew.num_dice === 0) {
+                            advanceDailyQuest('eliminator', 1);
+                        }
+                        // Unique challenges
+                        if (!questUniqueChallengedSet.has(rd.bidder)) {
+                            questUniqueChallengedSet.add(rd.bidder);
+                            advanceDailyQuest('unique_challenges', 1);
+                        }
+                        // Consecutive rounds won by calling liar
+                        questLiarRoundStreak++;
+                        if (questLiarRoundStreak >= 3) advanceDailyQuest('liar_streak', 1);
+                    } else {
+                        questLiarRoundStreak = 0;
+                    }
+                    if (questLastRoundBidCount <= 1) {
+                        advanceDailyQuest('first_bid_challenge', 1);
+                    }
+                } else {
+                    // I didn't challenge this round, so the "liar win streak" breaks
+                    questLiarRoundStreak = 0;
+                }
+
+                // Bidder-side tracking
+                if (iAmBidder) {
+                    if (bidTrue) {
+                        questBidStreak++;
+                        advanceDailyQuest('bid_streak', 1);
+                        advanceDailyQuest('bluff_success', 1);
+                        advanceDailyQuest('tough_bluffer', 1);
+                        if (rd.bid_face === 6) advanceDailyQuest('bluff_sixes', 1);
+                        if (rd.actual === rd.bid_qty) advanceDailyQuest('exact_bid', 1);
+                        // Pure bluff: zero matching dice (1s wild unless bidding on 1s)
+                        const me = newState.players[playerIndex];
+                        if (me && Array.isArray(me.dice)) {
+                            const matches = me.dice.filter(d =>
+                                d === rd.bid_face || (d === 1 && rd.bid_face !== 1)
+                            ).length;
+                            if (matches === 0) advanceDailyQuest('pure_bluff_win', 1);
+                        }
+                    } else {
+                        questBidStreak = 0;
+                        questIGotCaughtLying = true;
+                    }
+                }
+
+                // Showdown win: every alive player had 1 die going in and I won
+                if (allHad1Die && iWonReveal) advanceDailyQuest('showdown_win', 1);
+                // Duel winner: only 2 alive and I won
+                if (aliveBefore.length === 2 && iWonReveal) advanceDailyQuest('duel_winner', 1);
+
+                // Ones-bid quest: every bid I made this round was face 1 and I didn't lose a die
+                if (questMyRoundFaces.length > 0 &&
+                    questMyRoundFaces.every(f => f === 1) &&
+                    !myDidLose) {
+                    advanceDailyQuest('ones_bid', 1);
+                }
+
+                // Bold bluff: any of my bids this round on bid_face had qty >= actual + 3 and
+                // I wasn't the one caught (i.e. either someone else was the final bidder, or my
+                // own final bid held true).
+                const iGotCaught = iAmBidder && !bidTrue;
+                if (!iGotCaught && questMyRoundBidsList.length > 0) {
+                    for (const b of questMyRoundBidsList) {
+                        if (b.face === rd.bid_face && b.qty >= rd.actual + 3) {
+                            advanceDailyQuest('bold_bluff', 1);
+                            break;
+                        }
+                    }
+                }
+
+                // No-loss round streak — for rounds_no_loss / iron_will
+                if (myDidLose) {
+                    questMyDiceLost++;
+                    questNoLossRoundStreak = 0;
+                } else {
+                    questNoLossRoundStreak++;
+                    advanceDailyQuest('rounds_no_loss', 1);
+                    advanceDailyQuest('iron_will', 1);
+                }
             }
 
             // Daily quest: track game completions and wins
@@ -8175,6 +8345,36 @@
                 // Chatterbox: made 10+ bids in a single game
                 if (questGameBids >= 10) advanceDailyQuest('chatterbox', 1);
                 if (questGameBids >= 15) advanceDailyQuest('chatterbox', 1);
+                // Lobby-size quests (fixed once players are set)
+                if (newState.players.length >= 5) advanceDailyQuest('full_lobby', 1);
+                if (newState.players.length === 6) advanceDailyQuest('max_lobby', 1);
+
+                // Variety games: unique player counts across the day
+                try {
+                    const seedKey = 'questVarietyCounts_' + getDailyQuestSeed();
+                    const seenCounts = JSON.parse(localStorage.getItem(seedKey) || '[]');
+                    if (!seenCounts.includes(newState.players.length)) {
+                        seenCounts.push(newState.players.length);
+                        localStorage.setItem(seedKey, JSON.stringify(seenCounts));
+                        advanceDailyQuest('variety_games', 1);
+                    }
+                } catch(e) {}
+
+                // Public game quests
+                if (!newState.is_private) {
+                    advanceDailyQuest('public_games', 1);
+                }
+
+                // Always-challenge: I called liar on every round
+                if (questRoundCount >= 3 && questRoundsIChallenged === questRoundCount) {
+                    advanceDailyQuest('always_challenge', 1);
+                }
+
+                // Honest pirate: played a real game and was never caught lying
+                if (questGameBids >= 3 && !questIGotCaughtLying) {
+                    advanceDailyQuest('honest_pirate', 1);
+                }
+
                 const me = newState.players[playerIndex];
                 if (me) {
                     const alive = newState.players.filter(p => p.num_dice > 0);
@@ -8191,9 +8391,20 @@
                         if (newState.players.length >= 5) advanceDailyQuest('crowded_win', 1);
                         // Sea Devil win
                         if (newState.ai_difficulty === 'impossible') advanceDailyQuest('sea_devil_win', 1);
+                        // Speed win: won in under 5 rounds
+                        if (questRoundCount < 5) advanceDailyQuest('speed_win', 1);
+                        // Pacifist win: never called liar
+                        if (questChallengesMadeByMe === 0) advanceDailyQuest('pacifist_win', 1);
+                        // Comebacks: lost dice but still won
+                        if (questMyDiceLost >= 1) advanceDailyQuest('comeback', 1);
+                        if (questMyDiceLost >= 3) advanceDailyQuest('big_comeback', 1);
+                        // Public win
+                        if (!newState.is_private) advanceDailyQuest('public_win', 1);
                     } else {
                         questWinStreak = 0;
                         localStorage.setItem('questWinStreak', '0');
+                        // Runner-up: eliminated after reaching final two
+                        if (questWasFinalTwo) advanceDailyQuest('runner_up', 1);
                     }
                     if (alive.length <= 2 && me.num_dice > 0) {
                         advanceDailyQuest('final_two', 1);
@@ -8665,15 +8876,7 @@
         function makeBid() {
             const qty = parseInt(document.getElementById('bid-qty').value);
             const face = parseInt(document.getElementById('bid-face').value);
-            questGameBids++;
-            questLastRoundBidCount++;
-            questMyRoundBids++;
-            if (qty >= 6) advanceDailyQuest('big_bid', 1);
-            if (qty >= 8) advanceDailyQuest('big_bid', 1);
-            if (qty >= 10) advanceDailyQuest('big_bid', 1);
-            if (questMyRoundBids >= 3) advanceDailyQuest('multi_bid_round', 1);
-            if (questMyRoundBids >= 5) advanceDailyQuest('heavy_bidder', 1);
-            if (face === 1) advanceDailyQuest('aces_bid', 1);
+            trackQuestBidMade(qty, face);
             socket.emit('make_bid', { room_code: roomCode, quantity: qty, face: face });
         }
 
@@ -9494,6 +9697,8 @@
             userToken = null;
             currentUser = null;
             updateAccountUI();
+            // Token didn't validate — fall back to guest daily quest.
+            initDailyQuest();
         });
 
         socket.on('avatar_updated', (data) => {
@@ -9525,8 +9730,10 @@
                 if (data.rank) {
                     const rankEl = document.getElementById('account-rank');
                     if (rankEl) rankEl.textContent = '#' + data.rank;
-                    renderYourRankBar();
                 }
+                // Always refresh the visible "your rank" bar — this is where players usually
+                // see their live coin total, and coin awards don't include a rank field.
+                renderYourRankBar();
                 if (data.error) showToast(data.error);
             });
 
@@ -9643,14 +9850,17 @@
             loadDiceSizePreference();
             loadLayoutPreference();
             initPixelAvatars();
-            initDailyQuest();
             initIOSEventListeners();
 
-            // Validate existing token
+            // Validate existing token — and only init the daily quest AFTER we know who we are.
+            // Otherwise initDailyQuest runs as 'guest', overwrites the logged-in player's saved
+            // progress in localStorage, and the quest becomes re-doable on every refresh.
             const token = getAuthToken();
             if (token) {
                 userToken = token;
                 socket.emit('validate_token', { token });
+            } else {
+                initDailyQuest();
             }
 
             // Request initial leaderboard
