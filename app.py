@@ -1600,10 +1600,10 @@ if __name__ == '__main__':
         print("\n" + "="*50)
         print("  LIAR'S DICE - Production Server")
         print("="*50)
-        print(f"\n  Server running on port 5000")
+        print(f"\n  Server running on port 5001")
         print("="*50 + "\n")
 
-        socketio.run(app, host='0.0.0.0', port=5000, debug=False)
+        socketio.run(app, host='0.0.0.0', port=5001, debug=False)
     else:
         # Development mode
         import socket
@@ -1613,9 +1613,9 @@ if __name__ == '__main__':
         print("\n" + "="*50)
         print("  LIAR'S DICE - Multiplayer Server")
         print("="*50)
-        print(f"\n  Local play: http://127.0.0.1:5000")
-        print(f"  Network play: http://{local_ip}:5000")
+        print(f"\n  Local play: http://127.0.0.1:5001")
+        print(f"  Network play: http://{local_ip}:5001")
         print("\n  Share the Network URL with other players!")
         print("="*50 + "\n")
 
-        socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True)
+        socketio.run(app, host='0.0.0.0', port=5001, debug=True, allow_unsafe_werkzeug=True)
