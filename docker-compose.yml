@@ -2,8 +2,6 @@ services:
   liars-dice:
     build: .
     container_name: liars-dice-game
-    ports:
-      - "5001:5001"
     environment:
       - FLASK_ENV=production
     volumes:
