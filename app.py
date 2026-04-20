@@ -608,7 +608,8 @@ def resolve_challenge(game, challenger_idx, bidder_idx):
                             session_data['wins'] = user_data['wins']
                             session_data['coins'] = user_data.get('coins', 0)
                             if winner.get('sid'):
-                                socketio.emit('coins_update', {'coins': user_data.get('coins', 0)}, room=winner['sid'])
+                                winner_rank = get_user_rank(session_data['username'])
+                                socketio.emit('coins_update', {'coins': user_data.get('coins', 0), 'rank': winner_rank}, room=winner['sid'])
                         broadcast_leaderboard_update()
             except Exception as e:
                 print(f"Error recording win: {e}")
@@ -922,7 +923,8 @@ def handle_roll_dice(data):
                             session_data['wins'] = user_data['wins']
                             session_data['coins'] = user_data.get('coins', 0)
                             if winner.get('sid'):
-                                socketio.emit('coins_update', {'coins': user_data.get('coins', 0)}, room=winner['sid'])
+                                winner_rank = get_user_rank(session_data['username'])
+                                socketio.emit('coins_update', {'coins': user_data.get('coins', 0), 'rank': winner_rank}, room=winner['sid'])
                         broadcast_leaderboard_update()
             except Exception as e:
                 print(f"Error recording win: {e}")
@@ -1171,7 +1173,8 @@ def handle_kick_player(data):
                             session_data['wins'] = user_data['wins']
                             session_data['coins'] = user_data.get('coins', 0)
                             if winner.get('sid'):
-                                socketio.emit('coins_update', {'coins': user_data.get('coins', 0)}, room=winner['sid'])
+                                winner_rank = get_user_rank(session_data['username'])
+                                socketio.emit('coins_update', {'coins': user_data.get('coins', 0), 'rank': winner_rank}, room=winner['sid'])
                         broadcast_leaderboard_update()
             except Exception as e:
                 print(f"Error recording win: {e}")

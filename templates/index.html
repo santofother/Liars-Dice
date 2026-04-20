@@ -9770,14 +9770,16 @@
                 // Update account display
                 const acEl = document.getElementById('account-coins-count');
                 if (acEl) acEl.textContent = data.coins;
-                // Update rank if provided
+                // Update rank if provided; otherwise fetch fresh so the rank bar stays accurate.
                 if (data.rank) {
                     const rankEl = document.getElementById('account-rank');
                     if (rankEl) rankEl.textContent = '#' + data.rank;
+                } else if (userToken) {
+                    socket.emit('get_my_rank', { token: userToken });
                 }
-                // Always refresh the visible "your rank" bar — this is where players usually
-                // see their live coin total, and coin awards don't include a rank field.
                 renderYourRankBar();
+                // Re-render the ghost bet form so max/All reflect the new balance.
+                if (typeof updateGhostBetForm === 'function') updateGhostBetForm();
                 if (data.error) showToast(data.error);
             });
 
@@ -9788,7 +9790,13 @@
                 const acEl = document.getElementById('account-coins-count');
                 if (acEl) acEl.textContent = data.coins;
                 if (currentUser) currentUser.coins = data.coins;
+                // Also sync the visible ghost-coins display so the minigame popup
+                // doesn't show a stale balance after login/reconnect.
+                ghostCoins = data.coins;
+                const gcEl = document.getElementById('ghost-coins');
+                if (gcEl) gcEl.textContent = ghostCoins;
                 renderYourRankBar();
+                if (typeof updateGhostBetForm === 'function') updateGhostBetForm();
             });
         }
 
