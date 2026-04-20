@@ -1497,9 +1497,11 @@ def handle_spend_coins(data):
         if current >= amount:
             new_balance = increment_user_coins(session_data['username'], -amount)
             session_data['coins'] = new_balance
-            emit('coins_update', {'coins': new_balance})
+            rank = get_user_rank(session_data['username'])
+            emit('coins_update', {'coins': new_balance, 'rank': rank})
         else:
-            emit('coins_update', {'coins': current, 'error': 'Not enough coins!'})
+            rank = get_user_rank(session_data['username'])
+            emit('coins_update', {'coins': current, 'rank': rank, 'error': 'Not enough coins!'})
 
 @socketio.on('award_coins')
 def handle_award_coins(data):
@@ -1511,7 +1513,8 @@ def handle_award_coins(data):
     if session_data and amount > 0:
         new_balance = increment_user_coins(session_data['username'], amount)
         session_data['coins'] = new_balance
-        emit('coins_update', {'coins': new_balance})
+        rank = get_user_rank(session_data['username'])
+        emit('coins_update', {'coins': new_balance, 'rank': rank})
         broadcast_leaderboard_update()
 
 # Admin config events

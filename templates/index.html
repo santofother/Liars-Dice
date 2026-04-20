@@ -1244,6 +1244,17 @@
             text-align: right;
             margin-top: 3px;
         }
+        .layout-modern .m-quest-tracker.completed {
+            border-color: #7fff50;
+            box-shadow: 0 0 10px rgba(127,255,80,0.25);
+        }
+        .layout-modern .m-quest-tracker.completed .m-quest-tracker-fill {
+            background: #7fff50;
+        }
+        .layout-modern .m-quest-tracker.completed .m-quest-tracker-text {
+            color: #7fff50;
+            font-weight: bold;
+        }
 
         .m-opp-debug-dice {
             display: flex;
@@ -4773,7 +4784,8 @@
         }
 
         .ghost-bet-form-inner select,
-        .ghost-bet-form-inner input {
+        .ghost-bet-form-inner input[type="number"],
+        .ghost-bet-form-inner input[type="text"] {
             width: 100%;
             padding: 8px 10px;
             border: 1px solid var(--m-border2, #5a3015);
@@ -4782,6 +4794,13 @@
             color: var(--m-gold, #ffd700);
             font-size: 0.9em;
             margin-bottom: 8px;
+        }
+
+        .ghost-bet-form-inner input[type="radio"] {
+            width: auto;
+            margin: 0;
+            flex-shrink: 0;
+            accent-color: var(--m-gold, #ffd700);
         }
 
         .ghost-bet-quick-amounts {
@@ -6285,10 +6304,14 @@
             // Update in-game quest tracker
             const tracker = document.getElementById('m-quest-tracker');
             if (tracker) {
+                tracker.classList.remove('hidden');
                 if (dailyQuest.completed) {
-                    tracker.classList.add('hidden');
+                    tracker.classList.add('completed');
+                    document.getElementById('m-quest-desc').textContent = q.desc;
+                    document.getElementById('m-quest-fill').style.width = '100%';
+                    document.getElementById('m-quest-text').innerHTML = '✅ Completed — <span class="pirate-coin"></span> ' + q.reward + ' earned';
                 } else {
-                    tracker.classList.remove('hidden');
+                    tracker.classList.remove('completed');
                     document.getElementById('m-quest-desc').textContent = q.desc;
                     const pctG = Math.min(100, Math.round((dailyQuest.progress / q.goal) * 100));
                     document.getElementById('m-quest-fill').style.width = pctG + '%';
@@ -6307,12 +6330,32 @@
                 if (userToken && socket) {
                     socket.emit('award_coins', { token: userToken, amount: dailyQuest.quest.reward, source: 'daily_quest' });
                     dailyQuest.coins_awarded = true;
+                    // Optimistic local update so UI reflects the reward immediately,
+                    // without waiting for the coins_update round-trip.
+                    applyLocalCoinDelta(dailyQuest.quest.reward);
                 } else {
                     dailyQuest.coins_awarded = false;
                 }
             }
             localStorage.setItem('dailyQuest', JSON.stringify(dailyQuest));
             renderDailyQuest();
+        }
+
+        // Optimistically bump all visible coin counters by `delta`. The server's
+        // coins_update event will overwrite these values with the authoritative total.
+        function applyLocalCoinDelta(delta) {
+            if (!delta) return;
+            if (currentUser) {
+                currentUser.coins = (currentUser.coins || 0) + delta;
+            }
+            if (typeof ghostCoins === 'number') {
+                ghostCoins += delta;
+                const gcEl = document.getElementById('ghost-coins');
+                if (gcEl) gcEl.textContent = ghostCoins;
+            }
+            const acEl = document.getElementById('account-coins-count');
+            if (acEl && currentUser) acEl.textContent = currentUser.coins;
+            if (typeof renderYourRankBar === 'function') renderYourRankBar();
         }
 
         // Retry awarding quest coins if they failed (e.g. user wasn't logged in)
@@ -6322,6 +6365,7 @@
                 socket.emit('award_coins', { token: userToken, amount: dailyQuest.quest.reward, source: 'daily_quest' });
                 dailyQuest.coins_awarded = true;
                 localStorage.setItem('dailyQuest', JSON.stringify(dailyQuest));
+                applyLocalCoinDelta(dailyQuest.quest.reward);
             }
         }
 
@@ -9642,7 +9686,7 @@
                 username: data.username,
                 avatar: data.avatar,
                 wins: data.wins,
-                coins: data.coins || 50
+                coins: data.coins ?? 0
             };
             // Sync localStorage pixel avatar to account on login
             if (pixelAvatarsEnabled) {
@@ -9677,7 +9721,7 @@
                 username: data.username,
                 avatar: data.avatar,
                 wins: data.wins,
-                coins: data.coins || 50
+                coins: data.coins ?? 0
             };
             // If pixel avatars enabled and user has a localStorage selection, sync it
             if (pixelAvatarsEnabled) {
@@ -10425,7 +10469,7 @@
             };
         }
         let minigameOpen = false;
-        let ghostCoins = currentUser ? (currentUser.coins || 50) : 50;
+        let ghostCoins = currentUser ? (currentUser.coins ?? 0) : 50;
         let ghostBets = [];
         let ghostBetHistory = JSON.parse(sessionStorage.getItem('ghostBetHistory') || '[]');
         let wasEliminatedBefore = false;
@@ -10488,7 +10532,7 @@
                 btn.classList.add('hidden');
                 minigameOpen = false;
                 wasEliminatedBefore = false;
-                ghostCoins = currentUser ? (currentUser.coins || 50) : 50;
+                ghostCoins = currentUser ? (currentUser.coins ?? 0) : 50;
                 ghostBets = [];
                 ghostBetHistory = [];
                 sessionStorage.setItem('ghostBetHistory', '[]');
