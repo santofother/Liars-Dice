@@ -10601,27 +10601,45 @@
 
             const me = gameState.players[playerIndex];
             if (!me || me.num_dice > 0) {
-                form.innerHTML = '';
+                if (form.innerHTML !== '') form.innerHTML = '';
+                form.dataset.sig = '';
                 return;
             }
 
+            const setIfChanged = (html, sig) => {
+                if (form.dataset.sig !== sig) {
+                    form.innerHTML = html;
+                    form.dataset.sig = sig;
+                }
+            };
+
             if (gameState.phase !== 'bidding') {
                 if (ghostBets.length > 0) {
-                    form.innerHTML = '<div class="ghost-bet-waiting">Bets locked in... awaiting results!</div>';
+                    setIfChanged('<div class="ghost-bet-waiting">Bets locked in... awaiting results!</div>', 'locked');
                 } else {
-                    form.innerHTML = '<div class="ghost-bet-waiting">Wait for bidding to place bets...</div>';
+                    setIfChanged('<div class="ghost-bet-waiting">Wait for bidding to place bets...</div>', 'wait-bidding');
                 }
                 return;
             }
 
             if (!gameState.current_bid) {
-                form.innerHTML = '<div class="ghost-bet-waiting">Waiting for the first bid...</div>';
+                setIfChanged('<div class="ghost-bet-waiting">Waiting for the first bid...</div>', 'wait-first-bid');
                 return;
             }
 
             const alive = gameState.players.filter((p, i) => p.num_dice > 0);
             const bidQty = gameState.current_bid[0];
             const bidFace = gameState.current_bid[1];
+
+            // Skip rebuild when the inputs that drive the form haven't changed,
+            // so radio/select/amount selections aren't wiped on every state update.
+            const sig = `form|${bidQty}|${bidFace}|${ghostCoins}|${alive.map(p => p.name).join(',')}`;
+            if (form.dataset.sig === sig) return;
+
+            // Preserve the user's in-progress selections across rebuild.
+            const prevType = document.getElementById('ghost-bet-type')?.value;
+            const prevChoice = document.querySelector('input[name="ghost-bet-choice"]:checked')?.value;
+            const prevAmount = document.getElementById('ghost-bet-amount')?.value;
 
             form.innerHTML = `
                 <div class="ghost-bet-form-inner">
@@ -10637,16 +10655,33 @@
                     </div>
                     <div class="ghost-bet-section-label" style="margin-top:8px;">Wager</div>
                     <div class="ghost-bet-quick-amounts">
-                        <button onclick="setGhostWager(10)">10</button>
-                        <button onclick="setGhostWager(25)">25</button>
-                        <button onclick="setGhostWager(50)">50</button>
-                        <button onclick="setGhostWager(${ghostCoins})">All</button>
+                        <button type="button" onclick="setGhostWager(10)">10</button>
+                        <button type="button" onclick="setGhostWager(25)">25</button>
+                        <button type="button" onclick="setGhostWager(50)">50</button>
+                        <button type="button" onclick="setGhostWager(${ghostCoins})">All</button>
                     </div>
                     <input type="number" id="ghost-bet-amount" min="1" max="${ghostCoins}" value="10" placeholder="Wager amount">
-                    <button class="ghost-bet-place-btn" onclick="placeGhostBet()" ${ghostCoins <= 0 ? 'disabled' : ''}>
+                    <button type="button" class="ghost-bet-place-btn" onclick="placeGhostBet()" ${ghostCoins <= 0 ? 'disabled' : ''}>
                         Place Bet
                     </button>
                 </div>`;
+            form.dataset.sig = sig;
+
+            if (prevType) {
+                const typeEl = document.getElementById('ghost-bet-type');
+                if (typeEl) {
+                    typeEl.value = prevType;
+                    if (prevType === 'overunder') updateGhostBetOptions();
+                }
+            }
+            if (prevChoice) {
+                const radio = document.querySelector(`input[name="ghost-bet-choice"][value="${CSS.escape(prevChoice)}"]`);
+                if (radio) radio.checked = true;
+            }
+            if (prevAmount) {
+                const amtEl = document.getElementById('ghost-bet-amount');
+                if (amtEl) amtEl.value = Math.min(parseInt(prevAmount) || 10, ghostCoins);
+            }
         }
 
         function updateGhostBetOptions() {
@@ -10786,8 +10821,11 @@
             document.getElementById('snake-gameover-msg').classList.add('hidden');
             document.getElementById('snake-score').textContent = '0';
             if (snakeInterval) clearInterval(snakeInterval);
-            snakeInterval = setInterval(snakeTick, SNAKE_SPEED);
-            drawSnake();
+            snakeInterval = setInterval(() => {
+                try { snakeTick(); }
+                catch (err) { console.error('snakeTick error:', err); clearInterval(snakeInterval); snakeInterval = null; }
+            }, SNAKE_SPEED);
+            try { drawSnake(); } catch (err) { console.error('drawSnake error:', err); }
         }
 
         function placeFish() {
@@ -10889,9 +10927,17 @@
                 const isHead = i === 0;
                 ctx.fillStyle = isHead ? '#7fff50' : '#4a9e2f';
                 const pad = isHead ? 1 : 2;
-                ctx.beginPath();
-                ctx.roundRect(seg.x * cell + pad, seg.y * cell + pad, cell - pad*2, cell - pad*2, 3);
-                ctx.fill();
+                const x = seg.x * cell + pad;
+                const y = seg.y * cell + pad;
+                const w = cell - pad*2;
+                const h = cell - pad*2;
+                if (typeof ctx.roundRect === 'function') {
+                    ctx.beginPath();
+                    ctx.roundRect(x, y, w, h, 3);
+                    ctx.fill();
+                } else {
+                    ctx.fillRect(x, y, w, h);
+                }
             });
 
             // Snake eyes on head
