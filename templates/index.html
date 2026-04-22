@@ -2601,6 +2601,15 @@
         /* ============================================ */
         /* DAILY QUEST                                  */
         /* ============================================ */
+        .lobby-quests-row {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .lobby-quests-row > .lobby-daily-quest {
+            flex: 1 1 0;
+            min-width: 0;
+        }
         .lobby-daily-quest {
             background: linear-gradient(145deg, #3d2817, #2a1a0f);
             border: 2px solid #8b4513;
@@ -3065,6 +3074,11 @@
 
             .lobby-daily-quest {
                 padding: 6px 10px;
+            }
+
+            .lobby-quests-row {
+                flex-direction: column;
+                gap: 6px;
             }
 
             .quest-title { font-size: 0.75em; }
@@ -5409,30 +5423,33 @@
                         <div class="scene-kraken scene-kraken-2"></div>
                     </div>
 
-                    <!-- Daily Quest -->
-                    <div class="lobby-daily-quest" id="lobby-daily-quest">
-                        <div class="quest-header">
-                            <span class="quest-title">⚓ Daily Quest</span>
-                            <span class="quest-reward" id="quest-reward"><span class="pirate-coin"></span> 50</span>
+                    <!-- Quests row (Daily + Weekly side-by-side) -->
+                    <div class="lobby-quests-row">
+                        <!-- Daily Quest -->
+                        <div class="lobby-daily-quest" id="lobby-daily-quest">
+                            <div class="quest-header">
+                                <span class="quest-title">⚓ Daily Quest</span>
+                                <span class="quest-reward" id="quest-reward"><span class="pirate-coin"></span> 50</span>
+                            </div>
+                            <div class="quest-desc" id="quest-desc">Loading quest...</div>
+                            <div class="quest-progress-bar">
+                                <div class="quest-progress-fill" id="quest-progress-fill" style="width:0%"></div>
+                            </div>
+                            <div class="quest-progress-text" id="quest-progress-text">0/0</div>
                         </div>
-                        <div class="quest-desc" id="quest-desc">Loading quest...</div>
-                        <div class="quest-progress-bar">
-                            <div class="quest-progress-fill" id="quest-progress-fill" style="width:0%"></div>
-                        </div>
-                        <div class="quest-progress-text" id="quest-progress-text">0/0</div>
-                    </div>
 
-                    <!-- Weekly Quest -->
-                    <div class="lobby-daily-quest" id="lobby-weekly-quest" style="margin-top:8px;">
-                        <div class="quest-header">
-                            <span class="quest-title">🗺️ Weekly Quest</span>
-                            <span class="quest-reward" id="weekly-quest-reward"><span class="pirate-coin"></span> 500</span>
+                        <!-- Weekly Quest -->
+                        <div class="lobby-daily-quest" id="lobby-weekly-quest">
+                            <div class="quest-header">
+                                <span class="quest-title">🗺️ Weekly Quest</span>
+                                <span class="quest-reward" id="weekly-quest-reward"><span class="pirate-coin"></span> 500</span>
+                            </div>
+                            <div class="quest-desc" id="weekly-quest-desc">Loading quest...</div>
+                            <div class="quest-progress-bar">
+                                <div class="quest-progress-fill" id="weekly-quest-progress-fill" style="width:0%"></div>
+                            </div>
+                            <div class="quest-progress-text" id="weekly-quest-progress-text">0/0</div>
                         </div>
-                        <div class="quest-desc" id="weekly-quest-desc">Loading quest...</div>
-                        <div class="quest-progress-bar">
-                            <div class="quest-progress-fill" id="weekly-quest-progress-fill" style="width:0%"></div>
-                        </div>
-                        <div class="quest-progress-text" id="weekly-quest-progress-text">0/0</div>
                     </div>
 
                     <div id="m-lobby-error" class="error-message hidden" style="margin-top:2px;"></div>
