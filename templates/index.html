@@ -5422,6 +5422,19 @@
                         <div class="quest-progress-text" id="quest-progress-text">0/0</div>
                     </div>
 
+                    <!-- Weekly Quest -->
+                    <div class="lobby-daily-quest" id="lobby-weekly-quest" style="margin-top:8px;">
+                        <div class="quest-header">
+                            <span class="quest-title">🗺️ Weekly Quest</span>
+                            <span class="quest-reward" id="weekly-quest-reward"><span class="pirate-coin"></span> 500</span>
+                        </div>
+                        <div class="quest-desc" id="weekly-quest-desc">Loading quest...</div>
+                        <div class="quest-progress-bar">
+                            <div class="quest-progress-fill" id="weekly-quest-progress-fill" style="width:0%"></div>
+                        </div>
+                        <div class="quest-progress-text" id="weekly-quest-progress-text">0/0</div>
+                    </div>
+
                     <div id="m-lobby-error" class="error-message hidden" style="margin-top:2px;"></div>
                 </div>
 
@@ -5810,6 +5823,14 @@
                         <div class="m-quest-tracker-fill" id="m-quest-fill"></div>
                     </div>
                     <div class="m-quest-tracker-text" id="m-quest-text">0/0</div>
+                </div>
+                <div class="m-quest-tracker hidden" id="m-weekly-quest-tracker">
+                    <div class="m-quest-tracker-title">🗺️ Weekly Quest</div>
+                    <div class="m-quest-tracker-desc" id="m-weekly-quest-desc"></div>
+                    <div class="m-quest-tracker-bar">
+                        <div class="m-quest-tracker-fill" id="m-weekly-quest-fill"></div>
+                    </div>
+                    <div class="m-quest-tracker-text" id="m-weekly-quest-text">0/0</div>
                 </div>
             </div>
             <!-- Center: Game Action -->
@@ -6250,6 +6271,7 @@
         }
 
         function initDailyQuest() {
+            initWeeklyQuest();
             const today = getDailyQuestSeed();
             const username = (currentUser && currentUser.username) ? currentUser.username : 'guest';
             const saved = localStorage.getItem('dailyQuest');
@@ -6319,6 +6341,7 @@
         }
 
         function advanceDailyQuest(key, amount) {
+            advanceWeeklyQuest(key, amount);
             if (!dailyQuest || dailyQuest.completed) return;
             if (dailyQuest.quest.key !== key) return;
             dailyQuest.progress += (amount || 1);
@@ -6358,12 +6381,187 @@
 
         // Retry awarding quest coins if they failed (e.g. user wasn't logged in)
         function retryQuestCoinAward() {
+            retryWeeklyQuestCoinAward();
             if (!dailyQuest || !dailyQuest.completed || dailyQuest.coins_awarded) return;
             if (userToken && socket) {
                 socket.emit('award_coins', { token: userToken, amount: dailyQuest.quest.reward, source: 'daily_quest' });
                 dailyQuest.coins_awarded = true;
                 localStorage.setItem('dailyQuest', JSON.stringify(dailyQuest));
                 applyLocalCoinDelta(dailyQuest.quest.reward);
+            }
+        }
+
+        // --- Weekly Quest System (client-side, localStorage) ---
+        // Goals are larger than daily quests since they accumulate over 7 days.
+        // Reuses the same quest keys as daily so advanceDailyQuest can drive both.
+        const WEEKLY_QUEST_POOL = [
+            // --- Winning ---
+            { desc: 'Win 10 games this week', goal: 10, reward: 600, key: 'daily_wins' },
+            { desc: 'Win 15 games this week', goal: 15, reward: 900, key: 'daily_wins' },
+            { desc: 'Win 20 games this week', goal: 20, reward: 1300, key: 'daily_wins' },
+            { desc: 'Win 5 games against 4+ opponents', goal: 5, reward: 750, key: 'crowded_win' },
+            { desc: 'Win 3 perfect games (no dice lost)', goal: 3, reward: 800, key: 'perfect_win' },
+            { desc: 'Win 5 perfect games (no dice lost)', goal: 5, reward: 1300, key: 'perfect_win' },
+            { desc: 'Win 5 games on Sea Devil difficulty', goal: 5, reward: 1500, key: 'sea_devil_win' },
+            { desc: 'Win 3 public games', goal: 3, reward: 600, key: 'public_win' },
+            { desc: 'Win 5 final showdowns (1v1 last round)', goal: 5, reward: 750, key: 'duel_winner' },
+            { desc: 'Win 5 clutch games (down to 1 die)', goal: 5, reward: 900, key: 'clutch_win' },
+            { desc: 'Win 5 games in a row', goal: 5, reward: 1200, key: 'win_streak' },
+            { desc: 'Win 4 games in a row', goal: 4, reward: 900, key: 'win_streak' },
+            { desc: 'Win 3 marathon games (20+ rounds)', goal: 3, reward: 700, key: 'marathon_game' },
+            { desc: 'Win 3 speed games (under 5 rounds)', goal: 3, reward: 750, key: 'speed_win' },
+            { desc: 'Win 3 pacifist games (no liar calls)', goal: 3, reward: 950, key: 'pacifist_win' },
+
+            // --- Liar calls ---
+            { desc: 'Call liar correctly 25 times', goal: 25, reward: 600, key: 'liar_correct' },
+            { desc: 'Call liar correctly 40 times', goal: 40, reward: 950, key: 'liar_correct' },
+            { desc: 'Call liar on the first bid 8 times', goal: 8, reward: 700, key: 'first_bid_challenge' },
+            { desc: 'Catch 2 liars in one game 5 times', goal: 5, reward: 700, key: 'double_catch' },
+            { desc: 'Catch 3 liars in one game 3 times', goal: 3, reward: 900, key: 'triple_catch' },
+            { desc: 'Eliminate 10 opponents by calling liar', goal: 10, reward: 800, key: 'eliminator' },
+            { desc: 'Eliminate 15 opponents by calling liar', goal: 15, reward: 1200, key: 'eliminator' },
+            { desc: 'Successfully challenge 8 different players', goal: 8, reward: 700, key: 'unique_challenges' },
+
+            // --- Bidding & bluffing ---
+            { desc: 'Make 50 successful bluffs', goal: 50, reward: 700, key: 'bluff_success' },
+            { desc: 'Make 100 successful bluffs', goal: 100, reward: 1200, key: 'bluff_success' },
+            { desc: 'Make 20 bids of quantity 6+', goal: 20, reward: 600, key: 'big_bid' },
+            { desc: 'Make 5 exact bids', goal: 5, reward: 800, key: 'exact_bid' },
+            { desc: 'Make 10+ bids in a game 3 times', goal: 3, reward: 600, key: 'chatterbox' },
+            { desc: 'Make 10 successful bids in a row', goal: 10, reward: 700, key: 'bid_streak' },
+            { desc: 'Win 3 rounds with no matching dice', goal: 3, reward: 700, key: 'pure_bluff_win' },
+            { desc: 'Bluff all sixes 3 times', goal: 3, reward: 700, key: 'bluff_sixes' },
+            { desc: 'Bid only ones and survive 5 times', goal: 5, reward: 750, key: 'ones_bid' },
+
+            // --- Survival ---
+            { desc: 'Reach the final 2 players 10 times', goal: 10, reward: 700, key: 'final_two' },
+            { desc: 'Reach the final 2 players 15 times', goal: 15, reward: 1100, key: 'final_two' },
+            { desc: 'Survive 15+ rounds in a game 5 times', goal: 5, reward: 800, key: 'rounds_survived' },
+            { desc: 'Play 100 total rounds', goal: 100, reward: 600, key: 'total_rounds' },
+            { desc: 'Play 200 total rounds', goal: 200, reward: 1100, key: 'total_rounds' },
+            { desc: 'Survive 5 rounds without losing a die 8 times', goal: 8, reward: 700, key: 'rounds_no_loss' },
+
+            // --- Games played ---
+            { desc: 'Play 15 complete games', goal: 15, reward: 500, key: 'games_played' },
+            { desc: 'Play 25 complete games', goal: 25, reward: 800, key: 'games_played' },
+            { desc: 'Play 5 games with 5+ players', goal: 5, reward: 600, key: 'full_lobby' },
+            { desc: 'Play 3 games with 6 players', goal: 3, reward: 700, key: 'max_lobby' },
+
+            // --- Challenges ---
+            { desc: 'Challenge opponents 30 times', goal: 30, reward: 600, key: 'challenges' },
+            { desc: 'Challenge opponents 50 times', goal: 50, reward: 950, key: 'challenges' },
+
+            // --- Dice rolls ---
+            { desc: 'Roll three of a kind 15 times', goal: 15, reward: 600, key: 'three_of_kind' },
+            { desc: 'Roll four of a kind 5 times', goal: 5, reward: 800, key: 'four_of_kind' },
+            { desc: 'Roll five of a kind 2 times', goal: 2, reward: 1500, key: 'five_of_kind' },
+            { desc: 'Roll all-different on 5 dice 5 times', goal: 5, reward: 700, key: 'all_different' },
+
+            // --- Other ---
+            { desc: 'Finish 2nd place 5 times', goal: 5, reward: 600, key: 'runner_up' },
+            { desc: 'Get caught lying and survive 8 times', goal: 8, reward: 700, key: 'tough_bluffer' },
+        ];
+
+        let weeklyQuest = null;
+
+        function getWeeklyQuestSeed() {
+            // Anchor to the most-recent Monday so the quest resets at Mon 00:00 local time.
+            const d = new Date();
+            const day = d.getDay(); // 0=Sun ... 6=Sat
+            const diff = (day === 0) ? 6 : day - 1;
+            d.setDate(d.getDate() - diff);
+            return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+        }
+
+        function initWeeklyQuest() {
+            const week = getWeeklyQuestSeed();
+            const username = (currentUser && currentUser.username) ? currentUser.username : 'guest';
+            const saved = localStorage.getItem('weeklyQuest');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.week === week && (parsed.player === username || parsed.player === 'guest')) {
+                        weeklyQuest = parsed;
+                        if (parsed.player === 'guest' && username !== 'guest') {
+                            weeklyQuest.player = username;
+                            localStorage.setItem('weeklyQuest', JSON.stringify(weeklyQuest));
+                        }
+                        renderWeeklyQuest();
+                        return;
+                    }
+                } catch(e) {}
+            }
+            const playerSeed = week + hashString(username);
+            const idx = playerSeed % WEEKLY_QUEST_POOL.length;
+            weeklyQuest = {
+                week: week,
+                player: username,
+                quest: WEEKLY_QUEST_POOL[idx],
+                progress: 0,
+                completed: false
+            };
+            localStorage.setItem('weeklyQuest', JSON.stringify(weeklyQuest));
+            renderWeeklyQuest();
+        }
+
+        function renderWeeklyQuest() {
+            if (!weeklyQuest) return;
+            const q = weeklyQuest.quest;
+            const descEl = document.getElementById('weekly-quest-desc');
+            const rewardEl = document.getElementById('weekly-quest-reward');
+            const fillEl = document.getElementById('weekly-quest-progress-fill');
+            const textEl = document.getElementById('weekly-quest-progress-text');
+            if (descEl) {
+                descEl.textContent = q.desc;
+                rewardEl.innerHTML = weeklyQuest.completed ? '✅ Done!' : ('<span class="pirate-coin"></span> ' + q.reward);
+                const pct = Math.min(100, Math.round((weeklyQuest.progress / q.goal) * 100));
+                fillEl.style.width = pct + '%';
+                textEl.textContent = Math.min(weeklyQuest.progress, q.goal) + '/' + q.goal;
+            }
+
+            const tracker = document.getElementById('m-weekly-quest-tracker');
+            if (tracker) {
+                tracker.classList.remove('hidden');
+                if (weeklyQuest.completed) {
+                    tracker.classList.add('completed');
+                    document.getElementById('m-weekly-quest-desc').textContent = q.desc;
+                    document.getElementById('m-weekly-quest-fill').style.width = '100%';
+                    document.getElementById('m-weekly-quest-text').innerHTML = '✅ Completed — <span class="pirate-coin"></span> ' + q.reward + ' earned';
+                } else {
+                    tracker.classList.remove('completed');
+                    document.getElementById('m-weekly-quest-desc').textContent = q.desc;
+                    const pctG = Math.min(100, Math.round((weeklyQuest.progress / q.goal) * 100));
+                    document.getElementById('m-weekly-quest-fill').style.width = pctG + '%';
+                    document.getElementById('m-weekly-quest-text').innerHTML = Math.min(weeklyQuest.progress, q.goal) + '/' + q.goal + ' — <span class="pirate-coin"></span> ' + q.reward;
+                }
+            }
+        }
+
+        function advanceWeeklyQuest(key, amount) {
+            if (!weeklyQuest || weeklyQuest.completed) return;
+            if (weeklyQuest.quest.key !== key) return;
+            weeklyQuest.progress += (amount || 1);
+            if (weeklyQuest.progress >= weeklyQuest.quest.goal) {
+                weeklyQuest.completed = true;
+                if (userToken && socket) {
+                    socket.emit('award_coins', { token: userToken, amount: weeklyQuest.quest.reward, source: 'weekly_quest' });
+                    weeklyQuest.coins_awarded = true;
+                    applyLocalCoinDelta(weeklyQuest.quest.reward);
+                } else {
+                    weeklyQuest.coins_awarded = false;
+                }
+            }
+            localStorage.setItem('weeklyQuest', JSON.stringify(weeklyQuest));
+            renderWeeklyQuest();
+        }
+
+        function retryWeeklyQuestCoinAward() {
+            if (!weeklyQuest || !weeklyQuest.completed || weeklyQuest.coins_awarded) return;
+            if (userToken && socket) {
+                socket.emit('award_coins', { token: userToken, amount: weeklyQuest.quest.reward, source: 'weekly_quest' });
+                weeklyQuest.coins_awarded = true;
+                localStorage.setItem('weeklyQuest', JSON.stringify(weeklyQuest));
+                applyLocalCoinDelta(weeklyQuest.quest.reward);
             }
         }
 
@@ -7203,6 +7401,14 @@
 
             html += `</div>`; // close m-bottom-split
 
+            // Preserve chat input state across re-render so an opponent's bid
+            // doesn't wipe a half-typed message.
+            const prevChatInput = document.getElementById('m-chat-input');
+            const savedChatValue = prevChatInput ? prevChatInput.value : '';
+            const chatWasFocused = prevChatInput && document.activeElement === prevChatInput;
+            const savedSelStart = chatWasFocused ? prevChatInput.selectionStart : null;
+            const savedSelEnd = chatWasFocused ? prevChatInput.selectionEnd : null;
+
             center.innerHTML = html;
 
             // Set face value after DOM is built
@@ -7210,6 +7416,18 @@
                 const faceSelect = document.getElementById('m-bid-face');
                 if (faceSelect && gameState.current_bid) {
                     faceSelect.value = gameState.current_bid[1];
+                }
+            }
+
+            // Restore chat input value / focus / cursor
+            const newChatInput = document.getElementById('m-chat-input');
+            if (newChatInput && savedChatValue) {
+                newChatInput.value = savedChatValue;
+            }
+            if (chatWasFocused && newChatInput) {
+                newChatInput.focus();
+                if (savedSelStart !== null) {
+                    try { newChatInput.setSelectionRange(savedSelStart, savedSelEnd); } catch (e) {}
                 }
             }
 
@@ -7237,7 +7455,7 @@
             div.className = `m-chat-msg ${isOwn ? 'own' : ''}`;
             div.innerHTML = `<span class="m-chat-sender">${avatar||'⚓'} ${sender}${crown}${ghostTag}</span> <span class="m-chat-text">${message}</span>`;
             container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
+            scrollChatToBottom(container);
         }
 
         function restoreModernChat() {
@@ -7251,7 +7469,19 @@
                 div.innerHTML = `<span class="m-chat-sender">${m.avatar||'⚓'} ${m.sender}${crown}</span> <span class="m-chat-text">${m.message}</span>`;
                 container.appendChild(div);
             });
+            scrollChatToBottom(container);
+        }
+
+        // Scroll a chat container to its newest message. Uses rAF so the
+        // scroll runs after the browser has laid out the appended message —
+        // setting scrollTop synchronously can no-op when the flexbox parent
+        // hasn't recomputed scrollHeight yet.
+        function scrollChatToBottom(container) {
+            if (!container) return;
             container.scrollTop = container.scrollHeight;
+            requestAnimationFrame(() => {
+                container.scrollTop = container.scrollHeight;
+            });
         }
 
         function setModernChatTab(tab, btn) {
@@ -9285,7 +9515,7 @@
                     <div class="text">${message}</div>
                 `;
                 container.appendChild(msgDiv);
-                container.scrollTop = container.scrollHeight;
+                scrollChatToBottom(container);
 
                 // Keep only last 50 messages
                 while (container.children.length > 50) {
