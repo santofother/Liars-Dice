@@ -5127,8 +5127,6 @@
                         <label for="login-password">Password (4-10 digits)</label>
                         <input type="password" id="login-password" name="password"
                                placeholder="Enter PIN..."
-                               pattern="[0-9]{4,10}"
-                               maxlength="10"
                                autocomplete="current-password"
                                inputmode="numeric">
                     </div>
@@ -5878,7 +5876,7 @@
             <!-- Password Gate -->
             <div id="admin-password-gate" class="admin-password-section">
                 <p style="color: #d4a574; margin-bottom: 10px;">Enter the captain's password:</p>
-                <input type="password" id="admin-password" placeholder="Password..." onkeydown="if(event.key==='Enter')adminLogin()">
+                <input type="password" id="admin-password" placeholder="Password..." autocomplete="off" onkeydown="if(event.key==='Enter')adminLogin()">
                 <div id="admin-error" class="hidden" style="color: #ff4444; margin-bottom: 10px;"></div>
                 <button class="btn btn-gold" onclick="adminLogin()">Authenticate</button>
             </div>
