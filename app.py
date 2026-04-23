@@ -704,6 +704,7 @@ def sitemap():
 @socketio.on('connect')
 def handle_connect():
     print(f"Client connected: {request.sid}")
+    emit('issue_notes_update', {'notes': visible_issue_notes()})
 
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -1666,13 +1667,41 @@ def handle_award_coins(data):
 # Admin config events
 ADMIN_PASSWORD = 'SantoIsCool'
 
+# Issue notes shown to all clients (max 2). Each entry: {'text': str, 'enabled': bool}
+issue_notes = [
+    {'text': '', 'enabled': False},
+    {'text': '', 'enabled': False},
+]
+
+def visible_issue_notes():
+    return [n for n in issue_notes if n['enabled'] and n['text'].strip()]
+
+@socketio.on('get_issue_notes')
+def handle_get_issue_notes():
+    emit('issue_notes_update', {'notes': visible_issue_notes()})
+
+@socketio.on('admin_set_issue_notes')
+def handle_admin_set_issue_notes(data):
+    """Admin updates the issue notes list."""
+    password = data.get('password', '')
+    if password != ADMIN_PASSWORD:
+        emit('admin_auth_error', {'message': 'Unauthorized!'})
+        return
+    incoming = data.get('notes', [])
+    for i in range(2):
+        n = incoming[i] if i < len(incoming) else {}
+        text = str(n.get('text', ''))[:300]
+        issue_notes[i] = {'text': text, 'enabled': bool(n.get('enabled'))}
+    socketio.emit('issue_notes_update', {'notes': visible_issue_notes()})
+    emit('admin_reset_success', {'message': 'Issue notes updated', 'users': get_all_users()})
+
 @socketio.on('admin_auth')
 def handle_admin_auth(data):
     """Verify admin password."""
     password = data.get('password', '')
     if password == ADMIN_PASSWORD:
         users = get_all_users()
-        emit('admin_auth_success', {'users': users})
+        emit('admin_auth_success', {'users': users, 'issue_notes': issue_notes})
     else:
         emit('admin_auth_error', {'message': 'Wrong password, landlubber!'})
 

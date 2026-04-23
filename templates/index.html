@@ -4755,6 +4755,71 @@
         }
 
         /* ============================================ */
+        /* ISSUE NOTES (admin broadcast)                */
+        /* ============================================ */
+        .issue-notes-container {
+            position: fixed;
+            right: 16px;
+            bottom: 16px;
+            z-index: 1200;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 340px;
+            pointer-events: none;
+        }
+        .issue-note {
+            position: relative;
+            background: linear-gradient(145deg, #3d1717, #2a0f0f);
+            border: 2px solid #b8860b;
+            border-left: 6px solid #ff6b6b;
+            border-radius: 8px;
+            padding: 10px 32px 10px 12px;
+            color: #ffe6b5;
+            font-size: 0.88em;
+            line-height: 1.35;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.55), 0 0 12px rgba(255,107,107,0.25);
+            white-space: pre-wrap;
+            word-break: break-word;
+            pointer-events: auto;
+        }
+        .issue-note .issue-note-title {
+            display: block;
+            color: #ff9b6b;
+            font-weight: bold;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .issue-note .issue-note-dismiss {
+            position: absolute;
+            top: 4px;
+            right: 6px;
+            background: none;
+            border: none;
+            color: #d4a574;
+            font-size: 1.1em;
+            cursor: pointer;
+            padding: 2px 6px;
+            line-height: 1;
+        }
+        .issue-note .issue-note-dismiss:hover {
+            color: #ffd700;
+        }
+        @media (max-width: 600px) {
+            .issue-notes-container {
+                right: 8px;
+                bottom: 8px;
+                left: 8px;
+                max-width: none;
+            }
+            .issue-note {
+                font-size: 0.8em;
+            }
+        }
+
+        /* ============================================ */
         /* MINIGAME POPUP                               */
         /* ============================================ */
         .minigame-toggle-btn {
@@ -6070,6 +6135,27 @@
                         <span>Show all opponents' dice</span>
                     </label>
                 </div>
+                <div class="settings-section" style="margin-top: 15px;">
+                    <h3>📢 Issue Notes</h3>
+                    <p style="color: #8b7355; font-size: 0.85em; margin: 0 0 10px;">Up to 2 messages displayed at the bottom-right of every player's screen.</p>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <div>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #d4a574; cursor: pointer; margin-bottom: 4px;">
+                                <input type="checkbox" id="issue-note-enabled-0" style="accent-color: #b8860b;">
+                                <span>Show note 1</span>
+                            </label>
+                            <textarea id="issue-note-text-0" rows="3" maxlength="300" placeholder="e.g. Account creation has been reset. Please re-create your account. We apologize for the inconvenience." style="width: 100%; padding: 8px; background: rgba(0,0,0,0.4); border: 1px solid #5c3018; border-radius: 4px; color: #ffd700; font-family: inherit; font-size: 0.9em; resize: vertical;"></textarea>
+                        </div>
+                        <div>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #d4a574; cursor: pointer; margin-bottom: 4px;">
+                                <input type="checkbox" id="issue-note-enabled-1" style="accent-color: #b8860b;">
+                                <span>Show note 2</span>
+                            </label>
+                            <textarea id="issue-note-text-1" rows="3" maxlength="300" placeholder="Second message (optional)" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.4); border: 1px solid #5c3018; border-radius: 4px; color: #ffd700; font-family: inherit; font-size: 0.9em; resize: vertical;"></textarea>
+                        </div>
+                        <button class="btn btn-gold" onclick="saveIssueNotes()" style="align-self: flex-start;">Publish Notes</button>
+                    </div>
+                </div>
             </div>
 
             <button class="btn btn-gold" onclick="closeAdmin()" style="margin-top: 20px;">Close</button>
@@ -6117,6 +6203,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Issue Notes (admin-broadcast notices, bottom-right) -->
+    <div id="issue-notes-container" class="issue-notes-container"></div>
 
     <!-- Tutorial Layers (hidden until started) -->
     <div id="tutorial-game" class="hidden"></div>
@@ -8216,6 +8305,7 @@
             // Attach authentication handlers
             attachAuthHandlers();
             attachAdminHandlers();
+            attachIssueNotesHandler();
 
             // Debug: show opponent dice
             socket.on('debug_dice_data', function(data) {
@@ -10452,6 +10542,7 @@
                 document.getElementById('admin-panel').classList.remove('hidden');
                 document.getElementById('admin-error').classList.add('hidden');
                 renderAdminUserList(data.users);
+                populateIssueNotesAdmin(data.issue_notes || []);
             });
 
             socket.on('admin_auth_error', (data) => {
@@ -10469,6 +10560,70 @@
             socket.on('admin_reset_error', (data) => {
                 showToast(data.message);
             });
+        }
+
+        // ==================== ISSUE NOTES (admin broadcast) ====================
+        function renderIssueNotes(notes) {
+            const container = document.getElementById('issue-notes-container');
+            if (!container) return;
+            const dismissed = JSON.parse(sessionStorage.getItem('dismissedIssueNotes') || '[]');
+            const visible = (notes || []).filter(n => n && n.text && !dismissed.includes(n.text));
+            if (visible.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            container.innerHTML = '';
+            visible.forEach(n => {
+                const safe = String(n.text)
+                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const div = document.createElement('div');
+                div.className = 'issue-note';
+                div.innerHTML = `<button class="issue-note-dismiss" title="Dismiss">&times;</button>
+                    <span class="issue-note-title">⚠️ Notice</span>${safe}`;
+                div.querySelector('.issue-note-dismiss').addEventListener('click', () => {
+                    dismissIssueNote(n.text);
+                });
+                container.appendChild(div);
+            });
+        }
+
+        let _latestIssueNotes = [];
+        function dismissIssueNote(text) {
+            const dismissed = JSON.parse(sessionStorage.getItem('dismissedIssueNotes') || '[]');
+            if (!dismissed.includes(text)) dismissed.push(text);
+            sessionStorage.setItem('dismissedIssueNotes', JSON.stringify(dismissed));
+            renderIssueNotes(_latestIssueNotes);
+        }
+
+        function attachIssueNotesHandler() {
+            socket.on('issue_notes_update', (data) => {
+                _latestIssueNotes = (data && data.notes) || [];
+                // Clear dismissals when the published set changes (so new edits re-appear).
+                sessionStorage.removeItem('dismissedIssueNotes');
+                renderIssueNotes(_latestIssueNotes);
+            });
+        }
+
+        function populateIssueNotesAdmin(notes) {
+            for (let i = 0; i < 2; i++) {
+                const n = notes[i] || { text: '', enabled: false };
+                const txt = document.getElementById('issue-note-text-' + i);
+                const en = document.getElementById('issue-note-enabled-' + i);
+                if (txt) txt.value = n.text || '';
+                if (en) en.checked = !!n.enabled;
+            }
+        }
+
+        function saveIssueNotes() {
+            if (!adminAuthenticated) return;
+            const payload = [];
+            for (let i = 0; i < 2; i++) {
+                payload.push({
+                    text: document.getElementById('issue-note-text-' + i).value || '',
+                    enabled: document.getElementById('issue-note-enabled-' + i).checked,
+                });
+            }
+            socket.emit('admin_set_issue_notes', { password: adminPassword, notes: payload });
         }
 
         // Listen for '~' key to open admin panel
