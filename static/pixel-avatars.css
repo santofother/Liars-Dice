@@ -431,8 +431,14 @@ body.pixel-avatars-on .pixel-preview-row img {
 }
 
 .px-char-option.legendary.selected {
-    border-color: #ffd700;
-    box-shadow: 0 0 18px rgba(255,215,0,0.75), inset 0 0 12px rgba(255,200,0,0.18);
+    border: 3px solid #ffffff;
+    background: radial-gradient(ellipse at 50% 70%, rgba(120,80,15,0.95) 0%, rgba(40,20,5,0.98) 100%);
+    box-shadow:
+        0 0 0 2px #ffd700,
+        0 0 22px rgba(255,215,0,0.95),
+        inset 0 0 14px rgba(255,220,80,0.30);
+    transform: scale(1.05);
+    z-index: 5;
 }
 
 /* Rotating sparkle dots — unlocked only, uses box-shadow to make
@@ -572,7 +578,22 @@ img.legendary-sprite,
 }
 
 .px-char-option.legendary.selected::after {
-    content: '';
+    content: '✓ EQUIPPED';
+    position: absolute;
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.5em;
+    font-weight: bold;
+    color: #ffffff;
+    background: linear-gradient(180deg, #ffd700 0%, #c8960a 100%);
+    padding: 1px 6px;
+    border-radius: 6px;
+    white-space: nowrap;
+    pointer-events: none;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.6);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.6);
+    z-index: 6;
 }
 
 /* --- Purchase Modal --- */

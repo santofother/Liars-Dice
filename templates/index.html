@@ -4765,7 +4765,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            max-width: 300px;
+            max-width: 290;
             pointer-events: none;
         }
         .issue-note {
@@ -8144,6 +8144,7 @@
                 // Immediately show waiting room (game_state will update to game screen if rejoining mid-game)
                 document.getElementById('lobby').classList.add('hidden');
                 document.getElementById('server-browser').classList.add('hidden');
+                document.getElementById('ranked-panel').classList.add('hidden');
                 document.getElementById('waiting-room').classList.remove('hidden');
             });
 
