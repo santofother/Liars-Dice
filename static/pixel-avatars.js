@@ -688,6 +688,7 @@
                 html += `<div class="px-char-option legendary${lockedCls}${sel}" data-char-id="${ch.id}"
                     onclick="PixelAvatars.legendaryClick('${ch.id}', '${containerId}')"
                     ondblclick="PixelAvatars.legendaryDblClick('${ch.id}', '${containerId}')">
+                    <span class="px-legendary-badge">★</span>
                     <img src="${url}" alt="${ch.name}">
                     <div class="px-char-label">${label}</div>
                 </div>`;

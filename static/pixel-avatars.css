@@ -417,21 +417,83 @@ body.pixel-avatars-on .pixel-preview-row img {
     cursor: help;
 }
 
+/* --- Legendary tile base --- */
 .px-char-option.legendary {
-    border-color: rgba(255,215,0,0.4);
-    background: rgba(60,30,5,0.4);
+    background: radial-gradient(ellipse at 50% 70%, rgba(80,45,5,0.95) 0%, rgba(18,8,2,0.98) 100%);
+    border: 2px solid #c8960a;
+    box-shadow: 0 0 6px rgba(255,215,0,0.25), inset 0 0 8px rgba(255,180,0,0.08);
+    overflow: visible;
 }
 
 .px-char-option.legendary:hover {
     border-color: #ffd700;
-    background: rgba(255,215,0,0.15);
-    box-shadow: 0 0 8px rgba(255,215,0,0.4);
+    box-shadow: 0 0 14px rgba(255,215,0,0.55), inset 0 0 10px rgba(255,200,0,0.12);
 }
 
 .px-char-option.legendary.selected {
     border-color: #ffd700;
-    background: rgba(255,215,0,0.2);
-    box-shadow: 0 0 12px rgba(255,215,0,0.7);
+    box-shadow: 0 0 18px rgba(255,215,0,0.75), inset 0 0 12px rgba(255,200,0,0.18);
+}
+
+/* Rotating sparkle dots — unlocked only, uses box-shadow to make
+   multiple particles from a single 2×2 pseudo-element */
+@keyframes px-sparkle-orbit {
+    0%   { transform: translate(-50%, -50%) rotate(0deg);   opacity: 1; }
+    40%  { opacity: 0.45; }
+    70%  { opacity: 0.9; }
+    100% { transform: translate(-50%, -50%) rotate(360deg); opacity: 1; }
+}
+
+@keyframes px-sparkle-pulse {
+    0%, 100% { opacity: 1;    box-shadow:
+        -16px -10px 0 1.5px rgba(255,215,0,0.9),
+         16px -14px 0 0.5px rgba(255,230,120,0.65),
+        -13px  13px 0 1.5px rgba(255,215,0,0.8),
+         15px   9px 0 0.5px rgba(255,200,60,0.55),
+          5px -18px 0 1.5px rgba(255,215,0,0.75),
+        -18px   5px 0 0.5px rgba(255,230,120,0.5),
+         11px  17px 0 1.5px rgba(255,215,0,0.8),
+         -7px -20px 0 0.5px rgba(255,215,0,0.6); }
+    50% { opacity: 0.6;    box-shadow:
+        -16px -10px 0 0.5px rgba(255,215,0,0.4),
+         16px -14px 0 1.5px rgba(255,230,120,0.85),
+        -13px  13px 0 0.5px rgba(255,215,0,0.45),
+         15px   9px 0 1.5px rgba(255,200,60,0.8),
+          5px -18px 0 0.5px rgba(255,215,0,0.4),
+        -18px   5px 0 1.5px rgba(255,230,120,0.75),
+         11px  17px 0 0.5px rgba(255,215,0,0.45),
+         -7px -20px 0 1.5px rgba(255,215,0,0.85); }
+}
+
+.px-char-option.legendary:not(.locked)::before {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: transparent;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation:
+        px-sparkle-orbit  3.6s linear         infinite,
+        px-sparkle-pulse  1.8s ease-in-out     infinite;
+    pointer-events: none;
+    z-index: 3;
+}
+
+/* --- Star badge (top-left corner) --- */
+.px-legendary-badge {
+    position: absolute;
+    top: 2px;
+    left: 3px;
+    font-size: 9px;
+    line-height: 1;
+    color: #ffd700;
+    text-shadow: 0 0 4px rgba(255,215,0,0.9), 0 0 8px rgba(255,215,0,0.5);
+    pointer-events: none;
+    z-index: 4;
+    user-select: none;
 }
 
 .px-char-option.legendary.locked img {
@@ -473,6 +535,15 @@ img.legendary-sprite,
     font-size: 11px;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.9);
     pointer-events: none;
+    /* reset sparkle animation so lock icon shows cleanly */
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    background: none;
+    animation: none;
+    box-shadow: none;
+    transform: none;
+    z-index: 4;
 }
 
 .px-char-option.legendary.locked .px-char-label {
