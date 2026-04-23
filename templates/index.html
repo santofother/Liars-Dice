@@ -797,6 +797,103 @@
             padding: 10px 20px;
         }
 
+        /* === Ranked Mode === */
+        .ranked-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #b8860b, #ffd700);
+            color: #1a0f08;
+            border: 1px solid #ffd700;
+            margin-left: 6px;
+            letter-spacing: 0.5px;
+        }
+        .ranked-tier-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid #5a2d0a;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .ranked-tier-row.current {
+            border-color: #ffd700;
+            background: linear-gradient(135deg, rgba(184,134,11,0.25), rgba(0,0,0,0.4));
+            box-shadow: 0 0 12px rgba(255,215,0,0.3);
+        }
+        .ranked-tier-row.locked { opacity: 0.55; }
+        .ranked-tier-name {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        .ranked-tier-meta {
+            color: #b8860b;
+            font-size: 0.85em;
+            margin-top: 2px;
+        }
+        .ranked-progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #5a2d0a;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+        .ranked-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #b8860b, #ffd700);
+            transition: width 0.4s;
+        }
+        .ranked-current-card {
+            background: rgba(184,134,11,0.18);
+            border: 2px solid #ffd700;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 16px;
+        }
+        .ranked-pot {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        .ranked-tier-advanced-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .ranked-tier-advanced-card {
+            background: linear-gradient(135deg, #2a1a0f, #1a0f08);
+            border: 3px solid #ffd700;
+            border-radius: 16px;
+            padding: 30px 40px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(255,215,0,0.6);
+            animation: rankedPop 0.4s ease-out;
+        }
+        @keyframes rankedPop {
+            0% { transform: scale(0.6); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .ranked-tier-advanced-title {
+            font-size: 1.4em;
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+        .ranked-tier-advanced-tier {
+            font-size: 2em;
+            color: #fff;
+            margin: 14px 0;
+        }
+
         .browser-refresh {
             text-align: center;
             color: #5a2d0a;
@@ -5353,7 +5450,7 @@
                     <div class="lobby-m-row" style="gap:6px;">
                         <button class="lobby-m-btn lobby-m-btn-wood" id="m-private-game-btn" onclick="togglePrivateCreate()" style="flex:1;">🌐 Public</button>
                         <button class="lobby-m-btn lobby-m-btn-wood" onclick="openBrowser()" style="flex:1;">🔍 Browse</button>
-                        <button class="lobby-m-btn lobby-m-btn-wood" onclick="promptJoinCode()" style="flex:1;">🔑 Join Code</button>
+                        <button class="lobby-m-btn lobby-m-btn-gold" onclick="openRankedPanel()" style="flex:1;">⚔ Ranked</button>
                     </div>
 
                     <div class="lobby-m-row" style="gap:6px;">
@@ -5562,14 +5659,9 @@
 
             <div class="divider">- OR -</div>
 
-            <div class="input-group">
-                <label>Room Code</label>
-                <input type="text" id="room-code" placeholder="XXXX" maxlength="4" style="text-transform: uppercase; text-align: center; font-size: 1.5em; letter-spacing: 5px;">
-            </div>
-
             <div class="lobby-buttons">
-                <button class="btn btn-wood" onclick="joinGame()" style="flex: 1;">Join Game</button>
                 <button class="btn btn-wood" onclick="openBrowser()" style="flex: 1;">Browse Games</button>
+                <button class="btn btn-gold" onclick="openRankedPanel()" style="flex: 1;">⚔ Ranked</button>
             </div>
 
             <div class="divider">⚓</div>
@@ -5616,6 +5708,49 @@
 
             <div style="margin-top: 15px; text-align: center;">
                 <button class="btn btn-wood" onclick="closeBrowser()">Back to Port</button>
+            </div>
+        </div>
+
+        <!-- Ranked Mode Panel -->
+        <div id="ranked-panel" class="browser-container hidden">
+            <div class="browser-title">⚔ Ranked Voyage</div>
+            <div class="browser-subtitle">Wager coins, climb the tiers, prove yer mettle</div>
+
+            <div id="ranked-error" class="browser-error hidden"></div>
+
+            <div id="ranked-logged-out" class="hidden" style="text-align:center;padding:24px;color:#b8860b;">
+                <p style="margin-bottom:14px;">Ye must sign in to sail in ranked waters, matey!</p>
+                <button class="btn btn-gold" onclick="closeRankedPanel(); toggleAccount();">🔑 Sign In</button>
+            </div>
+
+            <div id="ranked-logged-in" class="hidden">
+                <div class="ranked-current-card" id="ranked-current-card">
+                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                        <div>
+                            <div style="font-size:0.85em;color:#b8860b;">Yer Current Tier</div>
+                            <div style="font-size:1.4em;color:#ffd700;font-weight:bold;" id="ranked-current-tier-name">Deckhand</div>
+                        </div>
+                        <div style="font-size:2em;" id="ranked-current-tier-badge"></div>
+                    </div>
+                    <div class="ranked-tier-meta" id="ranked-current-progress" style="margin-top:8px;">0 / 10 wins</div>
+                    <div class="ranked-progress-bar"><div class="ranked-progress-fill" id="ranked-current-progress-fill" style="width:0%;"></div></div>
+                    <div style="margin-top:10px;font-size:0.9em;color:#d4a574;">
+                        Entry fee: <span class="ranked-pot" id="ranked-current-entry">200</span> coins &middot;
+                        Yer chest: <span class="ranked-pot" id="ranked-current-coins">0</span>
+                    </div>
+                </div>
+
+                <div style="font-size:0.95em;color:#b8860b;margin-bottom:8px;">⚓ Tier Ladder</div>
+                <div id="ranked-tier-list" style="margin-bottom:18px;"></div>
+
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-gold" id="ranked-host-btn" onclick="hostRankedGame()" style="flex:1;">⚔ Host Ranked Game</button>
+                    <button class="btn btn-wood" onclick="closeRankedPanel(); openBrowser();" style="flex:1;">🔍 Browse Ranked</button>
+                </div>
+            </div>
+
+            <div style="margin-top:15px;text-align:center;">
+                <button class="btn btn-wood" onclick="closeRankedPanel()">Back to Port</button>
             </div>
         </div>
 
@@ -7922,19 +8057,40 @@
                     const statusText = isLobby ? 'In Port' : 'At Sea';
                     const diffNames = {easy:'Deckhand', medium:'First Mate', hard:'Blackbeard', impossible:'Sea Devil', random:'Motley Crew'};
                     const diffLabel = diffNames[g.ai_difficulty] || g.ai_difficulty;
+                    const rankedBadge = g.is_ranked
+                        ? `<span class="ranked-badge">⚔ ${g.ranked_tier_badge || ''} ${g.ranked_tier_name || 'Ranked'} · ${g.entry_fee}c</span>`
+                        : '';
                     const details = `${g.player_count}/${g.max_players} crew` +
                         (g.ai_count > 0 ? ` + ${g.ai_count} AI (${diffLabel})` : '');
 
                     return `
                         <div class="browser-item">
                             <div class="browser-item-info">
-                                <div class="browser-item-host">${g.host}'s Ship</div>
+                                <div class="browser-item-host">${g.host}'s Ship${rankedBadge}</div>
                                 <div class="browser-item-details">${details} &middot; <span class="browser-status ${statusClass}">${statusText}</span></div>
                             </div>
                             <button class="btn btn-gold" onclick="joinFromList('${g.room_code}')">Board!</button>
                         </div>
                     `;
                 }).join('');
+            });
+
+            socket.on('ranked_info', (info) => {
+                renderRankedPanel(info);
+            });
+
+            socket.on('ranked_error', (data) => {
+                // Show error in ranked panel if open, else in browser
+                const panelOpen = !document.getElementById('ranked-panel').classList.contains('hidden');
+                if (panelOpen) {
+                    showRankedError(data.message);
+                } else {
+                    openBrowser(data.message);
+                }
+            });
+
+            socket.on('ranked_tier_advanced', (data) => {
+                showRankedTierAdvanced(data);
             });
 
             socket.on('game_state', (state) => {
@@ -8323,6 +8479,123 @@
                 mBtn.textContent = isNowPrivate ? '🔒 Private' : '🌐 Public';
                 mBtn.className = 'lobby-m-btn lobby-m-btn-wood';
             }
+        }
+
+        // === Ranked Mode ===
+        function openRankedPanel() {
+            // Hide lobby, show ranked panel
+            document.getElementById('lobby').classList.add('hidden');
+            const panel = document.getElementById('ranked-panel');
+            panel.classList.remove('hidden');
+            document.getElementById('ranked-error').classList.add('hidden');
+            // Request fresh ranked info from server
+            socket.emit('get_ranked_info', { token: userToken });
+        }
+
+        function closeRankedPanel() {
+            document.getElementById('ranked-panel').classList.add('hidden');
+            document.getElementById('lobby').classList.remove('hidden');
+        }
+
+        function showRankedError(msg) {
+            const el = document.getElementById('ranked-error');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+
+        function renderRankedPanel(info) {
+            const loggedOut = document.getElementById('ranked-logged-out');
+            const loggedIn = document.getElementById('ranked-logged-in');
+            if (!info.logged_in) {
+                loggedOut.classList.remove('hidden');
+                loggedIn.classList.add('hidden');
+                return;
+            }
+            loggedOut.classList.add('hidden');
+            loggedIn.classList.remove('hidden');
+
+            document.getElementById('ranked-current-tier-name').textContent = info.tier_name;
+            document.getElementById('ranked-current-tier-badge').textContent = info.tier_badge || '';
+            document.getElementById('ranked-current-entry').textContent = info.entry_fee;
+            document.getElementById('ranked-current-coins').textContent = info.coins;
+
+            const wta = info.wins_to_advance;
+            const progressEl = document.getElementById('ranked-current-progress');
+            const fillEl = document.getElementById('ranked-current-progress-fill');
+            if (wta) {
+                progressEl.textContent = `${info.tier_wins} / ${wta} wins to next tier`;
+                fillEl.style.width = Math.min(100, (info.tier_wins / wta) * 100) + '%';
+            } else {
+                progressEl.textContent = '👑 Top tier — keep plunderin\'!';
+                fillEl.style.width = '100%';
+            }
+
+            // Tier ladder
+            const listEl = document.getElementById('ranked-tier-list');
+            listEl.innerHTML = (info.tiers || []).map(t => {
+                const isCurrent = t.tier === info.tier;
+                const isLocked = t.tier > info.tier;
+                const cls = isCurrent ? 'ranked-tier-row current' : (isLocked ? 'ranked-tier-row locked' : 'ranked-tier-row');
+                const wtaText = t.wins_to_advance ? `${t.wins_to_advance} wins to advance` : 'Top tier';
+                return `
+                    <div class="${cls}">
+                        <div>
+                            <div class="ranked-tier-name">${t.badge || ''} ${t.name}</div>
+                            <div class="ranked-tier-meta">Entry ${t.entry}c &middot; ${wtaText}</div>
+                        </div>
+                        ${isCurrent ? '<div style="color:#ffd700;font-size:0.85em;">⚓ You</div>' : ''}
+                    </div>
+                `;
+            }).join('');
+
+            // Disable host button if can't afford
+            const hostBtn = document.getElementById('ranked-host-btn');
+            if (info.coins < info.entry_fee) {
+                hostBtn.disabled = true;
+                hostBtn.style.opacity = '0.5';
+                hostBtn.title = `Need ${info.entry_fee} coins to host`;
+            } else {
+                hostBtn.disabled = false;
+                hostBtn.style.opacity = '1';
+                hostBtn.title = '';
+            }
+        }
+
+        function showRankedTierAdvanced(data) {
+            // server payload: { tier, name, badge }
+            const overlay = document.createElement('div');
+            overlay.className = 'ranked-tier-advanced-overlay';
+            overlay.innerHTML = `
+                <div class="ranked-tier-advanced-card">
+                    <div class="ranked-tier-advanced-title">⚓ Promotion! ⚓</div>
+                    <div style="font-size:3em;">${data.badge || '⚔'}</div>
+                    <div class="ranked-tier-advanced-tier">${data.name || 'New Tier'}</div>
+                    <div style="color:#b8860b;margin-bottom:18px;">Ye've earned a new rank, Captain!</div>
+                    <button class="btn btn-gold" onclick="this.closest('.ranked-tier-advanced-overlay').remove();">Hoist the Colors!</button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            setTimeout(() => { if (overlay.parentNode) overlay.remove(); }, 8000);
+        }
+
+        function hostRankedGame() {
+            const nameEl = getLobbyInput('player-name', 'm-player-name');
+            const name = nameEl.value.trim() || 'Captain';
+            if (!userToken) {
+                showRankedError('Ye must sign in first!');
+                return;
+            }
+            clearSession();
+            resetReconnectionFlag();
+            socket.emit('create_game', {
+                name,
+                num_ai: 0,
+                avatar: resolveAvatar(),
+                ai_difficulty: 'hard',
+                is_private: false,
+                is_ranked: true,
+                user_token: userToken
+            });
         }
 
         // Toggle private/public in waiting room (host only)
@@ -8864,6 +9137,39 @@
             checkMinigameVisibility();
         }
 
+        function renderRankedWaitingBanner(containerId) {
+            // Inject (or update) a ranked banner under the room-code in waiting rooms
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const id = containerId + '-ranked-banner';
+            let banner = document.getElementById(id);
+            if (!gameState.is_ranked) {
+                if (banner) banner.remove();
+                return;
+            }
+            const tier = gameState.ranked_tier_name || 'Ranked';
+            const entry = gameState.entry_fee || 0;
+            const pot = gameState.pot || 0;
+            const html = `
+                <div style="margin-top:10px;padding:10px 14px;background:rgba(184,134,11,0.18);border:2px solid #ffd700;border-radius:10px;text-align:center;">
+                    <div style="color:#ffd700;font-weight:bold;">⚔ ${tier} Tier · Ranked Match</div>
+                    <div style="color:#d4a574;font-size:0.9em;margin-top:4px;">
+                        Entry: <span class="ranked-pot">${entry}c</span> &middot;
+                        Pot: <span class="ranked-pot">${pot}c</span>
+                    </div>
+                    <div style="color:#8b7355;font-size:0.78em;margin-top:4px;font-style:italic;">Coins debited when host starts</div>
+                </div>
+            `;
+            if (banner) {
+                banner.innerHTML = html;
+            } else {
+                banner = document.createElement('div');
+                banner.id = id;
+                banner.innerHTML = html;
+                container.appendChild(banner);
+            }
+        }
+
         function updateWaitingRoom() {
             // === Legacy waiting room ===
             const playerList = document.getElementById('player-list');
@@ -8883,27 +9189,44 @@
                 `;
             }).join('');
 
-            // Private/Public badge button
+            // Private/Public badge button (hidden for ranked — always public, can't toggle)
             const privateBadge = document.getElementById('private-badge');
-            if (gameState.is_private) {
-                privateBadge.textContent = '🔒 Private Game';
-                privateBadge.classList.add('is-private');
+            if (gameState.is_ranked) {
+                privateBadge.style.display = 'none';
             } else {
-                privateBadge.textContent = '🌐 Public Game';
-                privateBadge.classList.remove('is-private');
+                privateBadge.style.display = '';
+                if (gameState.is_private) {
+                    privateBadge.textContent = '🔒 Private Game';
+                    privateBadge.classList.add('is-private');
+                } else {
+                    privateBadge.textContent = '🌐 Public Game';
+                    privateBadge.classList.remove('is-private');
+                }
+                privateBadge.disabled = !gameState.is_host;
             }
-            privateBadge.disabled = !gameState.is_host;
 
-            // AI controls (host only)
+            // Inject ranked banner (legacy room-code-display container)
+            const legacyRoomCodeContainer = document.querySelector('#waiting-room .room-code-display');
+            if (legacyRoomCodeContainer) {
+                legacyRoomCodeContainer.id = legacyRoomCodeContainer.id || 'legacy-room-code-display';
+                renderRankedWaitingBanner(legacyRoomCodeContainer.id);
+            }
+
+            // AI controls (host only, hidden in ranked)
             const aiControls = document.getElementById('ai-controls');
-            if (gameState.is_host) {
+            if (gameState.is_ranked) {
+                aiControls.classList.add('hidden');
+            } else if (gameState.is_host) {
                 aiControls.classList.remove('hidden');
                 document.getElementById('ai-count-display').textContent = gameState.num_ai;
                 document.getElementById('waiting-ai-difficulty').value = gameState.ai_difficulty || 'hard';
+            } else {
+                aiControls.classList.add('hidden');
+            }
+            if (gameState.is_host) {
                 document.getElementById('host-controls').classList.remove('hidden');
                 document.getElementById('waiting-message').classList.add('hidden');
             } else {
-                aiControls.classList.add('hidden');
                 document.getElementById('host-controls').classList.add('hidden');
                 document.getElementById('waiting-message').classList.remove('hidden');
             }
@@ -8936,29 +9259,47 @@
 
             const mPrivateBadge = document.getElementById('m-private-badge');
             if (mPrivateBadge) {
-                if (gameState.is_private) {
-                    mPrivateBadge.textContent = '🔒 Private Game';
-                    mPrivateBadge.classList.add('is-private');
+                if (gameState.is_ranked) {
+                    mPrivateBadge.style.display = 'none';
                 } else {
-                    mPrivateBadge.textContent = '🌐 Public Game';
-                    mPrivateBadge.classList.remove('is-private');
+                    mPrivateBadge.style.display = '';
+                    if (gameState.is_private) {
+                        mPrivateBadge.textContent = '🔒 Private Game';
+                        mPrivateBadge.classList.add('is-private');
+                    } else {
+                        mPrivateBadge.textContent = '🌐 Public Game';
+                        mPrivateBadge.classList.remove('is-private');
+                    }
+                    mPrivateBadge.disabled = !gameState.is_host;
                 }
-                mPrivateBadge.disabled = !gameState.is_host;
+            }
+
+            // Modern ranked banner — inject inside the left column under the room code
+            const mLeftCol = document.querySelector('#waiting-room .waiting-m-col-left');
+            if (mLeftCol) {
+                mLeftCol.id = mLeftCol.id || 'm-left-col-waiting';
+                renderRankedWaitingBanner(mLeftCol.id);
             }
 
             const mAiControls = document.getElementById('m-ai-controls');
             const mHostControls = document.getElementById('m-host-controls');
             const mWaitingMsg = document.getElementById('m-waiting-message');
-            if (gameState.is_host) {
+            // Ranked: never show AI controls
+            if (gameState.is_ranked) {
+                if (mAiControls) mAiControls.classList.add('hidden');
+            } else if (gameState.is_host) {
                 if (mAiControls) mAiControls.classList.remove('hidden');
-                if (mHostControls) mHostControls.classList.remove('hidden');
-                if (mWaitingMsg) mWaitingMsg.classList.add('hidden');
                 const mAiCount = document.getElementById('m-ai-count-display');
                 if (mAiCount) mAiCount.textContent = gameState.num_ai;
                 const mAiDiff = document.getElementById('m-waiting-ai-difficulty');
                 if (mAiDiff) mAiDiff.value = gameState.ai_difficulty || 'hard';
             } else {
                 if (mAiControls) mAiControls.classList.add('hidden');
+            }
+            if (gameState.is_host) {
+                if (mHostControls) mHostControls.classList.remove('hidden');
+                if (mWaitingMsg) mWaitingMsg.classList.add('hidden');
+            } else {
                 if (mHostControls) mHostControls.classList.add('hidden');
                 if (mWaitingMsg) mWaitingMsg.classList.remove('hidden');
             }

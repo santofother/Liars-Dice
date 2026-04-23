@@ -43,6 +43,8 @@ def init_db():
                 total_wins INTEGER NOT NULL DEFAULT 0,
                 total_games INTEGER NOT NULL DEFAULT 0,
                 total_coins INTEGER NOT NULL DEFAULT 50,
+                ranked_tier INTEGER NOT NULL DEFAULT 1,
+                tier_wins INTEGER NOT NULL DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -55,6 +57,15 @@ def init_db():
         except sqlite3.OperationalError:
             conn.execute('ALTER TABLE users ADD COLUMN total_coins INTEGER NOT NULL DEFAULT 50')
         conn.execute('CREATE INDEX IF NOT EXISTS idx_coins ON users(total_coins DESC)')
+        # Migration: add ranked_tier and tier_wins columns if missing
+        try:
+            conn.execute('SELECT ranked_tier FROM users LIMIT 1')
+        except sqlite3.OperationalError:
+            conn.execute('ALTER TABLE users ADD COLUMN ranked_tier INTEGER NOT NULL DEFAULT 1')
+        try:
+            conn.execute('SELECT tier_wins FROM users LIMIT 1')
+        except sqlite3.OperationalError:
+            conn.execute('ALTER TABLE users ADD COLUMN tier_wins INTEGER NOT NULL DEFAULT 0')
 
 def validate_username(username):
     """Validate username format (3-20 alphanumeric characters)."""
@@ -168,7 +179,7 @@ def get_user_by_username(username):
     try:
         with get_db() as conn:
             user = conn.execute(
-                'SELECT username, avatar, total_wins, total_games, total_coins FROM users WHERE username = ? COLLATE NOCASE',
+                'SELECT username, avatar, total_wins, total_games, total_coins, ranked_tier, tier_wins FROM users WHERE username = ? COLLATE NOCASE',
                 (username,)
             ).fetchone()
 
@@ -178,11 +189,64 @@ def get_user_by_username(username):
                     'avatar': user['avatar'],
                     'wins': user['total_wins'],
                     'games': user['total_games'],
-                    'coins': user['total_coins']
+                    'coins': user['total_coins'],
+                    'ranked_tier': user['ranked_tier'],
+                    'tier_wins': user['tier_wins']
                 }
             return None
     except Exception as e:
         print(f"Database error: {e}")
+        return None
+
+def get_user_ranked(username):
+    """Return {tier, tier_wins} for a user, or None if not found."""
+    try:
+        with get_db() as conn:
+            row = conn.execute(
+                'SELECT ranked_tier, tier_wins FROM users WHERE username = ? COLLATE NOCASE',
+                (username,)
+            ).fetchone()
+            if row:
+                return {'tier': row['ranked_tier'], 'tier_wins': row['tier_wins']}
+            return None
+    except Exception as e:
+        print(f"Error getting ranked progress: {e}")
+        return None
+
+def record_ranked_win(username, wins_to_advance):
+    """
+    Increment a user's tier_wins. If wins_to_advance is hit and not at max tier,
+    advance the tier and reset tier_wins to 0.
+
+    Args:
+        username: user's name
+        wins_to_advance: int or None — None means user is at max tier (no advancement)
+
+    Returns:
+        dict: {tier, tier_wins, advanced: bool} after update
+    """
+    try:
+        with get_db() as conn:
+            row = conn.execute(
+                'SELECT ranked_tier, tier_wins FROM users WHERE username = ? COLLATE NOCASE',
+                (username,)
+            ).fetchone()
+            if not row:
+                return None
+            new_wins = row['tier_wins'] + 1
+            new_tier = row['ranked_tier']
+            advanced = False
+            if wins_to_advance is not None and new_wins >= wins_to_advance:
+                new_tier += 1
+                new_wins = 0
+                advanced = True
+            conn.execute(
+                'UPDATE users SET ranked_tier = ?, tier_wins = ? WHERE username = ? COLLATE NOCASE',
+                (new_tier, new_wins, username)
+            )
+            return {'tier': new_tier, 'tier_wins': new_wins, 'advanced': advanced}
+    except Exception as e:
+        print(f"Error recording ranked win: {e}")
         return None
 
 def increment_user_wins(username):

@@ -11,8 +11,37 @@ from database import (
     increment_user_wins, update_last_login, get_top_pirates,
     reset_user_wins, reset_all_wins, get_all_users,
     increment_user_coins, get_user_coins, get_top_by_coins,
-    update_user_avatar, set_user_coins, get_user_rank
+    update_user_avatar, set_user_coins, get_user_rank,
+    get_user_ranked, record_ranked_win
 )
+
+# Ranked-mode tier configuration. wins_to_advance=None means top tier.
+RANKED_TIERS = [
+    {'tier': 1, 'name': 'Deckhand',    'badge': '',     'entry': 200,  'wins_to_advance': 10},
+    {'tier': 2, 'name': 'Buccaneer',   'badge': '⚓',    'entry': 500,  'wins_to_advance': 15},
+    {'tier': 3, 'name': 'First Mate',  'badge': '🗡️',   'entry': 1000, 'wins_to_advance': 20},
+    {'tier': 4, 'name': 'Captain',     'badge': '🏴‍☠️', 'entry': 2000, 'wins_to_advance': 25},
+    {'tier': 5, 'name': 'Pirate Lord', 'badge': '👑',   'entry': 5000, 'wins_to_advance': None},
+]
+
+def get_tier_info(tier):
+    """Get tier config dict by tier number, clamped to valid range."""
+    idx = max(0, min(int(tier) - 1, len(RANKED_TIERS) - 1))
+    return RANKED_TIERS[idx]
+
+def attach_player_ranked(player):
+    """Stamp a player dict with ranked_tier and tier_badge from their DB record."""
+    token = player.get('user_token')
+    if not token:
+        return
+    session_data = user_sessions.get(token)
+    if not session_data:
+        return
+    info = get_user_ranked(session_data['username'])
+    if not info:
+        return
+    player['ranked_tier'] = info['tier']
+    player['tier_badge'] = get_tier_info(info['tier'])['badge']
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -69,7 +98,7 @@ def generate_room_code():
         if code not in games:
             return code
 
-def create_game(room_code, host_name, num_ai=0, is_private=False):
+def create_game(room_code, host_name, num_ai=0, is_private=False, is_ranked=False, ranked_tier=1):
     """Create a new game state."""
     game = {
         'room_code': room_code,
@@ -84,7 +113,11 @@ def create_game(room_code, host_name, num_ai=0, is_private=False):
         'num_ai': num_ai,
         'min_players': 2,
         'max_players': 6,
-        'is_private': is_private
+        'is_private': is_private,
+        'is_ranked': is_ranked,
+        'ranked_tier': ranked_tier if is_ranked else None,
+        'entry_fee': get_tier_info(ranked_tier)['entry'] if is_ranked else 0,
+        'pot': 0,
     }
 
     # Add host as first player
@@ -427,6 +460,58 @@ def next_alive_player(game, current):
     next_pos = (current_pos + 1) % len(alive)
     return alive[next_pos]
 
+def record_game_win(game, winner):
+    """
+    Centralized win-recording. Handles standard coin reward (vs hard+ AI) and
+    ranked-mode pot payout + tier progression. Safe to call without a logged-in
+    winner (no-ops).
+    """
+    if not winner.get('user_token'):
+        return
+    try:
+        session_data = validate_session(winner['user_token'])
+        if not session_data:
+            return
+        username = session_data['username']
+        increment_user_wins(username)
+
+        is_ranked = game.get('is_ranked', False)
+        if is_ranked:
+            # Pay out the entire pot the players paid in at game start.
+            pot = game.get('pot', 0)
+            if pot > 0:
+                increment_user_coins(username, pot)
+            # Bump tier_wins; advance tier if threshold reached.
+            tier_cfg = get_tier_info(game.get('ranked_tier') or 1)
+            progress = record_ranked_win(username, tier_cfg['wins_to_advance'])
+            if progress and progress.get('advanced') and winner.get('sid'):
+                new_cfg = get_tier_info(progress['tier'])
+                socketio.emit('ranked_tier_advanced', {
+                    'tier': progress['tier'],
+                    'name': new_cfg['name'],
+                    'badge': new_cfg['badge']
+                }, room=winner['sid'])
+        else:
+            # Standard mode: only award coins on hard+ difficulty.
+            diff = game.get('ai_difficulty', 'hard')
+            if diff in ('hard', 'impossible', 'random'):
+                increment_user_coins(username, 100)
+
+        user_data = get_user_by_username(username)
+        if user_data:
+            session_data['wins'] = user_data['wins']
+            session_data['coins'] = user_data.get('coins', 0)
+            if winner.get('sid'):
+                winner_rank = get_user_rank(username)
+                socketio.emit(
+                    'coins_update',
+                    {'coins': user_data.get('coins', 0), 'rank': winner_rank},
+                    room=winner['sid']
+                )
+        broadcast_leaderboard_update()
+    except Exception as e:
+        print(f"Error recording win: {e}")
+
 def get_game_state_for_player(game, player_sid):
     """Get sanitized game state for a specific player."""
     players_data = []
@@ -441,7 +526,9 @@ def get_game_state_for_player(game, player_sid):
             'num_dice': p['num_dice'],
             'is_human': p['is_human'],
             'connected': p.get('connected', True),
-            'avatar': p.get('avatar', '⚓' if p['is_human'] else '🏴‍☠️')
+            'avatar': p.get('avatar', '⚓' if p['is_human'] else '🏴‍☠️'),
+            'ranked_tier': p.get('ranked_tier'),
+            'tier_badge': p.get('tier_badge', '')
         }
 
         # Show dice only to the owner, or during reveal/game_over
@@ -487,7 +574,12 @@ def get_game_state_for_player(game, player_sid):
         'is_waiting': is_waiting,
         'ai_difficulty': game.get('ai_difficulty', 'hard'),
         'is_private': game.get('is_private', False),
-        'num_ai': game.get('num_ai', 0)
+        'num_ai': game.get('num_ai', 0),
+        'is_ranked': game.get('is_ranked', False),
+        'ranked_tier': game.get('ranked_tier'),
+        'ranked_tier_name': get_tier_info(game.get('ranked_tier') or 1)['name'] if game.get('is_ranked') else None,
+        'entry_fee': game.get('entry_fee', 0),
+        'pot': game.get('pot', 0)
     }
 
 def broadcast_game_state(room_code):
@@ -592,27 +684,7 @@ def resolve_challenge(game, challenger_idx, bidder_idx):
         winner = game['players'][alive[0]] if alive else None
         if winner:
             game['message'] = f"{winner['name']} WINS! The treasure is theirs!"
-
-            # Record win and award coins if user is logged in
-            try:
-                if winner.get('user_token'):
-                    session_data = validate_session(winner['user_token'])
-                    if session_data:
-                        increment_user_wins(session_data['username'])
-                        # Only award coins on hard+ difficulty
-                        diff = game.get('ai_difficulty', 'hard')
-                        if diff in ('hard', 'impossible', 'random'):
-                            increment_user_coins(session_data['username'], 100)
-                        user_data = get_user_by_username(session_data['username'])
-                        if user_data:
-                            session_data['wins'] = user_data['wins']
-                            session_data['coins'] = user_data.get('coins', 0)
-                            if winner.get('sid'):
-                                winner_rank = get_user_rank(session_data['username'])
-                                socketio.emit('coins_update', {'coins': user_data.get('coins', 0), 'rank': winner_rank}, room=winner['sid'])
-                        broadcast_leaderboard_update()
-            except Exception as e:
-                print(f"Error recording win: {e}")
+            record_game_win(game, winner)
     # Round starter rotation is handled in roll_dice
 
 # Routes
@@ -664,6 +736,7 @@ def handle_create_game(data):
     avatar = data.get('avatar', '🏴‍☠️')
     ai_difficulty = data.get('ai_difficulty', 'hard')
     user_token = data.get('user_token')
+    is_ranked = bool(data.get('is_ranked', False))
 
     # Validate difficulty
     if ai_difficulty not in ['easy', 'medium', 'hard', 'impossible', 'random']:
@@ -671,8 +744,21 @@ def handle_create_game(data):
 
     is_private = bool(data.get('is_private', False))
 
+    # Ranked games: must be logged in, AI is forbidden, host's tier sets the room.
+    ranked_tier = 1
+    if is_ranked:
+        session_data = validate_session(user_token) if user_token else None
+        if not session_data:
+            emit('ranked_error', {'message': 'Ye must be signed in to host a ranked game!'})
+            return
+        ranked_progress = get_user_ranked(session_data['username'])
+        if ranked_progress:
+            ranked_tier = ranked_progress['tier']
+        num_ai = 0
+        is_private = False  # Ranked rooms are listed in the browser by default
+
     room_code = generate_room_code()
-    game = create_game(room_code, player_name, num_ai, is_private)
+    game = create_game(room_code, player_name, num_ai, is_private, is_ranked=is_ranked, ranked_tier=ranked_tier)
     game['players'][0]['sid'] = request.sid
     game['players'][0]['avatar'] = avatar
     game['ai_difficulty'] = ai_difficulty
@@ -683,6 +769,7 @@ def handle_create_game(data):
         if session_data:
             game['players'][0]['user_token'] = user_token
             game['players'][0]['username'] = session_data['username']
+            attach_player_ranked(game['players'][0])
 
     games[room_code] = game
     join_room(room_code)
@@ -701,6 +788,19 @@ def handle_join_game(data):
     if not game:
         emit('game_not_found', {'message': "No ship sails under that flag, matey! Check yer code or browse the tavern board."})
         return
+
+    # Ranked-mode join gate: must be signed in and able to cover the entry fee.
+    # Coins aren't deducted here — only when the host starts the game — so this
+    # is a soft check to prevent unfunded players from clogging the lobby.
+    if game.get('is_ranked'):
+        session_data = validate_session(user_token) if user_token else None
+        if not session_data:
+            emit('ranked_error', {'message': 'Ranked games require ye to sign in, matey!'})
+            return
+        entry = game.get('entry_fee', 0)
+        if get_user_coins(session_data['username']) < entry:
+            emit('ranked_error', {'message': f'Ye need {entry} coins to enter this ranked game!'})
+            return
 
     # Check if this player is reconnecting (matching name)
     reconnecting_player = None
@@ -722,6 +822,7 @@ def handle_join_game(data):
             if session_data:
                 reconnecting_player['user_token'] = user_token
                 reconnecting_player['username'] = session_data['username']
+                attach_player_ranked(reconnecting_player)
 
         join_room(room_code)
         game['message'] = f"{reconnecting_player['name']} has rejoined the crew!"
@@ -743,6 +844,7 @@ def handle_join_game(data):
                     if sd:
                         waiting_player['user_token'] = user_token
                         waiting_player['username'] = sd['username']
+                        attach_player_ranked(waiting_player)
 
                 join_room(room_code)
                 game['message'] = f"{waiting_player['name']} has rejoined the waiting list!"
@@ -774,6 +876,7 @@ def handle_join_game(data):
                 if sd:
                     disconnected_player['user_token'] = user_token
                     disconnected_player['username'] = sd['username']
+                    attach_player_ranked(disconnected_player)
 
             join_room(room_code)
             game['message'] = f"{player_name} took over for {old_name}!"
@@ -813,6 +916,7 @@ def handle_join_game(data):
                 if session_data:
                     waiting_player['user_token'] = user_token
                     waiting_player['username'] = session_data['username']
+                    attach_player_ranked(waiting_player)
 
             game['waiting_players'].append(waiting_player)
 
@@ -853,6 +957,7 @@ def handle_join_game(data):
         if session_data:
             new_player['user_token'] = user_token
             new_player['username'] = session_data['username']
+            attach_player_ranked(new_player)
 
     game['players'].append(new_player)
 
@@ -875,13 +980,50 @@ def handle_start_game(data):
         emit('game_error', {'message': 'Only the host can start the game!'})
         return
 
-    # Add AI players
-    add_ai_players(game)
+    is_ranked = game.get('is_ranked', False)
 
-    human_count = len([p for p in game['players'] if p['is_human']])
-    if human_count + game['num_ai'] < 2:
-        emit('game_error', {'message': 'Need at least 2 players!'})
-        return
+    if is_ranked:
+        # Ranked: no AI, ≥2 humans, all players logged in, all can pay the entry fee.
+        game['num_ai'] = 0
+        humans = [p for p in game['players'] if p['is_human']]
+        if len(humans) < 2:
+            emit('game_error', {'message': 'Ranked games need at least 2 human players, matey!'})
+            return
+        entry = game.get('entry_fee', 0)
+        # Re-validate every human has enough coins right now (they may have spent
+        # them elsewhere between joining and the host clicking start).
+        for p in humans:
+            if not p.get('user_token'):
+                emit('game_error', {'message': f"{p['name']} must sign in to play ranked!"})
+                return
+            sd = validate_session(p['user_token'])
+            if not sd:
+                emit('game_error', {'message': f"{p['name']}'s session expired — they need to sign in again!"})
+                return
+            if get_user_coins(sd['username']) < entry:
+                emit('game_error', {'message': f"{p['name']} doesn't have enough coins ({entry} needed)!"})
+                return
+        # Debit all entry fees into the pot.
+        pot = 0
+        for p in humans:
+            sd = validate_session(p['user_token'])
+            increment_user_coins(sd['username'], -entry)
+            pot += entry
+            # Push updated coin balance to the player so their UI reflects the debit.
+            new_balance = get_user_coins(sd['username'])
+            sd['coins'] = new_balance
+            if p.get('sid'):
+                rank = get_user_rank(sd['username'])
+                socketio.emit('coins_update', {'coins': new_balance, 'rank': rank}, room=p['sid'])
+        game['pot'] = pot
+        broadcast_leaderboard_update()
+    else:
+        # Standard mode: add AI players
+        add_ai_players(game)
+        human_count = len([p for p in game['players'] if p['is_human']])
+        if human_count + game['num_ai'] < 2:
+            emit('game_error', {'message': 'Need at least 2 players!'})
+            return
 
     game['phase'] = 'rolling'
     game['message'] = 'Game starting! Roll the dice!'
@@ -909,25 +1051,7 @@ def handle_roll_dice(data):
         if alive:
             winner = game['players'][alive[0]]
             game['message'] = f"{winner['name']} WINS! The treasure is theirs!"
-            # Record win and award coins
-            try:
-                if winner.get('user_token'):
-                    session_data = validate_session(winner['user_token'])
-                    if session_data:
-                        increment_user_wins(session_data['username'])
-                        diff = game.get('ai_difficulty', 'hard')
-                        if diff in ('hard', 'impossible', 'random'):
-                            increment_user_coins(session_data['username'], 100)
-                        user_data = get_user_by_username(session_data['username'])
-                        if user_data:
-                            session_data['wins'] = user_data['wins']
-                            session_data['coins'] = user_data.get('coins', 0)
-                            if winner.get('sid'):
-                                winner_rank = get_user_rank(session_data['username'])
-                                socketio.emit('coins_update', {'coins': user_data.get('coins', 0), 'rank': winner_rank}, room=winner['sid'])
-                        broadcast_leaderboard_update()
-            except Exception as e:
-                print(f"Error recording win: {e}")
+            record_game_win(game, winner)
         broadcast_game_state(room_code)
         return
 
@@ -1160,24 +1284,7 @@ def handle_kick_player(data):
         if alive:
             winner = game['players'][alive[0]]
             game['message'] = f"{winner['name']} WINS! The treasure is theirs!"
-            try:
-                if winner.get('user_token'):
-                    session_data = validate_session(winner['user_token'])
-                    if session_data:
-                        increment_user_wins(session_data['username'])
-                        diff = game.get('ai_difficulty', 'hard')
-                        if diff in ('hard', 'impossible', 'random'):
-                            increment_user_coins(session_data['username'], 100)
-                        user_data = get_user_by_username(session_data['username'])
-                        if user_data:
-                            session_data['wins'] = user_data['wins']
-                            session_data['coins'] = user_data.get('coins', 0)
-                            if winner.get('sid'):
-                                winner_rank = get_user_rank(session_data['username'])
-                                socketio.emit('coins_update', {'coins': user_data.get('coins', 0), 'rank': winner_rank}, room=winner['sid'])
-                        broadcast_leaderboard_update()
-            except Exception as e:
-                print(f"Error recording win: {e}")
+            record_game_win(game, winner)
 
     broadcast_game_state(room_code)
 
@@ -1314,6 +1421,9 @@ def handle_browse_games():
         if game.get('is_private', False):
             continue
         human_count = len([p for p in game['players'] if p['is_human']])
+        is_ranked = game.get('is_ranked', False)
+        tier = game.get('ranked_tier') if is_ranked else None
+        tier_cfg = get_tier_info(tier) if is_ranked else None
         game_list.append({
             'room_code': code,
             'host': game['host'],
@@ -1321,9 +1431,37 @@ def handle_browse_games():
             'max_players': game['max_players'],
             'phase': game['phase'],
             'ai_count': game.get('num_ai', 0),
-            'ai_difficulty': game.get('ai_difficulty', 'hard')
+            'ai_difficulty': game.get('ai_difficulty', 'hard'),
+            'is_ranked': is_ranked,
+            'ranked_tier': tier,
+            'ranked_tier_name': tier_cfg['name'] if tier_cfg else None,
+            'ranked_tier_badge': tier_cfg['badge'] if tier_cfg else '',
+            'entry_fee': game.get('entry_fee', 0)
         })
     emit('game_list', {'games': game_list})
+
+@socketio.on('get_ranked_info')
+def handle_get_ranked_info(data):
+    """Return the user's current tier, win progress, and the tier ladder."""
+    token = data.get('token')
+    session_data = validate_session(token) if token else None
+    if not session_data:
+        emit('ranked_info', {'logged_in': False, 'tiers': RANKED_TIERS})
+        return
+    progress = get_user_ranked(session_data['username']) or {'tier': 1, 'tier_wins': 0}
+    tier_cfg = get_tier_info(progress['tier'])
+    coins = get_user_coins(session_data['username'])
+    emit('ranked_info', {
+        'logged_in': True,
+        'tier': progress['tier'],
+        'tier_wins': progress['tier_wins'],
+        'tier_name': tier_cfg['name'],
+        'tier_badge': tier_cfg['badge'],
+        'entry_fee': tier_cfg['entry'],
+        'wins_to_advance': tier_cfg['wins_to_advance'],
+        'coins': coins,
+        'tiers': RANKED_TIERS
+    })
 
 @socketio.on('update_ai_count')
 def handle_update_ai_count(data):
@@ -1334,6 +1472,11 @@ def handle_update_ai_count(data):
         return
     # Host-only
     if game['players'][0].get('sid') != request.sid:
+        return
+    # Ranked games never allow AI.
+    if game.get('is_ranked'):
+        game['num_ai'] = 0
+        broadcast_game_state(room_code)
         return
     human_count = len([p for p in game['players'] if p['is_human']])
     max_ai = game['max_players'] - human_count
