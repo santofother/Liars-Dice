@@ -17,13 +17,17 @@ from database import (
 )
 
 # Legendary skin catalog — server-side price authority. Client cannot fake costs.
+# Each is a gold-glowing royal variant of an existing character class.
 LEGENDARY_SKINS = {
-    'legendary_ghost':   {'cost': 1500,  'name': 'Ghost Captain'},
-    'legendary_skeleton':{'cost': 2000,  'name': 'Bone Pirate'},
-    'legendary_golden':  {'cost': 3000,  'name': 'Golden Captain'},
-    'legendary_demon':   {'cost': 4000,  'name': 'Demon Buccaneer'},
-    'legendary_kraken':  {'cost': 5000,  'name': 'Kraken Lord'},
-    'legendary_royal':   {'cost': 10000, 'name': 'Royal Phantom'},
+    'legendary_deckhand':      {'cost': 1000,  'name': 'Legendary Deckhand'},
+    'legendary_lookout':       {'cost': 1500,  'name': 'Legendary Lookout'},
+    'legendary_gunner':        {'cost': 2500,  'name': 'Legendary Gunner'},
+    'legendary_navigator':     {'cost': 3000,  'name': 'Legendary Navigator'},
+    'legendary_eic_officer':   {'cost': 4000,  'name': 'Legendary EIC Officer'},
+    'legendary_firstmate':     {'cost': 5000,  'name': 'Legendary First Mate'},
+    'legendary_quartermaster': {'cost': 6000,  'name': 'Legendary Quartermaster'},
+    'legendary_redcoat':       {'cost': 7500,  'name': 'Legendary Redcoat'},
+    'legendary_captain':       {'cost': 10000, 'name': 'Legendary Captain'},
 }
 
 # Ranked-mode tier configuration. wins_to_advance=None means top tier.

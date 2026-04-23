@@ -437,6 +437,25 @@ body.pixel-avatars-on .pixel-preview-row img {
 .px-char-option.legendary.locked img {
     filter: grayscale(1) brightness(0.55);
     opacity: 0.55;
+    animation: none;
+}
+
+/* Gold shimmer halo on UNLOCKED legendary sprites — picker tiles, the
+   in-game sprite-wrap, and the purchase modal preview all share this. */
+@keyframes legendary-shimmer {
+    0%, 100% {
+        filter: drop-shadow(0 0 2px #ffd700) drop-shadow(0 0 5px rgba(255,215,0,0.55));
+    }
+    50% {
+        filter: drop-shadow(0 0 4px #ffe680) drop-shadow(0 0 10px rgba(255,215,0,0.9));
+    }
+}
+
+.px-char-option.legendary:not(.locked) img,
+.px-sprite-wrap.legendary-sprite img,
+img.legendary-sprite,
+.px-purchase-sprite {
+    animation: legendary-shimmer 2.4s ease-in-out infinite;
 }
 
 .px-char-option.legendary.locked {
@@ -460,6 +479,21 @@ body.pixel-avatars-on .pixel-preview-row img {
     color: #ffd700;
     font-weight: bold;
     font-size: 0.6em;
+}
+
+/* Hover hint on locked legendary tiles — mirrors the "double-click to
+   customize" hint on regular avatars but tells the user how to buy. */
+.px-char-option.legendary.locked:hover::after {
+    content: 'double-click to purchase';
+    position: absolute;
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.45em;
+    color: #ffd700;
+    white-space: nowrap;
+    pointer-events: none;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.9);
 }
 
 .px-char-option.legendary:not(.locked) .px-char-label {
