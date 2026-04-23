@@ -290,6 +290,130 @@
             '0000000000000000',
         ],
 
+        // ============================================
+        // LEGENDARY SKINS — distinct sprites
+        // ============================================
+
+        // --- GHOST CAPTAIN - Ethereal white spectre with tricorn ---
+        legendary_ghost: [
+            '0000000000000000',
+            '0000016661000000',
+            '0000166666100000',
+            '0011666666611000',
+            '0000a66666a00000',
+            '0000616616a00000',
+            '00000a666a000000',
+            '0000016661000000',
+            '0000066660000000',
+            '0000a6666a000000',
+            '0006a6666a600000',
+            '0000666666000000',
+            '00000a66a0000000',
+            '0000a000a0000000',
+            '00000a000a000000',
+            '0000000000000000',
+        ],
+
+        // --- BONE PIRATE - Skeleton with red bandana ---
+        legendary_skeleton: [
+            '0000000000000000',
+            '0000000000000000',
+            '0000077770000000',
+            '0000777777000000',
+            '0000766667000000',
+            '0000616616000000',
+            '0000066660000000',
+            '0000016610000000',
+            '0000066660000000',
+            '0006161616000000',
+            '0006666666000000',
+            '0006161616000000',
+            '0000066660000000',
+            '0000066660000000',
+            '0000060060000000',
+            '0000000000000000',
+        ],
+
+        // --- GOLDEN CAPTAIN - All gold royal regalia ---
+        legendary_golden: [
+            '0000000000000000',
+            '0000018881000000',
+            '0000188888100000',
+            '0011888888811000',
+            '0000188881000000',
+            '0000818118000000',
+            '0000088880000000',
+            '0000088880000000',
+            '0000888888000000',
+            '0008811188000000',
+            '0008888888000000',
+            '0008811188000000',
+            '0000888888000000',
+            '0000088880000000',
+            '0000088088000000',
+            '0000000000000000',
+        ],
+
+        // --- DEMON BUCCANEER - Red skin, horns, dark coat ---
+        legendary_demon: [
+            '0000000000000000',
+            '0001000000010000',
+            '0011700007710000',
+            '0001777777710000',
+            '0000777777000000',
+            '0000787787000000',
+            '0000077770000000',
+            '0000017710000000',
+            '0000022220000000',
+            '0000272272000000',
+            '0001277772100000',
+            '0000272272000000',
+            '0000022220000000',
+            '0000022022000000',
+            '0000022022000000',
+            '0000000000000000',
+        ],
+
+        // --- KRAKEN LORD - Tentacle face, deep purple/green ---
+        legendary_kraken: [
+            '0000000000000000',
+            '00000eeeeee00000',
+            '0000eeeeeeee0000',
+            '000beebeebeeb000',
+            '0000eeeeeeee0000',
+            '0000e8e88e8e0000',
+            '0000eeeeeeee0000',
+            '0000ebbbbbbe0000',
+            '0000bbbbbbbb0000',
+            '000bbeeeeebb0000',
+            '0000bbbbbbbb0000',
+            '0000bbbbbbbb0000',
+            '000b00bb00b00000',
+            '00b00b00b00b0000',
+            '0b00b0000b00b000',
+            '0000000000000000',
+        ],
+
+        // --- ROYAL PHANTOM - Crowned spectre in purple ---
+        legendary_royal: [
+            '0000000000000000',
+            '0008080808080000',
+            '0008888888880000',
+            '0008666666680000',
+            '0000666666000000',
+            '0000616616000000',
+            '0000066660000000',
+            '0000018810000000',
+            '00008eeeeee80000',
+            '00008e8778e80000',
+            '0008eeeeeeee8000',
+            '0008eeeeeeee8000',
+            '00008eeeeee80000',
+            '00008e88e8000000',
+            '0000080080000000',
+            '0000000000000000',
+        ],
+
     };
 
     // ===================================================
@@ -341,7 +465,38 @@
         { id: 'redcoat_dark', base: 'redcoat', name: 'Redcoat', group: 'redcoat', category: 'Military', skin: 'dark', hair: 'black', variantName: 'Powderkeg' },
         { id: 'naval_light', base: 'naval_officer', name: 'Naval Officer', group: 'naval', category: 'Military', skin: 'light', hair: 'brown', primary: true, variantName: 'Flagship' },
         { id: 'naval_dark', base: 'naval_officer', name: 'Naval Officer', group: 'naval', category: 'Military', skin: 'dark', hair: 'black', variantName: 'Deepwater' },
+
+        // --- LEGENDARY SKINS (purchased with coins, each variant bought separately) ---
+        { id: 'legendary_ghost',    base: 'legendary_ghost',    name: 'Ghost Captain',    category: 'Legendary', cost: 1500 },
+        { id: 'legendary_skeleton', base: 'legendary_skeleton', name: 'Bone Pirate',      category: 'Legendary', cost: 2000 },
+        { id: 'legendary_golden',   base: 'legendary_golden',   name: 'Golden Captain',   category: 'Legendary', cost: 3000 },
+        { id: 'legendary_demon',    base: 'legendary_demon',    name: 'Demon Buccaneer',  category: 'Legendary', cost: 4000 },
+        { id: 'legendary_kraken',   base: 'legendary_kraken',   name: 'Kraken Lord',      category: 'Legendary', cost: 5000 },
+        { id: 'legendary_royal',    base: 'legendary_royal',    name: 'Royal Phantom',    category: 'Legendary', cost: 10000 },
     ];
+
+    // === OWNED LEGENDARY SKINS (set by host page after auth) ===
+    let ownedLegendarySkins = [];
+    function setOwnedSkins(arr) {
+        ownedLegendarySkins = Array.isArray(arr) ? arr.slice() : [];
+        // If the currently equipped avatar is a legendary the user no longer
+        // owns (e.g. after logout), revert to the default so they can't keep
+        // showing it in-game.
+        const sel = localStorage.getItem('pixelAvatar');
+        const ch = sel && CHARACTERS.find(c => c.id === sel);
+        if (ch && ch.category === 'Legendary' && ownedLegendarySkins.indexOf(sel) === -1) {
+            localStorage.setItem('pixelAvatar', 'captain_m_light');
+        }
+        // Re-render any open pickers so locked/unlocked state updates immediately.
+        ['m-pixel-char-picker', 'register-pixel-char-picker', 'login-pixel-char-picker'].forEach(id => {
+            if (document.getElementById(id)) buildCharacterPicker(id);
+        });
+    }
+    function isOwned(charId) {
+        const ch = CHARACTERS.find(c => c.id === charId);
+        if (!ch || ch.category !== 'Legendary') return true; // non-legendary always owned
+        return ownedLegendarySkins.indexOf(charId) !== -1;
+    }
 
     // === AI CHARACTER MAPPING (fixed assignments) ===
     const AI_CHARACTERS = {
@@ -614,10 +769,82 @@
         });
         html += '</div>';
 
+        // --- LEGENDARY SKINS section ---
+        const legendary = CHARACTERS.filter(c => c.category === 'Legendary');
+        if (legendary.length) {
+            html += '<div class="px-legendary-header">⭐ LEGENDARY SKINS ⭐</div>';
+            html += '<div class="px-char-grid px-legendary-grid">';
+            legendary.forEach(ch => {
+                const url = getSpriteDataURL(ch.id, 3);
+                const owned = isOwned(ch.id);
+                const sel = ch.id === selected ? ' selected' : '';
+                const lockedCls = owned ? '' : ' locked';
+                const label = owned ? ch.name : (ch.cost + 'c');
+                html += `<div class="px-char-option legendary${lockedCls}${sel}" data-char-id="${ch.id}"
+                    onclick="PixelAvatars.legendaryClick('${ch.id}', '${containerId}')"
+                    ondblclick="PixelAvatars.legendaryDblClick('${ch.id}', '${containerId}')">
+                    <img src="${url}" alt="${ch.name}">
+                    <div class="px-char-label">${label}</div>
+                </div>`;
+            });
+            html += '</div>';
+        }
+
         // Variant sub-picker (hidden by default)
         html += '<div class="px-variant-picker hidden" id="px-variant-picker-' + containerId + '"></div>';
 
         container.innerHTML = html;
+    }
+
+    // Single-click on legendary: select if owned, otherwise no-op (double-click to buy)
+    function legendaryClick(charId, containerId) {
+        if (isOwned(charId)) {
+            selectCharacter(charId, containerId);
+        }
+    }
+
+    // Double-click on legendary: open purchase dialog if not owned
+    function legendaryDblClick(charId, containerId) {
+        if (isOwned(charId)) return; // already owned, no-op
+        openPurchaseDialog(charId, containerId);
+    }
+
+    function openPurchaseDialog(charId, containerId) {
+        const ch = CHARACTERS.find(c => c.id === charId);
+        if (!ch || ch.category !== 'Legendary') return;
+
+        // Remove any existing dialog
+        const existing = document.getElementById('px-purchase-modal');
+        if (existing) existing.remove();
+
+        const url = getSpriteDataURL(charId, 5);
+        const modal = document.createElement('div');
+        modal.id = 'px-purchase-modal';
+        modal.className = 'px-purchase-modal';
+        modal.innerHTML = `
+            <div class="px-purchase-card">
+                <div class="px-purchase-title">⭐ Legendary Skin ⭐</div>
+                <img class="px-purchase-sprite" src="${url}" alt="${ch.name}">
+                <div class="px-purchase-name">${ch.name}</div>
+                <div class="px-purchase-cost">Cost: <b>${ch.cost}</b> coins</div>
+                <div class="px-purchase-actions">
+                    <button class="px-purchase-cancel">Cancel</button>
+                    <button class="px-purchase-confirm">Purchase</button>
+                </div>
+                <div class="px-purchase-msg" id="px-purchase-msg"></div>
+            </div>`;
+        document.body.appendChild(modal);
+
+        modal.querySelector('.px-purchase-cancel').onclick = () => modal.remove();
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+        modal.querySelector('.px-purchase-confirm').onclick = () => {
+            if (typeof window.onLegendaryPurchase === 'function') {
+                window.onLegendaryPurchase(charId, ch.cost, containerId, modal);
+            } else {
+                const m = document.getElementById('px-purchase-msg');
+                if (m) m.textContent = 'Log in to purchase legendary skins!';
+            }
+        };
     }
 
     function selectGroup(group, containerId) {
@@ -670,6 +897,8 @@
     }
 
     function selectCharacter(charId, containerId) {
+        // Block selection of unowned legendary skins
+        if (!isOwned(charId)) return;
         localStorage.setItem('pixelAvatar', charId);
 
         // Close variant picker
@@ -719,6 +948,11 @@
         openVariantPicker: openVariantPicker,
         closeVariantPicker: closeVariantPicker,
         preloadAll: preloadAll,
+        setOwnedSkins: setOwnedSkins,
+        isOwned: isOwned,
+        legendaryClick: legendaryClick,
+        legendaryDblClick: legendaryDblClick,
+        openPurchaseDialog: openPurchaseDialog,
     };
 
     // Preload on next idle frame

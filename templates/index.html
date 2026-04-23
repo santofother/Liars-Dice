@@ -5519,7 +5519,7 @@
                     </div>
 
                     <div class="lobby-m-row" style="gap:6px;">
-                        <button class="lobby-m-btn lobby-m-btn-wood" onclick="startTutorial()" style="flex:1;">📜 How to Play</button>
+                        <button class="lobby-m-btn lobby-m-btn-wood" onclick="startTutorial()" style="flex:1;">📜 How to Play/Tutorial</button>
                         <button class="lobby-m-btn lobby-m-btn-wood" onclick="toggleAccount()" style="flex:1;" id="m-lobby-signin-btn">👤 Sign In</button>
                     </div>
 
@@ -6292,6 +6292,10 @@
         function onPixelAvatarsReady() {
             // Build character pickers in lobby and account creation
             if (window.PixelAvatars) {
+                // Push owned legendary skins BEFORE building pickers so locks render correctly
+                if (currentUser && currentUser.owned_skins) {
+                    PixelAvatars.setOwnedSkins(currentUser.owned_skins);
+                }
                 PixelAvatars.buildCharacterPicker('m-pixel-char-picker');
                 PixelAvatars.buildCharacterPicker('register-pixel-char-picker');
                 PixelAvatars.buildCharacterPicker('login-pixel-char-picker');
@@ -6323,6 +6327,34 @@
                 socket.emit('update_avatar', { token: userToken, avatar: charId });
             }
         }
+
+        // Push the server-confirmed owned-skin list into the pixel-avatars module
+        // so the picker shows the correct locked/unlocked state. Safe to call
+        // before the pixel-avatars script has finished loading — we retry shortly.
+        function applyOwnedSkins(list) {
+            if (window.PixelAvatars && PixelAvatars.setOwnedSkins) {
+                PixelAvatars.setOwnedSkins(list || []);
+            } else {
+                setTimeout(() => applyOwnedSkins(list), 200);
+            }
+        }
+
+        // Purchase callback hook used by the legendary purchase modal.
+        // pixel-avatars.js calls this when the user clicks "Purchase".
+        window.onLegendaryPurchase = function (skinId, cost, containerId, modalEl) {
+            const msgEl = modalEl ? modalEl.querySelector('.px-purchase-msg') : null;
+            if (!currentUser || !userToken) {
+                if (msgEl) msgEl.textContent = 'Log in to purchase legendary skins!';
+                return;
+            }
+            if ((currentUser.coins || 0) < cost) {
+                if (msgEl) msgEl.textContent = `Need ${cost} coins, ye have ${currentUser.coins || 0}.`;
+                return;
+            }
+            const confirmBtn = modalEl ? modalEl.querySelector('.px-purchase-confirm') : null;
+            if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '...'; }
+            socket.emit('purchase_skin', { token: userToken, skin_id: skinId });
+        };
 
         function initPixelAvatars() {
             const saved = localStorage.getItem('pixelAvatars');
@@ -10089,6 +10121,7 @@
 
             userToken = null;
             currentUser = null;
+            applyOwnedSkins([]);
             clearAuthToken();
             updateAccountUI();
             showToast('Fair winds and following seas! ⛵');
@@ -10341,8 +10374,10 @@
                 username: data.username,
                 avatar: data.avatar,
                 wins: data.wins,
-                coins: data.coins || 50
+                coins: data.coins || 50,
+                owned_skins: data.owned_skins || []
             };
+            applyOwnedSkins(currentUser.owned_skins);
             saveAuthToken(userToken);
             updateAccountUI();
             toggleAccount();
@@ -10362,8 +10397,10 @@
                 username: data.username,
                 avatar: data.avatar,
                 wins: data.wins,
-                coins: data.coins ?? 0
+                coins: data.coins ?? 0,
+                owned_skins: data.owned_skins || []
             };
+            applyOwnedSkins(currentUser.owned_skins);
             // Sync localStorage pixel avatar to account on login
             if (pixelAvatarsEnabled) {
                 const lsAvatar = localStorage.getItem('pixelAvatar');
@@ -10397,8 +10434,10 @@
                 username: data.username,
                 avatar: data.avatar,
                 wins: data.wins,
-                coins: data.coins ?? 0
+                coins: data.coins ?? 0,
+                owned_skins: data.owned_skins || []
             };
+            applyOwnedSkins(currentUser.owned_skins);
             // If pixel avatars enabled and user has a localStorage selection, sync it
             if (pixelAvatarsEnabled) {
                 const lsAvatar = localStorage.getItem('pixelAvatar');
@@ -10427,6 +10466,36 @@
                 updateAccountUI();
                 showToast('Avatar updated! ⚓');
             }
+        });
+
+        // Legendary skin purchase results
+        socket.on('purchase_success', (data) => {
+            if (currentUser) {
+                currentUser.coins = data.coins;
+                currentUser.owned_skins = data.owned_skins || [];
+            }
+            applyOwnedSkins(data.owned_skins || []);
+            // Auto-equip the freshly purchased skin
+            if (window.PixelAvatars && data.skin_id) {
+                PixelAvatars.selectCharacter(data.skin_id, 'm-pixel-char-picker');
+            }
+            const modal = document.getElementById('px-purchase-modal');
+            if (modal) modal.remove();
+            showToast(`Unlocked: ${data.name}! ⭐`);
+            playSfx('win');
+        });
+
+        socket.on('purchase_error', (data) => {
+            const modal = document.getElementById('px-purchase-modal');
+            if (modal) {
+                const msg = modal.querySelector('.px-purchase-msg');
+                if (msg) msg.textContent = data.message || 'Purchase failed';
+                const btn = modal.querySelector('.px-purchase-confirm');
+                if (btn) { btn.disabled = false; btn.textContent = 'Purchase'; }
+            } else {
+                showToast(data.message || 'Purchase failed');
+            }
+            playSfx('lose');
         });
 
             // Handle leaderboard updates

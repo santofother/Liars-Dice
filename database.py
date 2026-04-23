@@ -66,6 +66,10 @@ def init_db():
             conn.execute('SELECT tier_wins FROM users LIMIT 1')
         except sqlite3.OperationalError:
             conn.execute('ALTER TABLE users ADD COLUMN tier_wins INTEGER NOT NULL DEFAULT 0')
+        try:
+            conn.execute('SELECT owned_skins FROM users LIMIT 1')
+        except sqlite3.OperationalError:
+            conn.execute("ALTER TABLE users ADD COLUMN owned_skins TEXT NOT NULL DEFAULT ''")
 
 def validate_username(username):
     """Validate username format (3-20 alphanumeric characters)."""
@@ -179,7 +183,7 @@ def get_user_by_username(username):
     try:
         with get_db() as conn:
             user = conn.execute(
-                'SELECT username, avatar, total_wins, total_games, total_coins, ranked_tier, tier_wins FROM users WHERE username = ? COLLATE NOCASE',
+                'SELECT username, avatar, total_wins, total_games, total_coins, ranked_tier, tier_wins, owned_skins FROM users WHERE username = ? COLLATE NOCASE',
                 (username,)
             ).fetchone()
 
@@ -191,7 +195,8 @@ def get_user_by_username(username):
                     'games': user['total_games'],
                     'coins': user['total_coins'],
                     'ranked_tier': user['ranked_tier'],
-                    'tier_wins': user['tier_wins']
+                    'tier_wins': user['tier_wins'],
+                    'owned_skins': [s for s in (user['owned_skins'] or '').split(',') if s]
                 }
             return None
     except Exception as e:
@@ -456,6 +461,52 @@ def set_user_coins(username, amount):
     except Exception as e:
         print(f"Error setting coins: {e}")
         return 0
+
+def get_user_owned_skins(username):
+    """Return a list of legendary skin IDs the user owns."""
+    try:
+        with get_db() as conn:
+            row = conn.execute(
+                'SELECT owned_skins FROM users WHERE username = ? COLLATE NOCASE',
+                (username,)
+            ).fetchone()
+            if not row or not row['owned_skins']:
+                return []
+            return [s for s in row['owned_skins'].split(',') if s]
+    except Exception as e:
+        print(f"Error getting owned skins: {e}")
+        return []
+
+def purchase_legendary_skin(username, skin_id, cost):
+    """
+    Atomically deduct cost from user's coins and add skin_id to owned_skins.
+    Returns dict {success, message, coins, owned_skins}.
+    """
+    try:
+        with get_db() as conn:
+            row = conn.execute(
+                'SELECT total_coins, owned_skins FROM users WHERE username = ? COLLATE NOCASE',
+                (username,)
+            ).fetchone()
+            if not row:
+                return {'success': False, 'message': 'User not found', 'coins': 0, 'owned_skins': []}
+            current_coins = row['total_coins']
+            owned = [s for s in (row['owned_skins'] or '').split(',') if s]
+            if skin_id in owned:
+                return {'success': False, 'message': 'Ye already own this skin!', 'coins': current_coins, 'owned_skins': owned}
+            if current_coins < cost:
+                return {'success': False, 'message': f'Not enough coins! Need {cost}, ye have {current_coins}.', 'coins': current_coins, 'owned_skins': owned}
+            new_coins = current_coins - cost
+            owned.append(skin_id)
+            new_owned = ','.join(owned)
+            conn.execute(
+                'UPDATE users SET total_coins = ?, owned_skins = ? WHERE username = ? COLLATE NOCASE',
+                (new_coins, new_owned, username)
+            )
+            return {'success': True, 'message': 'Skin unlocked!', 'coins': new_coins, 'owned_skins': owned}
+    except Exception as e:
+        print(f"Error purchasing skin: {e}")
+        return {'success': False, 'message': 'Database error', 'coins': 0, 'owned_skins': []}
 
 def get_all_users():
     """Get all users with their win counts and coins."""

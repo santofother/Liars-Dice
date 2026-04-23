@@ -401,6 +401,183 @@ body.pixel-avatars-on .pixel-preview-row img {
     }
 }
 
+/* --- Legendary Skins --- */
+.px-legendary-header {
+    margin-top: 10px;
+    padding: 6px 8px;
+    text-align: center;
+    font-family: 'Pirata One', serif;
+    color: #ffd700;
+    font-size: 0.85em;
+    letter-spacing: 1px;
+    background: linear-gradient(90deg, rgba(120,80,20,0) 0%, rgba(120,80,20,0.45) 50%, rgba(120,80,20,0) 100%);
+    border-top: 1px solid rgba(255,215,0,0.4);
+    border-bottom: 1px solid rgba(255,215,0,0.4);
+    text-shadow: 0 0 6px rgba(255,215,0,0.6), 1px 1px 2px rgba(0,0,0,0.8);
+}
+
+.px-legendary-grid {
+    background: linear-gradient(180deg, rgba(80,40,5,0.45), rgba(0,0,0,0.3));
+    border-color: rgba(255,215,0,0.5);
+}
+
+.px-char-option.legendary {
+    border-color: rgba(255,215,0,0.4);
+    background: rgba(60,30,5,0.4);
+}
+
+.px-char-option.legendary:hover {
+    border-color: #ffd700;
+    background: rgba(255,215,0,0.15);
+    box-shadow: 0 0 8px rgba(255,215,0,0.4);
+}
+
+.px-char-option.legendary.selected {
+    border-color: #ffd700;
+    background: rgba(255,215,0,0.2);
+    box-shadow: 0 0 12px rgba(255,215,0,0.7);
+}
+
+.px-char-option.legendary.locked img {
+    filter: grayscale(1) brightness(0.55);
+    opacity: 0.55;
+}
+
+.px-char-option.legendary.locked {
+    cursor: help;
+    border-color: rgba(150,150,150,0.4);
+    background: rgba(0,0,0,0.45);
+    position: relative;
+}
+
+.px-char-option.legendary.locked::before {
+    content: '🔒';
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 11px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.9);
+    pointer-events: none;
+}
+
+.px-char-option.legendary.locked .px-char-label {
+    color: #ffd700;
+    font-weight: bold;
+    font-size: 0.6em;
+}
+
+.px-char-option.legendary:not(.locked) .px-char-label {
+    color: #ffd700;
+}
+
+.px-char-option.legendary.selected::after {
+    content: '';
+}
+
+/* --- Purchase Modal --- */
+.px-purchase-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: tutPopIn 0.2s ease-out;
+}
+
+.px-purchase-card {
+    background: linear-gradient(145deg, #3d2817, #1a0f08);
+    border: 3px solid #ffd700;
+    border-radius: 14px;
+    padding: 20px 24px;
+    max-width: 320px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(255,215,0,0.5), inset 0 0 20px rgba(0,0,0,0.4);
+}
+
+.px-purchase-title {
+    font-family: 'Pirata One', serif;
+    color: #ffd700;
+    font-size: 1.3em;
+    margin-bottom: 12px;
+    text-shadow: 0 0 8px rgba(255,215,0,0.6);
+}
+
+.px-purchase-sprite {
+    width: 80px;
+    height: 80px;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    margin: 6px auto;
+    display: block;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    padding: 4px;
+}
+
+.px-purchase-name {
+    font-family: 'Pirata One', serif;
+    color: #d4a574;
+    font-size: 1.1em;
+    margin-top: 8px;
+}
+
+.px-purchase-cost {
+    color: #ffd700;
+    margin: 10px 0 16px;
+    font-size: 1em;
+}
+
+.px-purchase-cost b {
+    font-size: 1.2em;
+}
+
+.px-purchase-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.px-purchase-actions button {
+    font-family: 'Pirata One', serif;
+    padding: 8px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1em;
+    border: 2px solid;
+    transition: transform 0.1s, box-shadow 0.2s;
+}
+
+.px-purchase-actions button:hover {
+    transform: translateY(-1px);
+}
+
+.px-purchase-cancel {
+    background: rgba(0,0,0,0.4);
+    color: #d4a574;
+    border-color: #8b5a2b;
+}
+
+.px-purchase-confirm {
+    background: linear-gradient(145deg, #c89030, #8b5a10);
+    color: #1a0f08;
+    border-color: #ffd700;
+    font-weight: bold;
+}
+
+.px-purchase-confirm:hover {
+    box-shadow: 0 0 12px rgba(255,215,0,0.6);
+}
+
+.px-purchase-msg {
+    margin-top: 12px;
+    color: #ff8866;
+    font-size: 0.85em;
+    min-height: 1em;
+}
+
 @media (max-height: 500px) {
     .px-sprite-wrap {
         width: 48px;

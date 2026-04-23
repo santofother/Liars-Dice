@@ -12,8 +12,19 @@ from database import (
     reset_user_wins, reset_all_wins, get_all_users,
     increment_user_coins, get_user_coins, get_top_by_coins,
     update_user_avatar, set_user_coins, get_user_rank,
-    get_user_ranked, record_ranked_win
+    get_user_ranked, record_ranked_win,
+    get_user_owned_skins, purchase_legendary_skin
 )
+
+# Legendary skin catalog — server-side price authority. Client cannot fake costs.
+LEGENDARY_SKINS = {
+    'legendary_ghost':   {'cost': 1500,  'name': 'Ghost Captain'},
+    'legendary_skeleton':{'cost': 2000,  'name': 'Bone Pirate'},
+    'legendary_golden':  {'cost': 3000,  'name': 'Golden Captain'},
+    'legendary_demon':   {'cost': 4000,  'name': 'Demon Buccaneer'},
+    'legendary_kraken':  {'cost': 5000,  'name': 'Kraken Lord'},
+    'legendary_royal':   {'cost': 10000, 'name': 'Royal Phantom'},
+}
 
 # Ranked-mode tier configuration. wins_to_advance=None means top tier.
 RANKED_TIERS = [
@@ -1532,7 +1543,8 @@ def handle_register(data):
             'username': user_data['username'],
             'avatar': user_data['avatar'],
             'wins': user_data['wins'],
-            'coins': user_data.get('coins', 50)
+            'coins': user_data.get('coins', 50),
+            'owned_skins': get_user_owned_skins(user_data['username'])
         })
         broadcast_leaderboard_update()
     else:
@@ -1557,7 +1569,8 @@ def handle_login(data):
             'username': user_data['username'],
             'avatar': user_data['avatar'],
             'wins': user_data['wins'],
-            'coins': user_data.get('coins', 50)
+            'coins': user_data.get('coins', 50),
+            'owned_skins': get_user_owned_skins(user_data['username'])
         })
     else:
         emit('login_error', {'message': message})
@@ -1586,7 +1599,8 @@ def handle_validate_token(data):
                 'username': user_data['username'],
                 'avatar': user_data['avatar'],
                 'wins': user_data['wins'],
-                'coins': user_data.get('coins', 50)
+                'coins': user_data.get('coins', 50),
+                'owned_skins': user_data.get('owned_skins', [])
             })
         else:
             emit('token_invalid')
@@ -1649,6 +1663,36 @@ def handle_spend_coins(data):
         else:
             rank = get_user_rank(session_data['username'])
             emit('coins_update', {'coins': current, 'rank': rank, 'error': 'Not enough coins!'})
+
+@socketio.on('purchase_skin')
+def handle_purchase_skin(data):
+    """Purchase a legendary skin. Server-side price authority via LEGENDARY_SKINS."""
+    token = data.get('token')
+    skin_id = data.get('skin_id', '')
+    session_data = validate_session(token)
+    if not session_data:
+        emit('purchase_error', {'message': 'Ye must be logged in to buy skins!'})
+        return
+    skin = LEGENDARY_SKINS.get(skin_id)
+    if not skin:
+        emit('purchase_error', {'message': 'Unknown skin'})
+        return
+    result = purchase_legendary_skin(session_data['username'], skin_id, skin['cost'])
+    if result['success']:
+        session_data['coins'] = result['coins']
+        rank = get_user_rank(session_data['username'])
+        emit('purchase_success', {
+            'skin_id': skin_id,
+            'name': skin['name'],
+            'coins': result['coins'],
+            'owned_skins': result['owned_skins'],
+            'rank': rank
+        })
+        # Sync coin balance everywhere (rank bar, ghost coins, etc.)
+        emit('coins_update', {'coins': result['coins'], 'rank': rank})
+        broadcast_leaderboard_update()
+    else:
+        emit('purchase_error', {'message': result['message'], 'coins': result['coins']})
 
 @socketio.on('award_coins')
 def handle_award_coins(data):
