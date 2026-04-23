@@ -244,6 +244,40 @@ body.pixel-avatars-on .px-char-selector {
     image-rendering: -moz-crisp-edges;
 }
 
+/* --- Upscaled legendary artwork ---
+   Hand-detailed PNGs are taller than wide and benefit from smooth scaling.
+   We override the tiny square sprite slot to fit the natural aspect ratio,
+   bumping the picker tile a bit so the character isn't squashed. */
+.px-char-option.legendary.upscaled img {
+    width: 44px;
+    height: 58px;
+    image-rendering: auto;
+    object-fit: contain;
+}
+.px-char-option.legendary.upscaled {
+    padding: 2px;
+}
+.px-sprite-wrap.legendary-upscaled {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    image-rendering: auto;
+}
+.px-sprite-wrap.legendary-upscaled img {
+    image-rendering: auto;
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+}
+img.px-purchase-sprite.legendary-upscaled {
+    image-rendering: auto;
+    width: auto;
+    max-width: 200px;
+    height: 200px;
+    object-fit: contain;
+}
+
 .px-char-label {
     font-size: 0.55em;
     color: #d4a574;

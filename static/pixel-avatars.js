@@ -394,6 +394,21 @@
         return ownedLegendarySkins.indexOf(charId) !== -1;
     }
 
+    // === EXPERIMENTAL: UPSCALED LEGENDARY ARTWORK ===
+    // When enabled, legendary character renders use hand-detailed PNGs from
+    // /static/legendary/ instead of the palette-swapped sprite. Initialised from
+    // localStorage so refreshes don't drop the preference.
+    let upscaledLegendary = false;
+    try { upscaledLegendary = localStorage.getItem('legendaryUpscaled') === '1'; } catch (e) {}
+    function setUpscaledLegendary(on) { upscaledLegendary = !!on; }
+    function getLegendaryUpscaledURL(charId) {
+        // charId already follows `legendary_<base>` naming, matching the file.
+        return `/static/legendary/${charId}.png`;
+    }
+    function isUpscaledLegendary(ch) {
+        return upscaledLegendary && ch && ch.category === 'Legendary';
+    }
+
     // === AI CHARACTER MAPPING (fixed assignments) ===
     const AI_CHARACTERS = {
         'Davy Jones': 'naval_dark',
@@ -556,18 +571,24 @@
     // ===================================================
 
     function getAvatarHTML(characterId, extraClass) {
-        const url = getSpriteDataURL(characterId, 4);
-        if (!url) return '';
         const ch = CHARACTERS.find(c => c.id === characterId);
+        const upscaled = isUpscaledLegendary(ch);
+        const url = upscaled ? getLegendaryUpscaledURL(characterId) : getSpriteDataURL(characterId, 4);
+        if (!url) return '';
         const legendaryCls = ch && ch.category === 'Legendary' ? ' legendary-sprite' : '';
-        return `<div class="px-sprite-wrap${legendaryCls} ${extraClass || ''}"><img src="${url}" alt="pixel avatar"></div>`;
+        const upCls = upscaled ? ' legendary-upscaled' : '';
+        return `<div class="px-sprite-wrap${legendaryCls}${upCls} ${extraClass || ''}"><img src="${url}" alt="pixel avatar"></div>`;
     }
 
     function getSmallAvatarHTML(characterId) {
-        const url = getSpriteDataURL(characterId, 3);
-        if (!url) return '';
         const ch = CHARACTERS.find(c => c.id === characterId);
+        const upscaled = isUpscaledLegendary(ch);
+        const url = upscaled ? getLegendaryUpscaledURL(characterId) : getSpriteDataURL(characterId, 3);
+        if (!url) return '';
         const legendaryCls = ch && ch.category === 'Legendary' ? ' legendary-sprite' : '';
+        if (upscaled) {
+            return `<img class="legendary-sprite legendary-upscaled" src="${url}" alt="" style="width:40px;height:auto;max-height:54px;object-fit:contain;">`;
+        }
         return `<img class="${legendaryCls}" src="${url}" alt="" style="width:40px;height:40px;image-rendering:pixelated;">`;
     }
 
@@ -680,12 +701,14 @@
         if (legendary.length) {
             html += '<div class="px-legendary-sep" title="Legendary Skins">⭐</div>';
             legendary.forEach(ch => {
-                const url = getSpriteDataURL(ch.id, 3);
+                const upscaled = isUpscaledLegendary(ch);
+                const url = upscaled ? getLegendaryUpscaledURL(ch.id) : getSpriteDataURL(ch.id, 3);
                 const owned = isOwned(ch.id);
                 const sel = ch.id === selected ? ' selected' : '';
                 const lockedCls = owned ? '' : ' locked';
+                const upCls = upscaled ? ' upscaled' : '';
                 const label = owned ? ch.name : (ch.cost + 'c');
-                html += `<div class="px-char-option legendary${lockedCls}${sel}" data-char-id="${ch.id}"
+                html += `<div class="px-char-option legendary${lockedCls}${sel}${upCls}" data-char-id="${ch.id}"
                     onclick="PixelAvatars.legendaryClick('${ch.id}', '${containerId}')"
                     ondblclick="PixelAvatars.legendaryDblClick('${ch.id}', '${containerId}')">
                     <span class="px-legendary-badge">★</span>
@@ -723,14 +746,16 @@
         const existing = document.getElementById('px-purchase-modal');
         if (existing) existing.remove();
 
-        const url = getSpriteDataURL(charId, 5);
+        const upscaled = isUpscaledLegendary(ch);
+        const url = upscaled ? getLegendaryUpscaledURL(charId) : getSpriteDataURL(charId, 5);
+        const upCls = upscaled ? ' legendary-upscaled' : '';
         const modal = document.createElement('div');
         modal.id = 'px-purchase-modal';
         modal.className = 'px-purchase-modal';
         modal.innerHTML = `
             <div class="px-purchase-card">
                 <div class="px-purchase-title">⭐ Legendary Skin ⭐</div>
-                <img class="px-purchase-sprite" src="${url}" alt="${ch.name}">
+                <img class="px-purchase-sprite${upCls}" src="${url}" alt="${ch.name}">
                 <div class="px-purchase-name">${ch.name}</div>
                 <div class="px-purchase-cost">Cost: <b>${ch.cost}</b> coins</div>
                 <div class="px-purchase-actions">
@@ -859,6 +884,7 @@
         legendaryClick: legendaryClick,
         legendaryDblClick: legendaryDblClick,
         openPurchaseDialog: openPurchaseDialog,
+        setUpscaledLegendary: setUpscaledLegendary,
     };
 
     // Preload on next idle frame

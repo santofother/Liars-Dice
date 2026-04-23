@@ -5173,7 +5173,20 @@
         }
     </style>
 </head>
-<body>
+<body class="layout-modern">
+<script>
+    // Apply saved layout preference IMMEDIATELY so the lobby doesn't flash the
+    // legacy 500px-wide style on cold loads (incognito, no cache) where window.onload
+    // is delayed by uncached fonts/ads. loadLayoutPreference() runs later and is a no-op
+    // on the body class for the saved value, but still wires up the radio inputs.
+    try {
+        var saved = localStorage.getItem('uiLayout');
+        if (saved === 'legacy') {
+            document.body.classList.remove('layout-modern');
+            document.body.classList.add('layout-legacy');
+        }
+    } catch (e) {}
+</script>
     <!-- Rules Button -->
     <button class="rules-btn" onclick="toggleRules()" title="Game Rules">📜</button>
 
@@ -5257,6 +5270,11 @@
                 </div>
                 <div class="pixel-toggle-desc">Replaces emoji avatars with animated pixel art characters</div>
                 <div class="pixel-preview-row" id="pixel-preview-row"></div>
+                <div class="pixel-toggle-wrap" style="margin-top:14px;">
+                    <input type="checkbox" id="legendary-upscaled-toggle" onchange="toggleLegendaryUpscaled(this.checked)">
+                    <label for="legendary-upscaled-toggle" class="pixel-toggle-label">⚗ Upscaled Legendary Skins <span style="color:#b8860b;font-size:0.8em;">(experimental)</span></label>
+                </div>
+                <div class="pixel-toggle-desc">Swaps legendary characters for hand-detailed upscaled artwork. May not match the 8-bit aesthetic.</div>
             </div>
 
             <div class="settings-section">
@@ -6255,6 +6273,22 @@
             if (gameState) updateUI();
         }
 
+        // Experimental: swap palette-rendered legendary sprites for hand-detailed
+        // upscaled artwork. Setting persists across sessions; takes effect immediately.
+        function toggleLegendaryUpscaled(on) {
+            localStorage.setItem('legendaryUpscaled', on ? '1' : '0');
+            document.body.classList.toggle('legendary-upscaled-on', on);
+            if (window.PixelAvatars && PixelAvatars.setUpscaledLegendary) {
+                PixelAvatars.setUpscaledLegendary(on);
+                // Re-render pickers to swap the tile sprites
+                ['m-pixel-char-picker', 'register-pixel-char-picker', 'login-pixel-char-picker'].forEach(id => {
+                    if (document.getElementById(id)) PixelAvatars.buildCharacterPicker(id);
+                });
+            }
+            if (gameState) updateUI();
+            if (typeof updateAccountUI === 'function' && currentUser) updateAccountUI();
+        }
+
         // Force-toggle emoji vs pixel pickers via JS (CSS alone has proven unreliable)
         function syncAvatarPickerVisibility(pixelOn) {
             // Hide/show all emoji grids
@@ -6367,6 +6401,11 @@
                 syncAvatarPickerVisibility(true);
                 loadPixelAvatarAssets();
             }
+            // Restore upscaled-legendary preference (default OFF — experimental)
+            const upSaved = localStorage.getItem('legendaryUpscaled') === '1';
+            if (upSaved) document.body.classList.add('legendary-upscaled-on');
+            const upToggle = document.getElementById('legendary-upscaled-toggle');
+            if (upToggle) upToggle.checked = upSaved;
         }
 
         // ==================== PIRATE SCENE & DAILY QUEST ====================
