@@ -5,7 +5,7 @@ services:
     environment:
       - FLASK_ENV=production
     volumes:
-      - game-data:/app/data
+      - ./data:/app/data
     restart: unless-stopped
     networks:
       - game-network
@@ -23,9 +23,6 @@ services:
       - game-network
     depends_on:
       - liars-dice
-
-volumes:
-  game-data:
 
 networks:
   game-network:
