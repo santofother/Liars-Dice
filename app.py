@@ -6,6 +6,12 @@ import string
 import os
 import secrets
 import time
+from dotenv import load_dotenv
+
+# Load .env so ADMIN_PASSWORD (and any other secrets) are available via os.environ.
+# Safe in production too — Docker env vars take precedence over .env values.
+load_dotenv()
+
 from database import (
     create_user, authenticate_user, get_user_by_username,
     increment_user_wins, update_last_login, get_top_pirates,
