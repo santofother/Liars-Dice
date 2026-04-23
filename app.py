@@ -1709,7 +1709,19 @@ def handle_award_coins(data):
         broadcast_leaderboard_update()
 
 # Admin config events
-ADMIN_PASSWORD = 'SantoIsCool'
+# Read from environment so the password is never committed to source. If unset,
+# admin endpoints are disabled (all auth attempts fail). Set ADMIN_PASSWORD in
+# .env (gitignored) for local dev, or as a container env var in production.
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '')
+
+def _check_admin(password):
+    """Timing-safe admin password check. Returns False if no password configured."""
+    if not ADMIN_PASSWORD or not password:
+        return False
+    return secrets.compare_digest(str(password), ADMIN_PASSWORD)
+
+if not ADMIN_PASSWORD:
+    print("WARNING: ADMIN_PASSWORD env var not set — admin endpoints are disabled.")
 
 # Issue notes shown to all clients (max 2). Each entry: {'text': str, 'enabled': bool}
 issue_notes = [
@@ -1728,7 +1740,7 @@ def handle_get_issue_notes():
 def handle_admin_set_issue_notes(data):
     """Admin updates the issue notes list."""
     password = data.get('password', '')
-    if password != ADMIN_PASSWORD:
+    if not _check_admin(password):
         emit('admin_auth_error', {'message': 'Unauthorized!'})
         return
     incoming = data.get('notes', [])
@@ -1743,7 +1755,7 @@ def handle_admin_set_issue_notes(data):
 def handle_admin_auth(data):
     """Verify admin password."""
     password = data.get('password', '')
-    if password == ADMIN_PASSWORD:
+    if _check_admin(password):
         users = get_all_users()
         emit('admin_auth_success', {'users': users, 'issue_notes': issue_notes})
     else:
@@ -1754,7 +1766,7 @@ def handle_admin_reset_user(data):
     """Reset a specific user's wins."""
     password = data.get('password', '')
     username = data.get('username', '')
-    if password != ADMIN_PASSWORD:
+    if not _check_admin(password):
         emit('admin_auth_error', {'message': 'Unauthorized!'})
         return
     if reset_user_wins(username):
@@ -1768,7 +1780,7 @@ def handle_admin_reset_user(data):
 def handle_admin_reset_all(data):
     """Reset all users' wins."""
     password = data.get('password', '')
-    if password != ADMIN_PASSWORD:
+    if not _check_admin(password):
         emit('admin_auth_error', {'message': 'Unauthorized!'})
         return
     if reset_all_wins():
@@ -1782,7 +1794,7 @@ def handle_admin_reset_all(data):
 def handle_admin_set_coins(data):
     """Set a user's coin balance."""
     password = data.get('password', '')
-    if password != ADMIN_PASSWORD:
+    if not _check_admin(password):
         emit('admin_auth_error', {'message': 'Unauthorized!'})
         return
     username = data.get('username', '')

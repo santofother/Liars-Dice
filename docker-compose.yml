@@ -2,8 +2,11 @@ services:
   liars-dice:
     build: .
     container_name: liars-dice-game
+    env_file:
+      - .env
     environment:
       - FLASK_ENV=production
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
     volumes:
       - ./data:/app/data
     restart: unless-stopped

@@ -750,7 +750,10 @@
 
         const primaries = getPrimaryCharacters();
 
-        // Single flat grid — all characters (pirates + military) in one row
+        // Single flat grid — regular characters then legendary skins inline.
+        // Legendary tiles use the same grid so they fill any empty space on
+        // the last row; visual differentiation comes from the .legendary class
+        // (gold border) and a small separator before the first legendary tile.
         let html = '<div class="px-char-grid">';
         primaries.forEach(ch => {
             // Show selected variant's sprite if this group is selected
@@ -767,13 +770,11 @@
                 <div class="px-char-label">${ch.name}</div>
             </div>`;
         });
-        html += '</div>';
 
-        // --- LEGENDARY SKINS section ---
+        // Legendary skins inline with the rest, after a small gold separator
         const legendary = CHARACTERS.filter(c => c.category === 'Legendary');
         if (legendary.length) {
-            html += '<div class="px-legendary-header">⭐ LEGENDARY SKINS ⭐</div>';
-            html += '<div class="px-char-grid px-legendary-grid">';
+            html += '<div class="px-legendary-sep" title="Legendary Skins">⭐</div>';
             legendary.forEach(ch => {
                 const url = getSpriteDataURL(ch.id, 3);
                 const owned = isOwned(ch.id);
@@ -787,8 +788,8 @@
                     <div class="px-char-label">${label}</div>
                 </div>`;
             });
-            html += '</div>';
         }
+        html += '</div>';
 
         // Variant sub-picker (hidden by default)
         html += '<div class="px-variant-picker hidden" id="px-variant-picker-' + containerId + '"></div>';
