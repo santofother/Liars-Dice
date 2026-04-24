@@ -1301,14 +1301,45 @@
             margin-bottom: 3px;
         }
 
-        .layout-modern .m-quest-tracker {
+        .layout-modern .m-quest-panel {
             margin-top: 10px;
             background: rgba(0,0,0,0.4);
             border: 1px solid var(--m-border2);
             border-radius: 8px;
-            padding: 8px 10px;
+            padding: 6px 8px;
             font-size: 0.75em;
             flex-shrink: 0;
+        }
+        .layout-modern .m-quest-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 6px;
+        }
+        .layout-modern .m-quest-tab {
+            flex: 1;
+            background: rgba(0,0,0,0.35);
+            border: 1px solid var(--m-border2);
+            border-radius: 6px;
+            color: var(--m-dimtext);
+            font-size: 1em;
+            font-weight: bold;
+            padding: 4px 6px;
+            cursor: pointer;
+        }
+        .layout-modern .m-quest-tab.active {
+            color: var(--m-gold);
+            border-color: var(--m-gold);
+            background: rgba(255,215,0,0.08);
+        }
+        .layout-modern .m-quest-tracker {
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            padding: 4px 6px;
+            font-size: 1em;
+        }
+        .layout-modern .m-quest-tracker.quest-tab-inactive {
+            display: none;
         }
         .layout-modern .m-quest-tracker-title {
             color: var(--m-gold);
@@ -6051,21 +6082,25 @@
                         <div class="m-stat-lbl">Difficulty</div>
                     </div>
                 </div>
-                <div class="m-quest-tracker hidden" id="m-quest-tracker">
-                    <div class="m-quest-tracker-title">⚓ Daily Quest</div>
-                    <div class="m-quest-tracker-desc" id="m-quest-desc"></div>
-                    <div class="m-quest-tracker-bar">
-                        <div class="m-quest-tracker-fill" id="m-quest-fill"></div>
+                <div class="m-quest-panel" id="m-quest-panel">
+                    <div class="m-quest-tabs">
+                        <button type="button" class="m-quest-tab active" data-quest-tab="daily" onclick="selectQuestTab('daily')">⚓ Daily</button>
+                        <button type="button" class="m-quest-tab" data-quest-tab="weekly" onclick="selectQuestTab('weekly')">🗺️ Weekly</button>
                     </div>
-                    <div class="m-quest-tracker-text" id="m-quest-text">0/0</div>
-                </div>
-                <div class="m-quest-tracker hidden" id="m-weekly-quest-tracker">
-                    <div class="m-quest-tracker-title">🗺️ Weekly Quest</div>
-                    <div class="m-quest-tracker-desc" id="m-weekly-quest-desc"></div>
-                    <div class="m-quest-tracker-bar">
-                        <div class="m-quest-tracker-fill" id="m-weekly-quest-fill"></div>
+                    <div class="m-quest-tracker hidden" id="m-quest-tracker">
+                        <div class="m-quest-tracker-desc" id="m-quest-desc"></div>
+                        <div class="m-quest-tracker-bar">
+                            <div class="m-quest-tracker-fill" id="m-quest-fill"></div>
+                        </div>
+                        <div class="m-quest-tracker-text" id="m-quest-text">0/0</div>
                     </div>
-                    <div class="m-quest-tracker-text" id="m-weekly-quest-text">0/0</div>
+                    <div class="m-quest-tracker hidden quest-tab-inactive" id="m-weekly-quest-tracker">
+                        <div class="m-quest-tracker-desc" id="m-weekly-quest-desc"></div>
+                        <div class="m-quest-tracker-bar">
+                            <div class="m-quest-tracker-fill" id="m-weekly-quest-fill"></div>
+                        </div>
+                        <div class="m-quest-tracker-text" id="m-weekly-quest-text">0/0</div>
+                    </div>
                 </div>
             </div>
             <!-- Center: Game Action -->
@@ -6616,6 +6651,16 @@
             };
             localStorage.setItem('dailyQuest', JSON.stringify(dailyQuest));
             renderDailyQuest();
+        }
+
+        function selectQuestTab(tab) {
+            document.querySelectorAll('#m-quest-panel .m-quest-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.questTab === tab);
+            });
+            const daily = document.getElementById('m-quest-tracker');
+            const weekly = document.getElementById('m-weekly-quest-tracker');
+            if (daily) daily.classList.toggle('quest-tab-inactive', tab !== 'daily');
+            if (weekly) weekly.classList.toggle('quest-tab-inactive', tab !== 'weekly');
         }
 
         function renderDailyQuest() {
