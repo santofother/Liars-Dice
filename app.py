@@ -994,12 +994,24 @@ def handle_start_game(data):
     room_code = data.get('room_code')
     game = games.get(room_code)
 
+    print(f"[start_game] room={room_code} sid={request.sid} game_exists={game is not None}")
+
     if not game:
         return
 
+    print(f"[start_game] phase={game.get('phase')} is_ranked={game.get('is_ranked')} "
+          f"host_sid={game['players'][0].get('sid')} players={len(game['players'])}")
+
     # Verify sender is host
     if game['players'][0].get('sid') != request.sid:
+        print(f"[start_game] REJECT: sender is not host")
         emit('game_error', {'message': 'Only the host can start the game!'})
+        return
+
+    # Only allow starting from lobby — otherwise repeat clicks would
+    # re-run ranked entry-fee deduction and drain coins each time.
+    if game.get('phase') != 'lobby':
+        print(f"[start_game] REJECT: phase is {game.get('phase')}, not lobby")
         return
 
     is_ranked = game.get('is_ranked', False)
@@ -1038,7 +1050,9 @@ def handle_start_game(data):
                 rank = get_user_rank(sd['username'])
                 socketio.emit('coins_update', {'coins': new_balance, 'rank': rank}, room=p['sid'])
         game['pot'] = pot
+        print(f"[start_game] ranked deducted. pot={pot}")
         broadcast_leaderboard_update()
+        print(f"[start_game] leaderboard broadcast done")
     else:
         # Standard mode: add AI players
         add_ai_players(game)
@@ -1050,7 +1064,10 @@ def handle_start_game(data):
     game['phase'] = 'rolling'
     game['message'] = 'Game starting! Roll the dice!'
 
+    print(f"[start_game] phase now {game['phase']}, broadcasting state")
     broadcast_game_state(room_code)
+    print(f"[start_game] broadcast complete. player sids: "
+          f"{[(p['name'], p.get('sid'), p.get('is_human'), p.get('connected')) for p in game['players']]}")
 
 @socketio.on('roll_dice')
 def handle_roll_dice(data):

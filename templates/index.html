@@ -8255,10 +8255,22 @@
             });
 
             socket.on('game_state', (state) => {
+                console.log('[game_state]', {
+                    phase: state.phase,
+                    is_ranked: state.is_ranked,
+                    player_index: state.player_index,
+                    is_host: state.is_host,
+                    is_waiting: state.is_waiting,
+                    pot: state.pot
+                });
                 const oldState = gameState;
                 gameState = state;
                 playerIndex = state.player_index;
-                updateUI();
+                try {
+                    updateUI();
+                } catch (e) {
+                    console.error('[updateUI threw]', e);
+                }
                 refreshDebugDice();
 
                 // Save session when we successfully join a game
@@ -8284,6 +8296,7 @@
             });
 
             socket.on('game_error', (data) => {
+                console.log('[game_error]', data);
                 showToast(data.message);
 
                 // If reconnection fails, clear session and show lobby
