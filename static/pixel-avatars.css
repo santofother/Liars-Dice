@@ -277,14 +277,17 @@ body.pixel-avatars-on .px-char-selector {
    p% = (N/8)*100% for frame N (0..8). --frame is set by JS triggerAnimation. */
 .px-sprite-wrap.legendary-upscaled .legendary-anim {
     --frame: 0;
-    width: 90%;
-    height: 90%;
-    min-height: 72px;
-    aspect-ratio: 1 / 0.95;
+    /* Explicit px dimensions — background-image gives no intrinsic size, so
+       percentage sizing would collapse to 0 inside flex containers that
+       aren't sized themselves (opponent cards, my-avatar slot). ~1/0.95
+       landscape, a touch smaller than the pixel-character default. */
+    width: 80px;
+    height: 76px;
     background-size: 900% 100%;
     background-repeat: no-repeat;
     background-position: calc(var(--frame) * 100% / 8) 0;
     image-rendering: auto;
+    flex-shrink: 0;
 }
 
 /* Subtler motion for upscaled legendary avatars — the larger high-detail art
