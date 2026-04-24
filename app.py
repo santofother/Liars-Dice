@@ -110,7 +110,7 @@ def broadcast_leaderboard_update():
     leaderboard = get_top_by_coins(5)
     socketio.emit('leaderboard_update', {
         'top_pirates': leaderboard
-    }, broadcast=True)
+    })
 
 def generate_room_code():
     """Generate a 4-letter room code."""
