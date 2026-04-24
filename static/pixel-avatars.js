@@ -405,8 +405,24 @@
         // charId already follows `legendary_<base>` naming, matching the file.
         return `/static/legendary/${charId}.png`;
     }
+    function getLegendarySheetURL(charId) {
+        return `/static/legendary/${charId}_sheet.png`;
+    }
     function isUpscaledLegendary(ch) {
         return upscaledLegendary && ch && ch.category === 'Legendary';
+    }
+
+    // Maps triggerAnimation() `type` values to the column index in the
+    // 9-frame legendary sprite sheet (idle, roll, bid, call, win, lose, chat,
+    // think, eliminated). Any type not listed falls back to idle (0).
+    const LEGENDARY_FRAME_INDEX = {
+        idle: 0, roll: 1, bid: 2,
+        liar: 3, call: 3,
+        win: 4, lose: 5, chat: 6, think: 7, eliminated: 8,
+    };
+    function getLegendaryFrame(type) {
+        const i = LEGENDARY_FRAME_INDEX[type];
+        return (typeof i === 'number') ? i : 0;
     }
 
     // === AI CHARACTER MAPPING (fixed assignments) ===
@@ -489,6 +505,12 @@
 
     const activeAnimations = {};
 
+    function setLegendaryFrameOn(root, type) {
+        if (!root) return;
+        const el = root.querySelector ? root.querySelector('.legendary-anim') : null;
+        if (el) el.style.setProperty('--frame', String(getLegendaryFrame(type)));
+    }
+
     function triggerAnimation(playerIdx, type, duration) {
         const card = document.querySelector(`[data-player-idx="${playerIdx}"]`);
         if (!card) return;
@@ -507,6 +529,7 @@
 
         const animClass = 'px-anim-' + type;
         card.classList.add(animClass);
+        setLegendaryFrameOn(card, type);
 
         const durations = {
             idle: 0,       // infinite
@@ -528,6 +551,9 @@
                 // Restore idle
                 if (!card.classList.contains('px-anim-eliminated')) {
                     card.classList.add('px-anim-idle');
+                    setLegendaryFrameOn(card, 'idle');
+                } else {
+                    setLegendaryFrameOn(card, 'eliminated');
                 }
                 delete activeAnimations[playerIdx];
             }, dur);
@@ -550,6 +576,7 @@
         const animClass = 'px-anim-' + type;
         myWrap.classList.add(animClass);
         myWrap.dataset.pxAnim = type;
+        setLegendaryFrameOn(myWrap, type);
 
         const durations = {
             idle: 0, roll: 600, bid: 800, liar: 1000,
@@ -562,6 +589,7 @@
                 myWrap.classList.remove(animClass);
                 myWrap.classList.add('px-anim-idle');
                 myWrap.dataset.pxAnim = 'idle';
+                setLegendaryFrameOn(myWrap, 'idle');
             }, dur);
         }
     }
@@ -573,10 +601,17 @@
     function getAvatarHTML(characterId, extraClass) {
         const ch = CHARACTERS.find(c => c.id === characterId);
         const upscaled = isUpscaledLegendary(ch);
-        const url = upscaled ? getLegendaryUpscaledURL(characterId) : getSpriteDataURL(characterId, 4);
-        if (!url) return '';
         const legendaryCls = ch && ch.category === 'Legendary' ? ' legendary-sprite' : '';
         const upCls = upscaled ? ' legendary-upscaled' : '';
+        if (upscaled) {
+            // Use the 9-frame sheet so triggerAnimation() can swap poses via --frame.
+            const sheet = getLegendarySheetURL(characterId);
+            return `<div class="px-sprite-wrap${legendaryCls}${upCls} ${extraClass || ''}">` +
+                   `<div class="legendary-anim" data-char-id="${characterId}" style="background-image:url('${sheet}');"></div>` +
+                   `</div>`;
+        }
+        const url = getSpriteDataURL(characterId, 4);
+        if (!url) return '';
         return `<div class="px-sprite-wrap${legendaryCls}${upCls} ${extraClass || ''}"><img src="${url}" alt="pixel avatar"></div>`;
     }
 
