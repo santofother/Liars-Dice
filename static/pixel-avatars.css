@@ -277,9 +277,9 @@ body.pixel-avatars-on .px-char-selector {
    p% = (N/8)*100% for frame N (0..8). --frame is set by JS triggerAnimation. */
 .px-sprite-wrap.legendary-upscaled .legendary-anim {
     --frame: 0;
-    width: 100%;
-    height: 100%;
-    min-height: 80px;
+    width: 90%;
+    height: 90%;
+    min-height: 72px;
     aspect-ratio: 1 / 0.95;
     background-size: 900% 100%;
     background-repeat: no-repeat;

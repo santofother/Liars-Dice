@@ -662,8 +662,14 @@
             }
         }
 
-        // Other human players: consistent assignment based on name hash
+        // Other human players: prefer their own server-broadcast avatar
+        // (so opponents using legendary or any non-default character actually
+        // show as that character, including to viewers who don't own it).
+        // Fall back to name-hash if they haven't picked a valid pixel avatar.
         if (player.is_human && typeof playerIndex !== 'undefined' && idx !== playerIndex) {
+            if (player.avatar && CHARACTERS.find(c => c.id === player.avatar)) {
+                return player.avatar;
+            }
             const humanChars = CHARACTERS.filter(c => c.category === 'Pirates');
             return humanChars[nameHash(player.name) % humanChars.length].id;
         }
