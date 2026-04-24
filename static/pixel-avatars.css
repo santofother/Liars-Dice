@@ -286,6 +286,27 @@ body.pixel-avatars-on .px-char-selector {
     background-position: calc(var(--frame) * 100% / 8) 0;
     image-rendering: auto;
 }
+
+/* Stronger gold aura for upscaled legendary skins in-game. Layered drop-shadows
+   trace the sprite silhouette (alpha-aware), so the glow follows the character
+   shape rather than the bounding box. Pulses gently. */
+@keyframes legendary-aura {
+    0%, 100% {
+        filter:
+            drop-shadow(0 0 3px #ffd700)
+            drop-shadow(0 0 8px rgba(255,200,40,0.7))
+            drop-shadow(0 0 16px rgba(255,170,0,0.45));
+    }
+    50% {
+        filter:
+            drop-shadow(0 0 5px #ffec8a)
+            drop-shadow(0 0 14px rgba(255,215,0,0.95))
+            drop-shadow(0 0 24px rgba(255,170,0,0.7));
+    }
+}
+.px-sprite-wrap.legendary-upscaled .legendary-anim {
+    animation: legendary-aura 2.2s ease-in-out infinite;
+}
 img.px-purchase-sprite.legendary-upscaled {
     image-rendering: auto;
     width: auto;
