@@ -280,11 +280,41 @@ body.pixel-avatars-on .px-char-selector {
     width: 100%;
     height: 100%;
     min-height: 80px;
-    aspect-ratio: 1 / 1.15;
+    aspect-ratio: 1 / 0.95;
     background-size: 900% 100%;
     background-repeat: no-repeat;
     background-position: calc(var(--frame) * 100% / 8) 0;
     image-rendering: auto;
+}
+
+/* Subtler motion for upscaled legendary avatars — the larger high-detail art
+   makes the default pixel-sprite bounce feel exaggerated. Override idle with a
+   gentler keyframe and damp the big liar/win jumps by scoping a smaller
+   transform. */
+@keyframes px-idle-legendary {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-1px); }
+}
+.px-anim-idle .px-sprite-wrap.legendary-upscaled {
+    animation: px-idle-legendary 3.2s ease-in-out infinite;
+}
+@keyframes px-liar-legendary {
+    0%, 100% { transform: translateY(0) scale(1); }
+    25% { transform: translateY(-3px) scale(1.03); }
+    55% { transform: translateY(-3px) scale(1.03); }
+    80% { transform: translateY(-2px) scale(1.02); }
+}
+.px-anim-liar .px-sprite-wrap.legendary-upscaled {
+    animation: px-liar-legendary 1s ease-in-out;
+}
+@keyframes px-win-legendary {
+    0%, 100% { transform: translateY(0) scale(1); }
+    40% { transform: translateY(-6px) scale(1.04); }
+    60% { transform: translateY(-6px) scale(1.04); }
+    85% { transform: translateY(-2px); }
+}
+.px-anim-win .px-sprite-wrap.legendary-upscaled {
+    animation: px-win-legendary 1s ease-in-out;
 }
 
 /* Stronger gold aura for upscaled legendary skins in-game. Layered drop-shadows
