@@ -5852,6 +5852,9 @@
                         Entry fee: <span class="ranked-pot" id="ranked-current-entry">200</span> coins &middot;
                         Yer chest: <span class="ranked-pot" id="ranked-current-coins">0</span>
                     </div>
+                    <div style="margin-top:6px;font-size:0.88em;color:#d4a574;">
+                        🏆 Lifetime ranked wins: <span class="ranked-pot" id="ranked-total-wins">0</span>
+                    </div>
                 </div>
 
                 <div style="font-size:0.95em;color:#b8860b;margin-bottom:8px;">⚓ Tier Ladder</div>
@@ -6635,6 +6638,7 @@
                             localStorage.setItem('dailyQuest', JSON.stringify(dailyQuest));
                         }
                         renderDailyQuest();
+                        requestServerQuests();
                         return;
                     }
                 } catch(e) {}
@@ -6651,6 +6655,52 @@
             };
             localStorage.setItem('dailyQuest', JSON.stringify(dailyQuest));
             renderDailyQuest();
+            persistQuestToServer('daily');
+            requestServerQuests();
+        }
+
+        // Ask the server for the persisted quest state so that progress survives
+        // device switches and updates that clear localStorage. Results are handled
+        // by the 'quests_state' socket listener, which reconciles with local state.
+        function requestServerQuests() {
+            if (userToken && socket) {
+                socket.emit('get_quests', { token: userToken });
+            }
+        }
+
+        // Push the current local quest blob up to the server so it's persisted
+        // across devices and game updates. No-op for guests.
+        function persistQuestToServer(kind) {
+            if (!userToken || !socket) return;
+            const q = kind === 'daily' ? dailyQuest : weeklyQuest;
+            if (!q) return;
+            socket.emit('save_quest', { token: userToken, kind: kind, quest: q });
+        }
+
+        // Merge a server-persisted quest with local state. If the server copy is
+        // for the current period and has equal-or-greater progress than local, it
+        // wins (prevents regressing a device that already has higher progress).
+        // Otherwise we push the local copy up to the server.
+        function reconcileServerQuest(kind, srvQuest) {
+            const today = getDailyQuestSeed();
+            const week = getWeeklyQuestSeed();
+            const periodKey = kind === 'daily' ? 'day' : 'week';
+            const currentPeriod = kind === 'daily' ? today : week;
+            const localVar = kind === 'daily' ? dailyQuest : weeklyQuest;
+            const storageKey = kind === 'daily' ? 'dailyQuest' : 'weeklyQuest';
+            const render = kind === 'daily' ? renderDailyQuest : renderWeeklyQuest;
+
+            const srvValid = srvQuest && srvQuest[periodKey] === currentPeriod && srvQuest.quest;
+            const localValid = localVar && localVar[periodKey] === currentPeriod;
+
+            if (srvValid && (!localValid || (srvQuest.progress || 0) >= (localVar.progress || 0))) {
+                if (kind === 'daily') dailyQuest = srvQuest; else weeklyQuest = srvQuest;
+                localStorage.setItem(storageKey, JSON.stringify(srvQuest));
+                render();
+            } else if (localValid) {
+                // Local is fresher — push up.
+                persistQuestToServer(kind);
+            }
         }
 
         function selectQuestTab(tab) {
@@ -6717,6 +6767,7 @@
             }
             localStorage.setItem('dailyQuest', JSON.stringify(dailyQuest));
             renderDailyQuest();
+            persistQuestToServer('daily');
         }
 
         // Optimistically bump all visible coin counters by `delta`. The server's
@@ -6745,6 +6796,7 @@
                 dailyQuest.coins_awarded = true;
                 localStorage.setItem('dailyQuest', JSON.stringify(dailyQuest));
                 applyLocalCoinDelta(dailyQuest.quest.reward);
+                persistQuestToServer('daily');
             }
         }
 
@@ -6859,6 +6911,7 @@
             };
             localStorage.setItem('weeklyQuest', JSON.stringify(weeklyQuest));
             renderWeeklyQuest();
+            persistQuestToServer('weekly');
         }
 
         function renderWeeklyQuest() {
@@ -6910,6 +6963,7 @@
             }
             localStorage.setItem('weeklyQuest', JSON.stringify(weeklyQuest));
             renderWeeklyQuest();
+            persistQuestToServer('weekly');
         }
 
         function retryWeeklyQuestCoinAward() {
@@ -6919,6 +6973,7 @@
                 weeklyQuest.coins_awarded = true;
                 localStorage.setItem('weeklyQuest', JSON.stringify(weeklyQuest));
                 applyLocalCoinDelta(weeklyQuest.quest.reward);
+                persistQuestToServer('weekly');
             }
         }
 
@@ -8738,6 +8793,8 @@
             document.getElementById('ranked-current-tier-badge').textContent = info.tier_badge || '';
             document.getElementById('ranked-current-entry').textContent = info.entry_fee;
             document.getElementById('ranked-current-coins').textContent = info.coins;
+            const totalWinsEl = document.getElementById('ranked-total-wins');
+            if (totalWinsEl) totalWinsEl.textContent = info.total_ranked_wins || 0;
 
             const wta = info.wins_to_advance;
             const progressEl = document.getElementById('ranked-current-progress');
@@ -10564,6 +10621,16 @@
                 updateAccountUI();
                 showToast('Avatar updated! ⚓');
             }
+        });
+
+        // Server reply to get_quests — merge persisted quest blobs into local state.
+        // If the server copy is for the current period with equal-or-greater progress
+        // it overrides local (protects against localStorage wipes); otherwise local
+        // wins and gets pushed back up.
+        socket.on('quests_state', (data) => {
+            if (!data || !data.logged_in) return;
+            reconcileServerQuest('daily', data.daily);
+            reconcileServerQuest('weekly', data.weekly);
         });
 
         // Legendary skin purchase results

@@ -19,7 +19,8 @@ from database import (
     increment_user_coins, get_user_coins, get_top_by_coins,
     update_user_avatar, set_user_coins, get_user_rank,
     get_user_ranked, record_ranked_win,
-    get_user_owned_skins, purchase_legendary_skin
+    get_user_owned_skins, purchase_legendary_skin,
+    get_user_quests, save_user_quest
 )
 
 # Legendary skin catalog — server-side price authority. Client cannot fake costs.
@@ -1487,13 +1488,14 @@ def handle_get_ranked_info(data):
     if not session_data:
         emit('ranked_info', {'logged_in': False, 'tiers': RANKED_TIERS})
         return
-    progress = get_user_ranked(session_data['username']) or {'tier': 1, 'tier_wins': 0}
+    progress = get_user_ranked(session_data['username']) or {'tier': 1, 'tier_wins': 0, 'total_ranked_wins': 0}
     tier_cfg = get_tier_info(progress['tier'])
     coins = get_user_coins(session_data['username'])
     emit('ranked_info', {
         'logged_in': True,
         'tier': progress['tier'],
         'tier_wins': progress['tier_wins'],
+        'total_ranked_wins': progress.get('total_ranked_wins', 0),
         'tier_name': tier_cfg['name'],
         'tier_badge': tier_cfg['badge'],
         'entry_fee': tier_cfg['entry'],
@@ -1627,7 +1629,10 @@ def handle_validate_token(data):
                 'avatar': user_data['avatar'],
                 'wins': user_data['wins'],
                 'coins': user_data.get('coins', 50),
-                'owned_skins': user_data.get('owned_skins', [])
+                'owned_skins': user_data.get('owned_skins', []),
+                'ranked_tier': user_data.get('ranked_tier', 1),
+                'tier_wins': user_data.get('tier_wins', 0),
+                'total_ranked_wins': user_data.get('total_ranked_wins', 0),
             })
         else:
             emit('token_invalid')
@@ -1734,6 +1739,33 @@ def handle_award_coins(data):
         rank = get_user_rank(session_data['username'])
         emit('coins_update', {'coins': new_balance, 'rank': rank})
         broadcast_leaderboard_update()
+
+@socketio.on('get_quests')
+def handle_get_quests(data):
+    """Return persisted daily/weekly quest blobs for the logged-in user."""
+    token = data.get('token')
+    session_data = validate_session(token)
+    if not session_data:
+        emit('quests_state', {'logged_in': False, 'daily': None, 'weekly': None})
+        return
+    quests = get_user_quests(session_data['username'])
+    emit('quests_state', {
+        'logged_in': True,
+        'daily': quests.get('daily'),
+        'weekly': quests.get('weekly'),
+    })
+
+@socketio.on('save_quest')
+def handle_save_quest(data):
+    """Persist a single quest blob (kind='daily'|'weekly') for the user.
+    Client sends the entire JSON state; server stores it verbatim."""
+    token = data.get('token')
+    kind = data.get('kind')
+    quest = data.get('quest')
+    session_data = validate_session(token)
+    if not session_data or kind not in ('daily', 'weekly'):
+        return
+    save_user_quest(session_data['username'], kind, quest)
 
 # Admin config events
 # Read from environment so the password is never committed to source. If unset,

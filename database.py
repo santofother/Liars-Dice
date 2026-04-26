@@ -70,6 +70,22 @@ def init_db():
             conn.execute('SELECT owned_skins FROM users LIMIT 1')
         except sqlite3.OperationalError:
             conn.execute("ALTER TABLE users ADD COLUMN owned_skins TEXT NOT NULL DEFAULT ''")
+        # Migration: lifetime ranked-win counter (separate from per-tier tier_wins,
+        # which resets to 0 on tier advance).
+        try:
+            conn.execute('SELECT total_ranked_wins FROM users LIMIT 1')
+        except sqlite3.OperationalError:
+            conn.execute('ALTER TABLE users ADD COLUMN total_ranked_wins INTEGER NOT NULL DEFAULT 0')
+        # Migration: server-side quest persistence. Stored as JSON blobs so the
+        # client's quest pool / progress shape can evolve without DB schema churn.
+        try:
+            conn.execute('SELECT daily_quest FROM users LIMIT 1')
+        except sqlite3.OperationalError:
+            conn.execute("ALTER TABLE users ADD COLUMN daily_quest TEXT NOT NULL DEFAULT ''")
+        try:
+            conn.execute('SELECT weekly_quest FROM users LIMIT 1')
+        except sqlite3.OperationalError:
+            conn.execute("ALTER TABLE users ADD COLUMN weekly_quest TEXT NOT NULL DEFAULT ''")
 
 def validate_username(username):
     """Validate username format (3-20 alphanumeric characters)."""
@@ -183,7 +199,7 @@ def get_user_by_username(username):
     try:
         with get_db() as conn:
             user = conn.execute(
-                'SELECT username, avatar, total_wins, total_games, total_coins, ranked_tier, tier_wins, owned_skins FROM users WHERE username = ? COLLATE NOCASE',
+                'SELECT username, avatar, total_wins, total_games, total_coins, ranked_tier, tier_wins, total_ranked_wins, owned_skins FROM users WHERE username = ? COLLATE NOCASE',
                 (username,)
             ).fetchone()
 
@@ -196,6 +212,7 @@ def get_user_by_username(username):
                     'coins': user['total_coins'],
                     'ranked_tier': user['ranked_tier'],
                     'tier_wins': user['tier_wins'],
+                    'total_ranked_wins': user['total_ranked_wins'],
                     'owned_skins': [s for s in (user['owned_skins'] or '').split(',') if s]
                 }
             return None
@@ -204,15 +221,19 @@ def get_user_by_username(username):
         return None
 
 def get_user_ranked(username):
-    """Return {tier, tier_wins} for a user, or None if not found."""
+    """Return {tier, tier_wins, total_ranked_wins} for a user, or None if not found."""
     try:
         with get_db() as conn:
             row = conn.execute(
-                'SELECT ranked_tier, tier_wins FROM users WHERE username = ? COLLATE NOCASE',
+                'SELECT ranked_tier, tier_wins, total_ranked_wins FROM users WHERE username = ? COLLATE NOCASE',
                 (username,)
             ).fetchone()
             if row:
-                return {'tier': row['ranked_tier'], 'tier_wins': row['tier_wins']}
+                return {
+                    'tier': row['ranked_tier'],
+                    'tier_wins': row['tier_wins'],
+                    'total_ranked_wins': row['total_ranked_wins'],
+                }
             return None
     except Exception as e:
         print(f"Error getting ranked progress: {e}")
@@ -233,23 +254,29 @@ def record_ranked_win(username, wins_to_advance):
     try:
         with get_db() as conn:
             row = conn.execute(
-                'SELECT ranked_tier, tier_wins FROM users WHERE username = ? COLLATE NOCASE',
+                'SELECT ranked_tier, tier_wins, total_ranked_wins FROM users WHERE username = ? COLLATE NOCASE',
                 (username,)
             ).fetchone()
             if not row:
                 return None
             new_wins = row['tier_wins'] + 1
             new_tier = row['ranked_tier']
+            new_total = row['total_ranked_wins'] + 1
             advanced = False
             if wins_to_advance is not None and new_wins >= wins_to_advance:
                 new_tier += 1
                 new_wins = 0
                 advanced = True
             conn.execute(
-                'UPDATE users SET ranked_tier = ?, tier_wins = ? WHERE username = ? COLLATE NOCASE',
-                (new_tier, new_wins, username)
+                'UPDATE users SET ranked_tier = ?, tier_wins = ?, total_ranked_wins = ? WHERE username = ? COLLATE NOCASE',
+                (new_tier, new_wins, new_total, username)
             )
-            return {'tier': new_tier, 'tier_wins': new_wins, 'advanced': advanced}
+            return {
+                'tier': new_tier,
+                'tier_wins': new_wins,
+                'total_ranked_wins': new_total,
+                'advanced': advanced,
+            }
     except Exception as e:
         print(f"Error recording ranked win: {e}")
         return None
@@ -527,6 +554,48 @@ def get_all_users():
     except Exception as e:
         print(f"Error fetching all users: {e}")
         return []
+
+def get_user_quests(username):
+    """Return {daily, weekly} parsed quest blobs for a user, each None if unset."""
+    import json
+    try:
+        with get_db() as conn:
+            row = conn.execute(
+                'SELECT daily_quest, weekly_quest FROM users WHERE username = ? COLLATE NOCASE',
+                (username,)
+            ).fetchone()
+            if not row:
+                return {'daily': None, 'weekly': None}
+            def _parse(blob):
+                if not blob:
+                    return None
+                try:
+                    return json.loads(blob)
+                except (ValueError, TypeError):
+                    return None
+            return {'daily': _parse(row['daily_quest']), 'weekly': _parse(row['weekly_quest'])}
+    except Exception as e:
+        print(f"Error getting quests: {e}")
+        return {'daily': None, 'weekly': None}
+
+def save_user_quest(username, kind, quest_data):
+    """Persist a quest blob for the user. kind is 'daily' or 'weekly'.
+    Pass quest_data=None to clear the slot."""
+    import json
+    if kind not in ('daily', 'weekly'):
+        return False
+    column = 'daily_quest' if kind == 'daily' else 'weekly_quest'
+    blob = '' if quest_data is None else json.dumps(quest_data)
+    try:
+        with get_db() as conn:
+            conn.execute(
+                f'UPDATE users SET {column} = ? WHERE username = ? COLLATE NOCASE',
+                (blob, username)
+            )
+            return True
+    except Exception as e:
+        print(f"Error saving quest: {e}")
+        return False
 
 # Initialize database on module import
 init_db()
