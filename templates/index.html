@@ -3598,14 +3598,14 @@
         }
 
         @keyframes bubblePop {
-            0% { transform: translateX(-50%) scale(0); opacity: 0; }
-            50% { transform: translateX(-50%) scale(1.1); }
-            100% { transform: translateX(-50%) scale(1); opacity: 1; }
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
         }
 
         @keyframes bubbleFade {
-            0% { opacity: 1; }
-            100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1) translateY(-10px); }
         }
 
         .player-card {
@@ -7806,7 +7806,7 @@
                 </div>
                 <div class="m-chat-options" id="m-chat-options"></div>
                 <div class="m-chat-input-row">
-                    <input type="text" id="m-chat-input" placeholder="Type yer message..." maxlength="100" onkeypress="if(event.key==='Enter')sendModernChat()">
+                    <input type="text" id="m-chat-input" name="chat-message" placeholder="Type yer message..." maxlength="100" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" onkeypress="if(event.key==='Enter')sendModernChat()">
                     <button onclick="sendModernChat()">Send</button>
                 </div>
             </div>`;
@@ -10010,7 +10010,7 @@
             if (currentChatTab === 'custom') {
                 container.innerHTML = `
                     <div class="chat-custom-input">
-                        <input type="text" id="custom-message-input" placeholder="Type yer message, matey..." maxlength="100" onkeypress="handleCustomKeypress(event)">
+                        <input type="text" id="custom-message-input" name="chat-message" placeholder="Type yer message, matey..." maxlength="100" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" onkeypress="handleCustomKeypress(event)">
                         <button onclick="sendCustomMessage()">Send</button>
                     </div>
                 `;
