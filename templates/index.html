@@ -1777,6 +1777,12 @@
             color: var(--m-dimtext);
         }
 
+        .layout-modern .m-chat-input-row input[type="search"]::-webkit-search-cancel-button,
+        .layout-modern .m-chat-input-row input[type="search"]::-webkit-search-decoration {
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
         .layout-modern .m-chat-input-row button {
             padding: 8px 14px;
             background: linear-gradient(145deg, #ffd700, #b8860b);
@@ -3874,6 +3880,12 @@
 
         .chat-custom-input input::placeholder {
             color: #8b7355;
+        }
+
+        .chat-custom-input input[type="search"]::-webkit-search-cancel-button,
+        .chat-custom-input input[type="search"]::-webkit-search-decoration {
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         .chat-custom-input button {
@@ -7806,7 +7818,7 @@
                 </div>
                 <div class="m-chat-options" id="m-chat-options"></div>
                 <div class="m-chat-input-row">
-                    <input type="text" id="m-chat-input" name="chat-message" placeholder="Type yer message..." maxlength="100" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" onkeypress="if(event.key==='Enter')sendModernChat()">
+                    <input type="search" id="m-chat-input" name="chat-message" placeholder="Type yer message..." maxlength="100" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-bwignore onkeypress="if(event.key==='Enter')sendModernChat()">
                     <button onclick="sendModernChat()">Send</button>
                 </div>
             </div>`;
@@ -10010,7 +10022,7 @@
             if (currentChatTab === 'custom') {
                 container.innerHTML = `
                     <div class="chat-custom-input">
-                        <input type="text" id="custom-message-input" name="chat-message" placeholder="Type yer message, matey..." maxlength="100" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" onkeypress="handleCustomKeypress(event)">
+                        <input type="search" id="custom-message-input" name="chat-message" placeholder="Type yer message, matey..." maxlength="100" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-bwignore onkeypress="handleCustomKeypress(event)">
                         <button onclick="sendCustomMessage()">Send</button>
                     </div>
                 `;
