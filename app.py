@@ -722,6 +722,10 @@ def robots():
 def sitemap():
     return app.send_static_file('sitemap.xml')
 
+@app.route('/ads.txt')
+def ads_txt():
+    return app.send_static_file('ads.txt')
+
 # Socket events
 @socketio.on('connect')
 def handle_connect():
